@@ -1,0 +1,12 @@
+[package]
+name = "optpy"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+members = ["optpy-compiler", "optpy-std"]
+
+[dependencies]
+optpy-std = { path = "./optpy-std" }
+optpy-compiler = { path = "./optpy-compiler" }
