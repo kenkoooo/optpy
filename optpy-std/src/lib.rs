@@ -1,2 +1,5 @@
-pub mod function;
-pub mod value;
+mod function;
+mod value;
+
+pub use function::*;
+pub use value::*;

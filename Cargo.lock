@@ -404,6 +404,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "num-bigint"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f93ab6289c7b344a8a9f60f88d80aa20032336fe78da341afc91c8a2341fc75f"
+dependencies = [
+ "autocfg 1.1.0",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
 name = "num-integer"
 version = "0.1.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -458,6 +469,9 @@ dependencies = [
 [[package]]
 name = "optpy-std"
 version = "0.1.0"
+dependencies = [
+ "num-bigint 0.4.3",
+]
 
 [[package]]
 name = "ordermap"
@@ -694,7 +708,7 @@ dependencies = [
  "lalrpop",
  "lalrpop-util",
  "log",
- "num-bigint",
+ "num-bigint 0.2.6",
  "num-traits",
  "unic-emoji-char",
  "unic-ucd-ident",

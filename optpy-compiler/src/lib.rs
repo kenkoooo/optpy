@@ -1,4 +1,5 @@
 mod compile;
+mod context;
 mod expression;
 mod statement;
 

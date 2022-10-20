@@ -1,62 +1,128 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 
-use crate::{expression::Expression, statement::Statement};
+use crate::{
+    context::{collect_declared_variables, resolve_variable_names, IdentifierStore},
+    expression::Expression,
+    statement::Statement,
+};
 
-pub fn compile_code(code: &str) -> Result<String> {
+pub fn compile_code(code: &str) -> Result<TokenStream> {
     let ast = rustpython_parser::parser::parse_program(code)?;
     let mut statements = vec![];
     for statement in ast.statements {
         let statement = Statement::interpret(&statement)?;
         statements.push(statement);
     }
-    let code = generate_code(&statements)?;
-    Ok(code.to_string())
+
+    let mut store = IdentifierStore::new();
+    let mut ctx = vec![];
+    collect_declared_variables(&statements, &mut ctx, &mut store);
+    let statements = resolve_variable_names(&statements, &mut ctx, &store)?;
+    let code = statements
+        .iter()
+        .map(|s| s.to_token_stream())
+        .collect::<Vec<_>>();
+    Ok(TokenStream::from_iter(code.into_iter()))
 }
 
-fn generate_code(statements: &[Statement]) -> Result<TokenStream> {
-    let mut result = vec![];
-    for statement in statements {
-        match statement {
-            Statement::Expression { inner } => {
-                let expr = generate_expr(inner);
-                result.push(quote! { #expr; })
-            }
+impl ToTokens for Statement {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            Statement::Expression { inner } => tokens.append_all(quote! { #inner; }),
             Statement::Assign { targets, value } => {
-                if targets.len() != 1 {
-                    return Err(anyhow!("unsupporeted non-single target assignment"));
-                }
-                let target = generate_expr(&targets[0]);
-                let value = generate_expr(value);
-                result.push(quote! {
-                    let #target = #value;
+                assert_eq!(
+                    targets.len(),
+                    1,
+                    "multiple assignment targets are not supported."
+                );
+                let target = &targets[0];
+                tokens.append_all(quote! {
+                    #target = #value;
                 });
+            }
+            Statement::If { test, body, orelse } => {
+                tokens.append_all(quote! {
+                    if #test {
+                        #(#body);*
+                    }
+                });
+                if let Some(statements) = orelse {
+                    tokens.append_all(quote! {
+                        else {
+                            #(#statements);*
+                        }
+                    });
+                }
+            }
+            Statement::Initialize { variables } => {
+                for v in variables {
+                    let v = format_ident!("{}", v);
+                    tokens.append_all(quote! {
+                        let mut #v = Value::None;
+                    });
+                }
             }
         }
     }
-
-    Ok(TokenStream::from_iter(result.into_iter()))
 }
 
-fn generate_expr(expr: &Expression) -> TokenStream {
-    match expr {
-        Expression::Identifier { name } => {
-            let ident = format_ident!("{}", name);
-            quote! { #ident }
-        }
-        Expression::Call { function, args } => {
-            let function = generate_expr(function);
-            let args = args.iter().map(|a| generate_expr(a)).collect::<Vec<_>>();
-            quote! {
-                #function( #(#args),* )
+impl ToTokens for Expression {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            Expression::Identifier { name } => {
+                let ident = format_ident!("{}", name);
+                tokens.append_all(quote! { #ident });
             }
-        }
-        Expression::Binop { a, b, op } => {
-            let op = TokenStream::from(op);
-            let a = generate_expr(a);
-            let b = generate_expr(b);
-            quote! { #a #op #b }
+            Expression::Call { function, args } => {
+                let args = args.iter().map(|a| a.to_token_stream()).collect::<Vec<_>>();
+                tokens.append_all(quote! {
+                    #function( #(#args),* )
+                });
+            }
+            Expression::Binop { a, b, op } => {
+                tokens.append_all(quote! { #a #op #b });
+            }
+            Expression::Tuple { elements } => {
+                let elements = elements
+                    .iter()
+                    .map(|e| e.to_token_stream())
+                    .collect::<Vec<_>>();
+                tokens.append_all(quote! {
+                    [
+                        #(#elements),*
+                    ]
+                });
+            }
+            Expression::Attribute { value, name } => {
+                let name = format_ident!("{}", name);
+                tokens.append_all(quote! {
+                    #value.#name
+                });
+            }
+            Expression::Compare { values, ops } => {
+                let n = ops.len();
+                assert_eq!(n + 1, values.len());
+
+                let mut compares = Vec::with_capacity(n);
+                for i in 0..n {
+                    let left = &values[i];
+                    let right = &values[i + 1];
+                    let op = ops[i];
+                    compares.push(quote! {
+                        #left
+                        #op
+                        #right
+                    });
+                }
+                tokens.append_all(quote! {
+                    #(#compares)&&*
+                });
+            }
+            Expression::Number { value } => {
+                tokens.append_all(quote! { #value });
+            }
         }
     }
 }
