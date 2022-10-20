@@ -13,7 +13,7 @@ pub fn compile_code(code: &str) -> Result<TokenStream> {
     let mut statements = vec![];
     for statement in ast.statements {
         let statement = Statement::interpret(&statement)?;
-        statements.push(statement);
+        statements.extend(statement);
     }
 
     let mut store = IdentifierStore::new();
@@ -23,21 +23,19 @@ pub fn compile_code(code: &str) -> Result<TokenStream> {
     let code = statements
         .iter()
         .map(|s| s.to_token_stream())
-        .collect::<Vec<_>>();
-    Ok(TokenStream::from_iter(code.into_iter()))
+        .collect::<TokenStream>();
+    Ok(quote! {
+        fn main() {
+            #code
+        }
+    })
 }
 
 impl ToTokens for Statement {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
             Statement::Expression { inner } => tokens.append_all(quote! { #inner; }),
-            Statement::Assign { targets, value } => {
-                assert_eq!(
-                    targets.len(),
-                    1,
-                    "multiple assignment targets are not supported."
-                );
-                let target = &targets[0];
+            Statement::Assign { target, value } => {
                 tokens.append_all(quote! {
                     #target = #value;
                 });
@@ -122,6 +120,11 @@ impl ToTokens for Expression {
             }
             Expression::Number { value } => {
                 tokens.append_all(quote! { #value });
+            }
+            Expression::Subscript { a, b } => {
+                tokens.append_all(quote! {
+                    #a.index(#b)
+                });
             }
         }
     }

@@ -10,3 +10,7 @@ members = ["optpy-compiler", "optpy-std"]
 [dependencies]
 optpy-std = { path = "./optpy-std" }
 optpy-compiler = { path = "./optpy-compiler" }
+syn = { version = "1.0.102", features = ["parsing", "full", "extra-traits"] }
+anyhow = { version = "1.0.65", features = ["backtrace"] }
+proc-macro2 = "1.0.47"
+quote = "1.0.21"

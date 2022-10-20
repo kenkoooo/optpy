@@ -11,10 +11,8 @@ pub(crate) fn collect_declared_variables(
 ) {
     for statement in statements {
         match statement {
-            Statement::Assign { targets, .. } => {
-                for target in targets {
-                    collect_from_tuple(target, ctx, store);
-                }
+            Statement::Assign { target, .. } => {
+                collect_from_tuple(target, ctx, store);
             }
             Statement::If { body, orelse, .. } => {
                 collect_declared_variables(body, ctx, store);
@@ -77,10 +75,10 @@ fn resolve_statement(
             let inner = resolve_expr(inner, ctx, store)?;
             Ok(Statement::Expression { inner })
         }
-        Statement::Assign { targets, value } => {
-            let targets = resolve_expressions(targets, ctx, store)?;
+        Statement::Assign { target, value } => {
+            let target = resolve_expr(target, ctx, store)?;
             let value = resolve_expr(value, ctx, store)?;
-            Ok(Statement::Assign { targets, value })
+            Ok(Statement::Assign { target, value })
         }
         Statement::If { test, body, orelse } => {
             let test = resolve_expr(test, ctx, store)?;
@@ -135,6 +133,11 @@ fn resolve_expr(
         Expression::Number { value } => Ok(Expression::Number {
             value: value.clone(),
         }),
+        Expression::Subscript { a, b } => {
+            let a = Box::new(resolve_expr(a, ctx, store)?);
+            let b = Box::new(resolve_expr(b, ctx, store)?);
+            Ok(Expression::Subscript { a, b })
+        }
     }
 }
 fn resolve_expressions(
