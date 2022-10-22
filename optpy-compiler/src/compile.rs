@@ -72,7 +72,7 @@ impl ToTokens for OptpyStatement {
             OptpyStatement::For { target, iter, body } => {
                 tokens.append_all(quote! {
                     for __for_tmp_v in #iter {
-                        #target = __for_tmp_v;
+                        #target = Value::from(__for_tmp_v);
                         #(#body);*
                     }
                 });

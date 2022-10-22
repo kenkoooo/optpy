@@ -1,4 +1,7 @@
-use std::{ops::Sub, rc::Rc};
+use std::{
+    ops::{Add, Mul, Sub},
+    rc::Rc,
+};
 
 use num_bigint::BigInt;
 
@@ -59,6 +62,13 @@ impl Value {
     }
 }
 
+impl From<usize> for Value {
+    fn from(v: usize) -> Self {
+        let v = BigInt::from(v);
+        Self::Integer { inner: Rc::new(v) }
+    }
+}
+
 impl ToString for Value {
     fn to_string(&self) -> String {
         match self {
@@ -70,6 +80,27 @@ impl ToString for Value {
     }
 }
 
+impl Add for Value {
+    type Output = Value;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Value::String { inner: lhs }, Value::String { inner: rhs }) => {
+                let mut result = lhs.as_ref().clone();
+                result += rhs.as_str();
+                Value::String {
+                    inner: Rc::new(result),
+                }
+            }
+            (Value::Integer { inner: lhs }, Value::Integer { inner: rhs }) => {
+                let x = lhs.as_ref() + rhs.as_ref();
+                Value::Integer { inner: Rc::new(x) }
+            }
+            _ => panic!(),
+        }
+    }
+}
+
 impl Sub for Value {
     type Output = Value;
 
@@ -77,6 +108,22 @@ impl Sub for Value {
         match (self, rhs) {
             (Value::Integer { inner: lhs }, Value::Integer { inner: rhs }) => {
                 let result = lhs.as_ref() - rhs.as_ref();
+                Value::Integer {
+                    inner: Rc::new(result),
+                }
+            }
+            _ => panic!(),
+        }
+    }
+}
+
+impl Mul for Value {
+    type Output = Value;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Value::Integer { inner: lhs }, Value::Integer { inner: rhs }) => {
+                let result = lhs.as_ref() * rhs.as_ref();
                 Value::Integer {
                     inner: Rc::new(result),
                 }

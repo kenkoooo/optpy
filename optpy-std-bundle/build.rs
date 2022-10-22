@@ -79,6 +79,7 @@ fn concat_file(module_map: &HashMap<Vec<String>, String>, path: &[String]) -> Re
 }
 
 fn main() -> Result<()> {
+    println!("cargo:rerun-if-changed=../optpy-std/src");
     let std_module_map = read_src("../optpy-std/src")?;
     let std_modules = concat_modules(&std_module_map)?;
 
