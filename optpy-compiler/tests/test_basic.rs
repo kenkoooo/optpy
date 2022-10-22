@@ -87,7 +87,7 @@ print(ans)
                 __v0 = int(input());
                 __v1 = Value::i64(1i64);
                 for __for_tmp_v in range!(Value::i64(1i64), __v0 + Value::i64(1i64)) {
-                    __v2 = __for_tmp_v;
+                    __v2 = Value::from(__for_tmp_v);
                     __v1 = __v1 * __v2;
                 }
                 print(__v1);
