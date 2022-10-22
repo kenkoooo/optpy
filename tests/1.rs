@@ -32,3 +32,17 @@ print(answer)
 
     Ok(())
 }
+
+#[test]
+fn test_for_loop() -> Result<()> {
+    let python_code = r"
+N = int(input())
+ans = 1
+for i in range(1, N+1):
+    ans *= i
+print(ans)
+";
+    let rust_code = transpile(python_code)?;
+    let output = optpy_test_tools::execute(&rust_code, "10 15 12\n")?;
+    Ok(())
+}

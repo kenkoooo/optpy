@@ -66,23 +66,9 @@ impl Statement {
             }
             StatementType::If { test, body, orelse } => {
                 let test = Expression::interpret(test)?;
-                let body = body
-                    .iter()
-                    .map(|s| Statement::interpret(s))
-                    .collect::<Result<Vec<_>>>()?
-                    .into_iter()
-                    .flatten()
-                    .collect();
+                let body = interpret_statements(body)?;
                 let orelse = match orelse {
-                    Some(orelse) => Some(
-                        orelse
-                            .iter()
-                            .map(|s| Statement::interpret(s))
-                            .collect::<Result<Vec<_>>>()?
-                            .into_iter()
-                            .flatten()
-                            .collect(),
-                    ),
+                    Some(orelse) => Some(interpret_statements(orelse)?),
                     None => None,
                 };
                 Ok(vec![Statement::If { test, body, orelse }])
@@ -90,4 +76,16 @@ impl Statement {
             _ => Err(anyhow!("unimplemented statement: {:?}", statement.node)),
         }
     }
+}
+
+fn interpret_statements(
+    statements: &[rustpython_parser::ast::Statement],
+) -> Result<Vec<Statement>> {
+    Ok(statements
+        .iter()
+        .map(|s| Statement::interpret(s))
+        .collect::<Result<Vec<_>>>()?
+        .into_iter()
+        .flatten()
+        .collect())
 }
