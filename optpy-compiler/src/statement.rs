@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
-use rustpython_parser::ast::{ExpressionType, StatementType};
+use rustpython_parser::ast::StatementType;
 
-use crate::expression::{number::Number, OptpyExpression};
+use crate::expression::OptpyExpression;
 
 #[derive(Debug)]
 pub(crate) enum OptpyStatement {
@@ -37,37 +37,8 @@ impl OptpyStatement {
             StatementType::Assign { targets, value } => {
                 assert_eq!(targets.len(), 1);
                 let value = OptpyExpression::interpret(value)?;
-                match &targets[0].node {
-                    ExpressionType::Tuple { elements } => {
-                        const TMP_VARIABLE_NAME: &str = "__short_live_tmp";
-                        let tmp = OptpyExpression::Identifier {
-                            name: TMP_VARIABLE_NAME.into(),
-                        };
-                        let mut statements = vec![OptpyStatement::Assign {
-                            target: tmp.clone(),
-                            value,
-                        }];
-                        for (i, element) in elements.iter().enumerate() {
-                            statements.push(OptpyStatement::Assign {
-                                target: OptpyExpression::interpret(element)?,
-                                value: OptpyExpression::Subscript {
-                                    a: Box::new(tmp.clone()),
-                                    b: Box::new(OptpyExpression::Number {
-                                        value: Number::Integer {
-                                            value: i.to_string(),
-                                        },
-                                    }),
-                                },
-                            });
-                        }
-
-                        Ok(statements)
-                    }
-                    _ => {
-                        let target = OptpyExpression::interpret(&targets[0])?;
-                        Ok(vec![OptpyStatement::Assign { target, value }])
-                    }
-                }
+                let target = OptpyExpression::interpret(&targets[0])?;
+                Ok(vec![OptpyStatement::Assign { target, value }])
             }
             StatementType::If { test, body, orelse } => {
                 let test = OptpyExpression::interpret(test)?;
@@ -92,9 +63,9 @@ impl OptpyStatement {
                     return Err(anyhow!("for-else is not supported"));
                 }
 
-                let target = OptpyExpression::interpret(target)?;
                 let iter = OptpyExpression::interpret(iter)?;
                 let body = interpret_statements(body)?;
+                let target = OptpyExpression::interpret(target)?;
                 Ok(vec![OptpyStatement::For { target, iter, body }])
             }
             _ => Err(anyhow!("unimplemented statement: {:?}", statement.node)),

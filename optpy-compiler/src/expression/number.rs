@@ -25,7 +25,7 @@ impl ToTokens for Number {
             Number::Integer { value } => {
                 if let Ok(value) = value.parse::<i64>() {
                     tokens.append_all(quote! {
-                        Value::i64(#value)
+                        Value::from(#value)
                     });
                 } else {
                     tokens.append_all(quote! {

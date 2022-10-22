@@ -30,11 +30,6 @@ impl Clone for Value {
 }
 
 impl Value {
-    pub fn i64(v: i64) -> Self {
-        Self::Integer {
-            inner: Rc::new(v.into()),
-        }
-    }
     pub fn split(&self) -> Self {
         match self {
             Self::String { inner } => {
@@ -64,6 +59,12 @@ impl Value {
 
 impl From<usize> for Value {
     fn from(v: usize) -> Self {
+        let v = BigInt::from(v);
+        Self::Integer { inner: Rc::new(v) }
+    }
+}
+impl From<i64> for Value {
+    fn from(v: i64) -> Self {
         let v = BigInt::from(v);
         Self::Integer { inner: Rc::new(v) }
     }

@@ -42,11 +42,23 @@ impl ToTokens for OptpyStatement {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
             OptpyStatement::Expression { inner } => tokens.append_all(quote! { #inner; }),
-            OptpyStatement::Assign { target, value } => {
-                tokens.append_all(quote! {
-                    #target = #value;
-                });
-            }
+            OptpyStatement::Assign { target, value } => match target {
+                OptpyExpression::Tuple { elements } => {
+                    tokens.append_all(quote! {
+                        let __tmp = #value;
+                    });
+                    for (i, element) in elements.iter().enumerate() {
+                        tokens.append_all(quote! {
+                            #element = __tmp.index(Value::from(#i));
+                        });
+                    }
+                }
+                _ => {
+                    tokens.append_all(quote! {
+                        #target = #value;
+                    });
+                }
+            },
             OptpyStatement::If { test, body, orelse } => {
                 tokens.append_all(quote! {
                     if #test {
@@ -70,9 +82,17 @@ impl ToTokens for OptpyStatement {
                 }
             }
             OptpyStatement::For { target, iter, body } => {
+                let tmp = OptpyExpression::Identifier {
+                    name: "__for_tmp_v".to_string(),
+                };
+                let assign = OptpyStatement::Assign {
+                    target: target.clone(),
+                    value: tmp.clone(),
+                };
                 tokens.append_all(quote! {
-                    for __for_tmp_v in #iter {
-                        #target = Value::from(__for_tmp_v);
+                    for #tmp in #iter {
+                        let #tmp = Value::from(#tmp);
+                        #assign
                         #(#body);*
                     }
                 });
@@ -101,17 +121,7 @@ impl ToTokens for OptpyExpression {
             OptpyExpression::Binop { a, b, op } => {
                 tokens.append_all(quote! { #a #op #b });
             }
-            OptpyExpression::Tuple { elements } => {
-                let elements = elements
-                    .iter()
-                    .map(|e| e.to_token_stream())
-                    .collect::<Vec<_>>();
-                tokens.append_all(quote! {
-                    [
-                        #(#elements),*
-                    ]
-                });
-            }
+            OptpyExpression::Tuple { .. } => todo!(),
             OptpyExpression::Attribute { value, name } => {
                 let name = format_ident!("{}", name);
                 tokens.append_all(quote! {
