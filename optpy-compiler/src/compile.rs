@@ -85,11 +85,15 @@ impl ToTokens for OptpyExpression {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
             OptpyExpression::Identifier { name } => {
-                let ident = format_ident!("{}", name);
-                tokens.append_all(quote! { #ident });
+                if let Some(name) = name.strip_suffix('!') {
+                    let name = format_ident!("{}", name);
+                    tokens.append_all(quote! { #name! });
+                } else {
+                    let name = format_ident!("{}", name);
+                    tokens.append_all(quote! { #name });
+                }
             }
             OptpyExpression::Call { function, args } => {
-                let args = args.iter().map(|a| a.to_token_stream()).collect::<Vec<_>>();
                 tokens.append_all(quote! {
                     #function( #(#args),* )
                 });

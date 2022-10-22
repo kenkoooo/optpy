@@ -160,7 +160,13 @@ fn resolve_expressions(
     Ok(expressions)
 }
 
-const BUILTIN_FUNCTIONS: [&str; 4] = ["int", "input", "print", "map"];
+const BUILTIN_FUNCTIONS: [(&str, &str); 5] = [
+    ("int", "int"),
+    ("input", "input"),
+    ("print", "print"),
+    ("map", "map"),
+    ("range", "range!"),
+];
 pub(crate) struct IdentifierStore {
     inner: BTreeMap<Vec<String>, BTreeMap<String, String>>,
     count: usize,
@@ -197,8 +203,9 @@ impl IdentifierStore {
         {
             return Ok(name);
         }
-        if BUILTIN_FUNCTIONS.contains(&name) {
-            return Ok(name.to_string());
+
+        if let Some((_, call)) = BUILTIN_FUNCTIONS.iter().find(|(n, _)| *n == name) {
+            return Ok(call.to_string());
         }
         Err(anyhow!("undeclared variable: ctx={:?} name={}", ctx, name))
     }

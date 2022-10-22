@@ -43,7 +43,7 @@ impl ToTokens for Operator {
         match self {
             Operator::Add => tokens.append_all(quote! { + }),
             Operator::Sub => tokens.append_all(quote! { - }),
-            Operator::Mult => todo!(),
+            Operator::Mult => tokens.append_all(quote! { * }),
             Operator::MatMult => todo!(),
             Operator::Div => todo!(),
             Operator::Mod => todo!(),
