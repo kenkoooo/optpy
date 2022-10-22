@@ -2,37 +2,39 @@ use std::collections::BTreeMap;
 
 use anyhow::{anyhow, Result};
 
-use crate::{expression::Expression, statement::Statement};
+use crate::{expression::OptpyExpression, statement::OptpyStatement};
 
 pub(crate) fn collect_declared_variables(
-    statements: &[Statement],
+    statements: &[OptpyStatement],
     ctx: &mut Vec<String>,
     store: &mut IdentifierStore,
 ) {
     for statement in statements {
         match statement {
-            Statement::Assign { target, .. } => {
+            OptpyStatement::Assign { target, .. } => {
                 collect_from_tuple(target, ctx, store);
             }
-            Statement::If { body, orelse, .. } => {
+            OptpyStatement::If { body, orelse, .. } => {
                 collect_declared_variables(body, ctx, store);
                 if let Some(orelse) = orelse {
                     collect_declared_variables(orelse, ctx, store);
                 }
             }
-            _ => {
-                continue;
+            OptpyStatement::For { target, body, .. } => {
+                collect_from_tuple(target, ctx, store);
+                collect_declared_variables(body, ctx, store);
             }
+            OptpyStatement::Initialize { .. } | OptpyStatement::Expression { .. } => continue,
         }
     }
 }
 
-fn collect_from_tuple(expr: &Expression, ctx: &Vec<String>, store: &mut IdentifierStore) {
+fn collect_from_tuple(expr: &OptpyExpression, ctx: &Vec<String>, store: &mut IdentifierStore) {
     match expr {
-        Expression::Identifier { name } => {
+        OptpyExpression::Identifier { name } => {
             store.declare(ctx, name);
         }
-        Expression::Tuple { elements } => {
+        OptpyExpression::Tuple { elements } => {
             for e in elements {
                 collect_from_tuple(e, ctx, store);
             }
@@ -42,21 +44,21 @@ fn collect_from_tuple(expr: &Expression, ctx: &Vec<String>, store: &mut Identifi
 }
 
 pub(crate) fn resolve_variable_names(
-    statements: &[Statement],
+    statements: &[OptpyStatement],
     ctx: &mut Vec<String>,
     store: &IdentifierStore,
-) -> Result<Vec<Statement>> {
+) -> Result<Vec<OptpyStatement>> {
     let mut statements = resolve_statements(statements, ctx, store)?;
     let mut variables = store.list_declared_variables(ctx);
     variables.sort();
-    statements.insert(0, Statement::Initialize { variables });
+    statements.insert(0, OptpyStatement::Initialize { variables });
     Ok(statements)
 }
 fn resolve_statements(
-    statements: &[Statement],
+    statements: &[OptpyStatement],
     ctx: &mut Vec<String>,
     store: &IdentifierStore,
-) -> Result<Vec<Statement>> {
+) -> Result<Vec<OptpyStatement>> {
     let statements = statements
         .iter()
         .map(|s| resolve_statement(s, ctx, store))
@@ -65,86 +67,92 @@ fn resolve_statements(
 }
 
 fn resolve_statement(
-    statement: &Statement,
+    statement: &OptpyStatement,
     ctx: &mut Vec<String>,
     store: &IdentifierStore,
-) -> Result<Statement> {
+) -> Result<OptpyStatement> {
     match statement {
-        Statement::Initialize { .. } => unreachable!(),
-        Statement::Expression { inner } => {
+        OptpyStatement::Initialize { .. } => unreachable!(),
+        OptpyStatement::Expression { inner } => {
             let inner = resolve_expr(inner, ctx, store)?;
-            Ok(Statement::Expression { inner })
+            Ok(OptpyStatement::Expression { inner })
         }
-        Statement::Assign { target, value } => {
+        OptpyStatement::Assign { target, value } => {
             let target = resolve_expr(target, ctx, store)?;
             let value = resolve_expr(value, ctx, store)?;
-            Ok(Statement::Assign { target, value })
+            Ok(OptpyStatement::Assign { target, value })
         }
-        Statement::If { test, body, orelse } => {
+        OptpyStatement::If { test, body, orelse } => {
             let test = resolve_expr(test, ctx, store)?;
             let body = resolve_statements(body, ctx, store)?;
             let orelse = match orelse {
                 Some(orelse) => Some(resolve_statements(orelse, ctx, store)?),
                 None => None,
             };
-            Ok(Statement::If { test, body, orelse })
+            Ok(OptpyStatement::If { test, body, orelse })
+        }
+        OptpyStatement::For { target, iter, body } => {
+            let target = resolve_expr(target, ctx, store)?;
+            let iter = resolve_expr(iter, ctx, store)?;
+            let body = resolve_statements(body, ctx, store)?;
+            Ok(OptpyStatement::For { target, iter, body })
         }
     }
 }
 
 fn resolve_expr(
-    expr: &Expression,
+    expr: &OptpyExpression,
     ctx: &Vec<String>,
     store: &IdentifierStore,
-) -> Result<Expression> {
+) -> Result<OptpyExpression> {
     match expr {
-        Expression::Identifier { name } => {
+        OptpyExpression::Identifier { name } => {
             let name = store.fetch(ctx, name)?;
-            Ok(Expression::Identifier { name })
+            Ok(OptpyExpression::Identifier { name })
         }
-        Expression::Call { function, args } => {
+        OptpyExpression::Call { function, args } => {
             let function = Box::new(resolve_expr(function, ctx, store)?);
             let args = resolve_expressions(args, ctx, store)?;
-            Ok(Expression::Call { function, args })
+            Ok(OptpyExpression::Call { function, args })
         }
-        Expression::Binop { a, b, op } => {
+        OptpyExpression::Binop { a, b, op } => {
             let a = Box::new(resolve_expr(a, ctx, store)?);
             let b = Box::new(resolve_expr(b, ctx, store)?);
-            Ok(Expression::Binop { a, b, op: *op })
+            Ok(OptpyExpression::Binop { a, b, op: *op })
         }
-        Expression::Tuple { elements } => {
+        OptpyExpression::Tuple { elements } => {
             let elements = resolve_expressions(elements, ctx, store)?;
-            Ok(Expression::Tuple { elements })
+            Ok(OptpyExpression::Tuple { elements })
         }
-        Expression::Attribute { value, name } => {
+        OptpyExpression::Attribute { value, name } => {
             let value = Box::new(resolve_expr(value, ctx, store)?);
-            Ok(Expression::Attribute {
+            Ok(OptpyExpression::Attribute {
                 value,
                 name: name.clone(),
             })
         }
-        Expression::Compare { values, ops } => {
+        OptpyExpression::Compare { values, ops } => {
             let values = resolve_expressions(values, ctx, store)?;
-            Ok(Expression::Compare {
+            Ok(OptpyExpression::Compare {
                 values,
                 ops: ops.clone(),
             })
         }
-        Expression::Number { value } => Ok(Expression::Number {
+        OptpyExpression::Number { value } => Ok(OptpyExpression::Number {
             value: value.clone(),
         }),
-        Expression::Subscript { a, b } => {
+        OptpyExpression::Subscript { a, b } => {
             let a = Box::new(resolve_expr(a, ctx, store)?);
             let b = Box::new(resolve_expr(b, ctx, store)?);
-            Ok(Expression::Subscript { a, b })
+            Ok(OptpyExpression::Subscript { a, b })
         }
     }
 }
 fn resolve_expressions(
-    expressions: &[Expression],
+    expressions: &[OptpyExpression],
     ctx: &Vec<String>,
     store: &IdentifierStore,
-) -> Result<Vec<Expression>> {
+) -> Result<Vec<OptpyExpression>> {
     let expressions = expressions
         .iter()
         .map(|e| resolve_expr(e, ctx, store))

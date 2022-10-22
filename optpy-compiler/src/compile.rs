@@ -4,43 +4,50 @@ use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 
 use crate::{
     context::{collect_declared_variables, resolve_variable_names, IdentifierStore},
-    expression::Expression,
-    statement::Statement,
+    expression::OptpyExpression,
+    statement::OptpyStatement,
 };
 
 pub fn compile_code(code: &str) -> Result<TokenStream> {
     let ast = rustpython_parser::parser::parse_program(code)?;
-    let mut statements = vec![];
-    for statement in ast.statements {
-        let statement = Statement::interpret(&statement)?;
-        statements.extend(statement);
-    }
-
-    let mut store = IdentifierStore::new();
-    let mut ctx = vec![];
-    collect_declared_variables(&statements, &mut ctx, &mut store);
-    let statements = resolve_variable_names(&statements, &mut ctx, &store)?;
-    let code = statements
-        .iter()
-        .map(|s| s.to_token_stream())
-        .collect::<TokenStream>();
+    let statements = interpret_statements(&ast)?;
+    let statements = resolve_variables(&statements)?;
     Ok(quote! {
         fn main() {
-            #code
+            #(#statements)*
         }
     })
 }
 
-impl ToTokens for Statement {
+fn interpret_statements(ast: &rustpython_parser::ast::Program) -> Result<Vec<OptpyStatement>> {
+    Ok(ast
+        .statements
+        .iter()
+        .map(|s| OptpyStatement::interpret(s))
+        .collect::<Result<Vec<_>>>()?
+        .into_iter()
+        .flatten()
+        .collect())
+}
+
+fn resolve_variables(statements: &[OptpyStatement]) -> Result<Vec<OptpyStatement>> {
+    let mut store = IdentifierStore::new();
+    let mut ctx = vec![];
+    collect_declared_variables(&statements, &mut ctx, &mut store);
+    let statements = resolve_variable_names(&statements, &mut ctx, &store)?;
+    Ok(statements)
+}
+
+impl ToTokens for OptpyStatement {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
-            Statement::Expression { inner } => tokens.append_all(quote! { #inner; }),
-            Statement::Assign { target, value } => {
+            OptpyStatement::Expression { inner } => tokens.append_all(quote! { #inner; }),
+            OptpyStatement::Assign { target, value } => {
                 tokens.append_all(quote! {
                     #target = #value;
                 });
             }
-            Statement::If { test, body, orelse } => {
+            OptpyStatement::If { test, body, orelse } => {
                 tokens.append_all(quote! {
                     if #test {
                         #(#body);*
@@ -54,7 +61,7 @@ impl ToTokens for Statement {
                     });
                 }
             }
-            Statement::Initialize { variables } => {
+            OptpyStatement::Initialize { variables } => {
                 for v in variables {
                     let v = format_ident!("{}", v);
                     tokens.append_all(quote! {
@@ -62,27 +69,35 @@ impl ToTokens for Statement {
                     });
                 }
             }
+            OptpyStatement::For { target, iter, body } => {
+                tokens.append_all(quote! {
+                    for __for_tmp_v in #iter {
+                        #target = __for_tmp_v;
+                        #(#body);*
+                    }
+                });
+            }
         }
     }
 }
 
-impl ToTokens for Expression {
+impl ToTokens for OptpyExpression {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
-            Expression::Identifier { name } => {
+            OptpyExpression::Identifier { name } => {
                 let ident = format_ident!("{}", name);
                 tokens.append_all(quote! { #ident });
             }
-            Expression::Call { function, args } => {
+            OptpyExpression::Call { function, args } => {
                 let args = args.iter().map(|a| a.to_token_stream()).collect::<Vec<_>>();
                 tokens.append_all(quote! {
                     #function( #(#args),* )
                 });
             }
-            Expression::Binop { a, b, op } => {
+            OptpyExpression::Binop { a, b, op } => {
                 tokens.append_all(quote! { #a #op #b });
             }
-            Expression::Tuple { elements } => {
+            OptpyExpression::Tuple { elements } => {
                 let elements = elements
                     .iter()
                     .map(|e| e.to_token_stream())
@@ -93,13 +108,13 @@ impl ToTokens for Expression {
                     ]
                 });
             }
-            Expression::Attribute { value, name } => {
+            OptpyExpression::Attribute { value, name } => {
                 let name = format_ident!("{}", name);
                 tokens.append_all(quote! {
                     #value.#name
                 });
             }
-            Expression::Compare { values, ops } => {
+            OptpyExpression::Compare { values, ops } => {
                 let n = ops.len();
                 assert_eq!(n + 1, values.len());
 
@@ -118,10 +133,10 @@ impl ToTokens for Expression {
                     #(#compares)&&*
                 });
             }
-            Expression::Number { value } => {
+            OptpyExpression::Number { value } => {
                 tokens.append_all(quote! { #value });
             }
-            Expression::Subscript { a, b } => {
+            OptpyExpression::Subscript { a, b } => {
                 tokens.append_all(quote! {
                     #a.index(#b)
                 });
