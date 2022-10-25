@@ -74,12 +74,18 @@ impl ToTokens for OptpyStatement {
                 }
             }
             OptpyStatement::Initialize { variables } => {
-                for v in variables {
-                    let v = format_ident!("{}", v);
-                    tokens.append_all(quote! {
-                        let mut #v = Value::None;
-                    });
-                }
+                let v = variables
+                    .iter()
+                    .map(|v| format_ident!("{}", v))
+                    .collect::<Vec<_>>();
+                tokens.append_all(quote! {
+                    struct Context {
+                        #(#v:Value,)*
+                    }
+                    let mut ctx = Context {
+                        #(#v: Value::None,)*
+                    };
+                });
             }
             OptpyStatement::For { target, iter, body } => {
                 let tmp = OptpyExpression::Identifier {

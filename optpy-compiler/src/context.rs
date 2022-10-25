@@ -107,8 +107,15 @@ fn resolve_expr(
 ) -> Result<OptpyExpression> {
     match expr {
         OptpyExpression::Identifier { name } => {
-            let name = store.fetch(ctx, name)?;
-            Ok(OptpyExpression::Identifier { name })
+            let (name, user_defined) = store.fetch(ctx, name)?;
+            if user_defined {
+                Ok(OptpyExpression::Attribute {
+                    value: Box::new(OptpyExpression::Identifier { name: "ctx".into() }),
+                    name,
+                })
+            } else {
+                Ok(OptpyExpression::Identifier { name })
+            }
         }
         OptpyExpression::Call { function, args } => {
             let function = Box::new(resolve_expr(function, ctx, store)?);
@@ -194,18 +201,18 @@ impl IdentifierStore {
         }
     }
 
-    fn fetch(&self, ctx: &[String], name: &str) -> Result<String> {
+    fn fetch(&self, ctx: &[String], name: &str) -> Result<(String, bool)> {
         if let Some(name) = self
             .inner
             .get(ctx)
             .and_then(|m| m.get(name))
             .map(|name| name.clone())
         {
-            return Ok(name);
+            return Ok((name, true));
         }
 
         if let Some((_, call)) = BUILTIN_FUNCTIONS.iter().find(|(n, _)| *n == name) {
-            return Ok(call.to_string());
+            return Ok((call.to_string(), false));
         }
         Err(anyhow!("undeclared variable: ctx={:?} name={}", ctx, name))
     }
