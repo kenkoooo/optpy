@@ -10,7 +10,7 @@ use crate::{
 
 pub fn compile_code(code: &str) -> Result<TokenStream> {
     let ast = rustpython_parser::parser::parse_program(code)?;
-    let statements = interpret_statements(&ast)?;
+    let statements = load_statements(&ast)?;
     let statements = resolve_variables(&statements)?;
     Ok(quote! {
         fn main() {
@@ -19,11 +19,11 @@ pub fn compile_code(code: &str) -> Result<TokenStream> {
     })
 }
 
-fn interpret_statements(ast: &rustpython_parser::ast::Program) -> Result<Vec<OptpyStatement>> {
+fn load_statements(ast: &rustpython_parser::ast::Program) -> Result<Vec<OptpyStatement>> {
     Ok(ast
         .statements
         .iter()
-        .map(|s| OptpyStatement::interpret(s))
+        .map(|s| OptpyStatement::load(s))
         .collect::<Result<Vec<_>>>()?
         .into_iter()
         .flatten()
@@ -103,6 +103,38 @@ impl ToTokens for OptpyStatement {
                     }
                 });
             }
+            OptpyStatement::FunctionDef { name, body, args } => {
+                let args = args
+                    .iter()
+                    .map(|arg| format_ident!("{}", arg))
+                    .collect::<Vec<_>>();
+                let name = format_ident!("{}", name);
+                tokens.append_all(quote! {
+                    fn #name(
+                        #(#args: Value,)*
+                    ) -> Value {
+                        struct Context {
+                            #(#args: Value,)*
+                        }
+                        let mut ctx = Context {
+                            #(#args),*
+                        };
+                        #(#body);*
+                    }
+                });
+            }
+            OptpyStatement::Return { value } => match value {
+                Some(value) => {
+                    tokens.append_all(quote! {
+                        return #value;
+                    });
+                }
+                None => {
+                    tokens.append_all(quote! {
+                        return Value::None;
+                    });
+                }
+            },
         }
     }
 }

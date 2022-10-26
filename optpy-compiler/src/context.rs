@@ -24,7 +24,18 @@ pub(crate) fn collect_declared_variables(
                 collect_from_tuple(target, ctx, store);
                 collect_declared_variables(body, ctx, store);
             }
-            OptpyStatement::Initialize { .. } | OptpyStatement::Expression { .. } => continue,
+            OptpyStatement::FunctionDef { name, body, args } => {
+                let name = store.declare(ctx, name);
+                ctx.push(name.to_string());
+                for arg in args {
+                    store.declare(ctx, arg);
+                }
+                collect_declared_variables(body, ctx, store);
+                assert_eq!(ctx.pop(), Some(name.to_string()));
+            }
+            OptpyStatement::Return { .. }
+            | OptpyStatement::Initialize { .. }
+            | OptpyStatement::Expression { .. } => continue,
         }
     }
 }
@@ -96,6 +107,31 @@ fn resolve_statement(
             let iter = resolve_expr(iter, ctx, store)?;
             let body = resolve_statements(body, ctx, store)?;
             Ok(OptpyStatement::For { target, iter, body })
+        }
+        OptpyStatement::FunctionDef { name, body, args } => {
+            let (name, user_defined) = store.fetch(ctx, name)?;
+            assert!(user_defined);
+            ctx.push(name.clone());
+            let args = args
+                .iter()
+                .map(|arg| store.fetch(ctx, arg))
+                .collect::<Result<Vec<_>>>()?
+                .into_iter()
+                .map(|(name, user_defined)| {
+                    assert!(user_defined);
+                    name
+                })
+                .collect::<Vec<_>>();
+            let body = resolve_statements(body, ctx, store)?;
+            assert_eq!(ctx.pop(), Some(name.clone()));
+            Ok(OptpyStatement::FunctionDef { name, body, args })
+        }
+        OptpyStatement::Return { value } => {
+            let value = match value {
+                Some(e) => Some(resolve_expr(e, ctx, store)?),
+                None => None,
+            };
+            Ok(OptpyStatement::Return { value })
         }
     }
 }

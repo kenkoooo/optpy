@@ -42,7 +42,7 @@ pub(crate) enum OptpyExpression {
 }
 
 impl OptpyExpression {
-    pub(crate) fn interpret(expression: &rustpython_parser::ast::Expression) -> Result<Self> {
+    pub(crate) fn load(expression: &rustpython_parser::ast::Expression) -> Result<Self> {
         match &expression.node {
             ExpressionType::Identifier { name } => {
                 Ok(OptpyExpression::Identifier { name: name.into() })
@@ -55,28 +55,28 @@ impl OptpyExpression {
                 if !keywords.is_empty() {
                     return Err(anyhow!("unimplemented keywords: {:?}", keywords));
                 }
-                let function = Box::new(OptpyExpression::interpret(function)?);
+                let function = Box::new(OptpyExpression::load(function)?);
                 let args = args
                     .iter()
-                    .map(|e| OptpyExpression::interpret(e))
+                    .map(|e| OptpyExpression::load(e))
                     .collect::<Result<Vec<_>>>()?;
                 Ok(OptpyExpression::Call { function, args })
             }
             ExpressionType::Binop { a, op, b } => {
-                let a = Box::new(OptpyExpression::interpret(a)?);
-                let b = Box::new(OptpyExpression::interpret(b)?);
+                let a = Box::new(OptpyExpression::load(a)?);
+                let b = Box::new(OptpyExpression::load(b)?);
                 let op = Operator::from(op);
                 Ok(OptpyExpression::Binop { a, b, op })
             }
             ExpressionType::Tuple { elements } => {
                 let elements = elements
                     .iter()
-                    .map(|e| OptpyExpression::interpret(e))
+                    .map(|e| OptpyExpression::load(e))
                     .collect::<Result<Vec<_>>>()?;
                 Ok(OptpyExpression::Tuple { elements })
             }
             ExpressionType::Attribute { value, name } => {
-                let value = Box::new(OptpyExpression::interpret(value)?);
+                let value = Box::new(OptpyExpression::load(value)?);
                 Ok(OptpyExpression::Attribute {
                     value,
                     name: name.into(),
@@ -85,7 +85,7 @@ impl OptpyExpression {
             ExpressionType::Compare { vals, ops } => {
                 let values = vals
                     .iter()
-                    .map(|e| OptpyExpression::interpret(e))
+                    .map(|e| OptpyExpression::load(e))
                     .collect::<Result<Vec<_>>>()?;
                 let ops = ops.iter().map(|c| Comparison::from(c)).collect::<Vec<_>>();
                 Ok(OptpyExpression::Compare { values, ops })
@@ -94,8 +94,8 @@ impl OptpyExpression {
                 value: Number::from(value),
             }),
             ExpressionType::Subscript { a, b } => {
-                let a = Box::new(OptpyExpression::interpret(a)?);
-                let b = Box::new(OptpyExpression::interpret(b)?);
+                let a = Box::new(OptpyExpression::load(a)?);
+                let b = Box::new(OptpyExpression::load(b)?);
                 Ok(OptpyExpression::Subscript { a, b })
             }
             _ => Err(anyhow!("unimplemented expression: {:?}", expression.node)),
