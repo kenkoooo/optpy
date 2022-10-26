@@ -4,7 +4,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use tempfile::{tempdir, TempDir};
 
 fn create_tmp_cargo_workspace(main: &str) -> Result<TempDir> {
@@ -20,6 +20,10 @@ fn create_tmp_cargo_workspace(main: &str) -> Result<TempDir> {
 
 pub fn execute(main: &str, input: &str) -> Result<String> {
     let cargo = create_tmp_cargo_workspace(main)?;
+    let fmt = Command::new("cargo").arg("fmt").status()?;
+    if !fmt.success() {
+        return Err(anyhow!("failed to format the code"));
+    }
 
     let mut child = Command::new("cargo")
         .arg("run")
