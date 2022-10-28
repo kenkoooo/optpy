@@ -4,18 +4,7 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
-[workspace]
-members = [
-    "optpy-compiler",
-    "optpy-std",
-    "optpy-std-bundle",
-    "optpy-test-tools",
-]
-
 [dependencies]
-optpy-std-bundle = { path = "./optpy-std-bundle" }
-optpy-compiler = { path = "./optpy-compiler" }
-anyhow = { version = "1.0.66", features = ["backtrace"] }
 
-[dev-dependencies]
-optpy-test-tools = { path = "./optpy-test-tools" }
+[workspace]
+members = ["optpy-parser"]

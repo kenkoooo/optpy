@@ -1,9 +1,9 @@
 [package]
-name = "optpy-test-tools"
+name = "optpy-parser"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [dependencies]
 anyhow = { version = "1.0.66", features = ["backtrace"] }
-tempfile = "3.3.0"
+rustpython-parser = "0.1.2"
