@@ -54,4 +54,67 @@ print(a)
         );
         Ok(())
     }
+
+    #[test]
+    fn test_if_statement() -> Result<()> {
+        let code = r"
+a, b, c = input().split()
+if a <= c < b:
+    result = 1
+else:
+    result = 2
+print(result)
+";
+        let statements = parse(code)?;
+        assert_eq!(
+            statements,
+            [
+                OptpyStatement::Assign {
+                    target: OptpyExpression::Tuple(vec![
+                        OptpyExpression::Ident("a".into()),
+                        OptpyExpression::Ident("b".into()),
+                        OptpyExpression::Ident("c".into())
+                    ]),
+                    value: OptpyExpression::CallMethod {
+                        value: Box::new(OptpyExpression::CallFunction {
+                            name: "input".into(),
+                            args: vec![]
+                        }),
+                        name: "split".into(),
+                        args: vec![]
+                    }
+                },
+                OptpyStatement::If {
+                    test: OptpyExpression::BoolOperation {
+                        op: expression::BoolOperator::And,
+                        conditions: vec![
+                            OptpyExpression::Compare {
+                                left: Box::new(OptpyExpression::Ident("a".into())),
+                                right: Box::new(OptpyExpression::Ident("c".into())),
+                                op: expression::CompareOperator::LessOrEqual
+                            },
+                            OptpyExpression::Compare {
+                                left: Box::new(OptpyExpression::Ident("c".into())),
+                                right: Box::new(OptpyExpression::Ident("b".into())),
+                                op: expression::CompareOperator::Less
+                            }
+                        ]
+                    },
+                    body: vec![OptpyStatement::Assign {
+                        target: OptpyExpression::Ident("result".into()),
+                        value: OptpyExpression::Number(expression::Number::Int("1".into()))
+                    }],
+                    orelse: vec![OptpyStatement::Assign {
+                        target: OptpyExpression::Ident("result".into()),
+                        value: OptpyExpression::Number(expression::Number::Int("2".into()))
+                    }]
+                },
+                OptpyStatement::Expression(OptpyExpression::CallFunction {
+                    name: "print".into(),
+                    args: vec![OptpyExpression::Ident("result".into())]
+                }),
+            ]
+        );
+        Ok(())
+    }
 }

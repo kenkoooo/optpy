@@ -9,6 +9,11 @@ pub enum OptpyStatement {
         value: OptpyExpression,
     },
     Expression(OptpyExpression),
+    If {
+        test: OptpyExpression,
+        body: Vec<OptpyStatement>,
+        orelse: Vec<OptpyStatement>,
+    },
 }
 
 impl OptpyStatement {
@@ -23,7 +28,23 @@ impl OptpyStatement {
             StatementType::Expression { expression } => {
                 Self::Expression(OptpyExpression::parse(&expression.node))
             }
+            StatementType::If { test, body, orelse } => {
+                let test = OptpyExpression::parse(&test.node);
+                let body = parse_statements(body);
+                let orelse = orelse
+                    .as_ref()
+                    .map(|s| parse_statements(s))
+                    .unwrap_or_default();
+                Self::If { test, body, orelse }
+            }
             statement => todo!("{:?}", statement),
         }
     }
+}
+
+fn parse_statements(statements: &[rustpython_parser::ast::Statement]) -> Vec<OptpyStatement> {
+    statements
+        .iter()
+        .map(|s| OptpyStatement::parse(&s.node))
+        .collect()
 }
