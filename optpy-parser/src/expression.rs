@@ -1,38 +1,43 @@
 use rustpython_parser::ast::ExpressionType;
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum OptpyExpression {
+pub enum Expr {
     CallFunction {
         name: String,
-        args: Vec<OptpyExpression>,
+        args: Vec<Expr>,
     },
     CallMethod {
-        value: Box<OptpyExpression>,
+        value: Box<Expr>,
         name: String,
-        args: Vec<OptpyExpression>,
+        args: Vec<Expr>,
     },
-    Tuple(Vec<OptpyExpression>),
+    Tuple(Vec<Expr>),
     Ident(String),
     BoolOperation {
         op: BoolOperator,
-        conditions: Vec<OptpyExpression>,
+        conditions: Vec<Expr>,
     },
     Compare {
-        left: Box<OptpyExpression>,
-        right: Box<OptpyExpression>,
+        left: Box<Expr>,
+        right: Box<Expr>,
         op: CompareOperator,
+    },
+    BinaryOperation {
+        left: Box<Expr>,
+        right: Box<Expr>,
+        op: BinaryOperator,
     },
     Number(Number),
 }
 
-impl OptpyExpression {
+impl Expr {
     pub fn parse(expr: &ExpressionType) -> Self {
         match expr {
             ExpressionType::Tuple { elements } => {
                 let elements = parse_expressions(elements);
-                OptpyExpression::Tuple(elements)
+                Expr::Tuple(elements)
             }
-            ExpressionType::Identifier { name } => OptpyExpression::Ident(name.into()),
+            ExpressionType::Identifier { name } => Expr::Ident(name.into()),
             ExpressionType::Call {
                 function,
                 args,
@@ -42,14 +47,14 @@ impl OptpyExpression {
                 let args = parse_expressions(args);
                 match &function.node {
                     ExpressionType::Attribute { value, name } => {
-                        let value = OptpyExpression::parse(&value.node);
-                        OptpyExpression::CallMethod {
+                        let value = Expr::parse(&value.node);
+                        Expr::CallMethod {
                             value: Box::new(value),
                             name: name.into(),
                             args,
                         }
                     }
-                    ExpressionType::Identifier { name } => OptpyExpression::CallFunction {
+                    ExpressionType::Identifier { name } => Expr::CallFunction {
                         name: name.into(),
                         args,
                     },
@@ -59,44 +64,50 @@ impl OptpyExpression {
             ExpressionType::BoolOp { op, values } => {
                 let conditions = parse_expressions(values);
                 let op = BoolOperator::parse(op);
-                OptpyExpression::BoolOperation { op, conditions }
+                Expr::BoolOperation { op, conditions }
             }
             ExpressionType::Compare { vals, ops } => {
                 let mut conditions = vec![];
                 assert_eq!(vals.len(), ops.len() + 1);
                 for (i, op) in ops.iter().enumerate() {
-                    let left = OptpyExpression::parse(&vals[i].node);
-                    let right = OptpyExpression::parse(&vals[i + 1].node);
-                    conditions.push(OptpyExpression::Compare {
+                    let left = Expr::parse(&vals[i].node);
+                    let right = Expr::parse(&vals[i + 1].node);
+                    conditions.push(Expr::Compare {
                         left: Box::new(left),
                         right: Box::new(right),
                         op: CompareOperator::parse(op),
                     })
                 }
-                OptpyExpression::BoolOperation {
+                Expr::BoolOperation {
                     op: BoolOperator::And,
                     conditions,
                 }
             }
             ExpressionType::Number { value } => match value {
                 rustpython_parser::ast::Number::Integer { value } => {
-                    OptpyExpression::Number(Number::Int(value.to_string()))
+                    Expr::Number(Number::Int(value.to_string()))
                 }
                 rustpython_parser::ast::Number::Float { value } => {
-                    OptpyExpression::Number(Number::Float(value.to_string()))
+                    Expr::Number(Number::Float(value.to_string()))
                 }
                 value => todo!("{:?}", value),
             },
+            ExpressionType::Binop { a, op, b } => {
+                let left = Expr::parse(&a.node);
+                let right = Expr::parse(&b.node);
+                Self::BinaryOperation {
+                    left: Box::new(left),
+                    right: Box::new(right),
+                    op: BinaryOperator::parse(op),
+                }
+            }
             expr => todo!("unsupported expression: {:?}", expr),
         }
     }
 }
 
-fn parse_expressions(expressions: &[rustpython_parser::ast::Expression]) -> Vec<OptpyExpression> {
-    expressions
-        .iter()
-        .map(|e| OptpyExpression::parse(&e.node))
-        .collect()
+fn parse_expressions(expressions: &[rustpython_parser::ast::Expression]) -> Vec<Expr> {
+    expressions.iter().map(|e| Expr::parse(&e.node)).collect()
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -133,4 +144,18 @@ impl CompareOperator {
 pub enum Number {
     Int(String),
     Float(String),
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum BinaryOperator {
+    Add,
+}
+
+impl BinaryOperator {
+    pub fn parse(op: &rustpython_parser::ast::Operator) -> Self {
+        match op {
+            rustpython_parser::ast::Operator::Add => Self::Add,
+            op => todo!("{:?}", op),
+        }
+    }
 }

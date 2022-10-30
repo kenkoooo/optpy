@@ -1,5 +1,5 @@
 mod expression;
-pub use expression::OptpyExpression;
+pub use expression::Expr;
 
 mod statement;
 pub use statement::OptpyStatement;
@@ -19,6 +19,8 @@ pub fn parse(code: &str) -> Result<Vec<OptpyStatement>> {
 #[cfg(test)]
 mod tests {
 
+    use crate::expression::BinaryOperator;
+
     use super::*;
 
     #[test]
@@ -32,13 +34,13 @@ print(a)
             statements,
             [
                 OptpyStatement::Assign {
-                    target: OptpyExpression::Tuple(vec![
-                        OptpyExpression::Ident("a".into()),
-                        OptpyExpression::Ident("b".into()),
-                        OptpyExpression::Ident("c".into())
+                    target: Expr::Tuple(vec![
+                        Expr::Ident("a".into()),
+                        Expr::Ident("b".into()),
+                        Expr::Ident("c".into())
                     ]),
-                    value: OptpyExpression::CallMethod {
-                        value: Box::new(OptpyExpression::CallFunction {
+                    value: Expr::CallMethod {
+                        value: Box::new(Expr::CallFunction {
                             name: "input".into(),
                             args: vec![]
                         }),
@@ -46,9 +48,9 @@ print(a)
                         args: vec![]
                     }
                 },
-                OptpyStatement::Expression(OptpyExpression::CallFunction {
+                OptpyStatement::Expression(Expr::CallFunction {
                     name: "print".into(),
-                    args: vec![OptpyExpression::Ident("a".into())]
+                    args: vec![Expr::Ident("a".into())]
                 })
             ]
         );
@@ -70,13 +72,13 @@ print(result)
             statements,
             [
                 OptpyStatement::Assign {
-                    target: OptpyExpression::Tuple(vec![
-                        OptpyExpression::Ident("a".into()),
-                        OptpyExpression::Ident("b".into()),
-                        OptpyExpression::Ident("c".into())
+                    target: Expr::Tuple(vec![
+                        Expr::Ident("a".into()),
+                        Expr::Ident("b".into()),
+                        Expr::Ident("c".into())
                     ]),
-                    value: OptpyExpression::CallMethod {
-                        value: Box::new(OptpyExpression::CallFunction {
+                    value: Expr::CallMethod {
+                        value: Box::new(Expr::CallFunction {
                             name: "input".into(),
                             args: vec![]
                         }),
@@ -85,34 +87,87 @@ print(result)
                     }
                 },
                 OptpyStatement::If {
-                    test: OptpyExpression::BoolOperation {
+                    test: Expr::BoolOperation {
                         op: expression::BoolOperator::And,
                         conditions: vec![
-                            OptpyExpression::Compare {
-                                left: Box::new(OptpyExpression::Ident("a".into())),
-                                right: Box::new(OptpyExpression::Ident("c".into())),
+                            Expr::Compare {
+                                left: Box::new(Expr::Ident("a".into())),
+                                right: Box::new(Expr::Ident("c".into())),
                                 op: expression::CompareOperator::LessOrEqual
                             },
-                            OptpyExpression::Compare {
-                                left: Box::new(OptpyExpression::Ident("c".into())),
-                                right: Box::new(OptpyExpression::Ident("b".into())),
+                            Expr::Compare {
+                                left: Box::new(Expr::Ident("c".into())),
+                                right: Box::new(Expr::Ident("b".into())),
                                 op: expression::CompareOperator::Less
                             }
                         ]
                     },
                     body: vec![OptpyStatement::Assign {
-                        target: OptpyExpression::Ident("result".into()),
-                        value: OptpyExpression::Number(expression::Number::Int("1".into()))
+                        target: Expr::Ident("result".into()),
+                        value: Expr::Number(expression::Number::Int("1".into()))
                     }],
                     orelse: vec![OptpyStatement::Assign {
-                        target: OptpyExpression::Ident("result".into()),
-                        value: OptpyExpression::Number(expression::Number::Int("2".into()))
+                        target: Expr::Ident("result".into()),
+                        value: Expr::Number(expression::Number::Int("2".into()))
                     }]
                 },
-                OptpyStatement::Expression(OptpyExpression::CallFunction {
+                OptpyStatement::Expression(Expr::CallFunction {
                     name: "print".into(),
-                    args: vec![OptpyExpression::Ident("result".into())]
+                    args: vec![Expr::Ident("result".into())]
                 }),
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_function() -> Result<()> {
+        let code = r"
+a, b, c = input().split()
+def f(d):
+    return a + d
+e = f(b)
+print(e)
+";
+        let statements = parse(code)?;
+        assert_eq!(
+            statements,
+            [
+                OptpyStatement::Assign {
+                    target: Expr::Tuple(vec![
+                        Expr::Ident("a".into()),
+                        Expr::Ident("b".into()),
+                        Expr::Ident("c".into())
+                    ]),
+                    value: Expr::CallMethod {
+                        value: Box::new(Expr::CallFunction {
+                            name: "input".into(),
+                            args: vec![]
+                        }),
+                        name: "split".into(),
+                        args: vec![]
+                    }
+                },
+                OptpyStatement::Func {
+                    name: "f".into(),
+                    args: vec!["d".into()],
+                    body: vec![OptpyStatement::Return(Some(Expr::BinaryOperation {
+                        left: Box::new(Expr::Ident("a".into())),
+                        right: Box::new(Expr::Ident("d".into())),
+                        op: BinaryOperator::Add
+                    }))]
+                },
+                OptpyStatement::Assign {
+                    target: Expr::Ident("e".into()),
+                    value: Expr::CallFunction {
+                        name: "f".into(),
+                        args: vec![Expr::Ident("b".into())]
+                    }
+                },
+                OptpyStatement::Expression(Expr::CallFunction {
+                    name: "print".into(),
+                    args: vec![Expr::Ident("e".into())]
+                })
             ]
         );
         Ok(())
