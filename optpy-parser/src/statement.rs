@@ -3,7 +3,7 @@ use rustpython_parser::ast::StatementType;
 use crate::expression::Expr;
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum OptpyStatement {
+pub enum Statement {
     Assign {
         target: Expr,
         value: Expr,
@@ -11,18 +11,18 @@ pub enum OptpyStatement {
     Expression(Expr),
     If {
         test: Expr,
-        body: Vec<OptpyStatement>,
-        orelse: Vec<OptpyStatement>,
+        body: Vec<Statement>,
+        orelse: Vec<Statement>,
     },
     Func {
         name: String,
         args: Vec<String>,
-        body: Vec<OptpyStatement>,
+        body: Vec<Statement>,
     },
     Return(Option<Expr>),
 }
 
-impl OptpyStatement {
+impl Statement {
     pub fn parse(statement: &StatementType) -> Self {
         match statement {
             StatementType::Assign { targets, value } => {
@@ -65,9 +65,9 @@ impl OptpyStatement {
     }
 }
 
-fn parse_statements(statements: &[rustpython_parser::ast::Statement]) -> Vec<OptpyStatement> {
+fn parse_statements(statements: &[rustpython_parser::ast::Statement]) -> Vec<Statement> {
     statements
         .iter()
-        .map(|s| OptpyStatement::parse(&s.node))
+        .map(|s| Statement::parse(&s.node))
         .collect()
 }

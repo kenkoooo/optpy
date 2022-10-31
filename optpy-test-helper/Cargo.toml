@@ -1,8 +1,8 @@
 [package]
-name = "optpy-parser"
+name = "optpy-test-helper"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [dependencies]
-rustpython-parser = "0.1.2"
+optpy-parser = { path = "../optpy-parser" }

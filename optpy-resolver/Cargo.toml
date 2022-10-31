@@ -1,0 +1,12 @@
+[package]
+name = "optpy-resolver"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+optpy-parser = { path = "../optpy-parser" }
+thiserror = "1.0.37"
+
+[dev-dependencies]
+optpy-test-helper = { path = "../optpy-test-helper" }
