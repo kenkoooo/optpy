@@ -1,3 +1,6 @@
+mod string;
+pub use string::StripMargin;
+
 use optpy_parser::{BinaryOperator, Expr, Statement};
 
 pub fn assign(target: Expr, value: Expr) -> Statement {

@@ -5,8 +5,8 @@ mod statement;
 use rustpython_parser::error::ParseError;
 pub use statement::Statement;
 
-pub fn parse(code: &str) -> Result<Vec<Statement>, ParseError> {
-    let ast = rustpython_parser::parser::parse_program(code)?;
+pub fn parse<S: AsRef<str>>(code: S) -> Result<Vec<Statement>, ParseError> {
+    let ast = rustpython_parser::parser::parse_program(code.as_ref())?;
     let statements = ast
         .statements
         .iter()

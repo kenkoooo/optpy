@@ -257,19 +257,18 @@ impl NameStore {
 
 #[cfg(test)]
 mod tests {
-    use optpy_parser::{parse, BinaryOperator};
-    use optpy_test_helper::{
-        assign, bin_op, call_fn, call_method, expr, func, ident, returns, tuple,
-    };
+    use optpy_parser::parse;
+    use optpy_test_helper::{assign, call_fn, call_method, expr, ident, tuple, StripMargin};
 
     use super::*;
 
     #[test]
     fn test_basic_resolver() {
         let code = r"
-a, b = map(int, input().split())
-print(a)
-";
+            |a, b = map(int, input().split())
+            |print(a)
+            |"
+        .strip_margin();
         let ast = parse(code).unwrap();
         let resolved = resolve_names(&ast).unwrap();
         assert_eq!(
@@ -291,37 +290,24 @@ print(a)
     #[test]
     fn test_function_resolver() {
         let code = r"
-a, b = map(int, input().split())
-def func(a):
-    return a + b
-c = func(a)
-print(c)
-";
+            |a, b = map(int, input().split())
+            |def func(a):
+            |    return a + b
+            |c = func(a)
+            |print(c)
+            |"
+        .strip_margin();
         let ast = parse(code).unwrap();
         let resolved = resolve_names(&ast).unwrap();
-        assert_eq!(
-            resolved,
-            vec![
-                assign(
-                    tuple!(ident("__v0"), ident("__v1")),
-                    call_fn!(
-                        "map",
-                        ident("int"),
-                        call_method!(call_fn!("input"), "split")
-                    )
-                ),
-                func(
-                    "__f0",
-                    vec!["__v2"],
-                    vec![returns!(bin_op(
-                        ident("__v2"),
-                        BinaryOperator::Add,
-                        ident("__v1")
-                    ))]
-                ),
-                assign(ident("__v3"), call_fn!("__f0", ident("__v0"))),
-                expr(call_fn!("print", ident("__v3")))
-            ]
-        );
+
+        let expected = r"
+            |__v0, __v1 = map(int, input().split())
+            |def __f0(__v2):
+            |    return __v2 + __v1
+            |__v3 = __f0(__v0)
+            |print(__v3)
+            |"
+        .strip_margin();
+        assert_eq!(resolved, parse(expected).unwrap());
     }
 }
