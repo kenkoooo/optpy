@@ -16,7 +16,7 @@ where
                     .collect::<String>(),
             )
         }
-        lines.join("\n")
+        lines.join("\n").trim().to_string()
     }
 }
 
@@ -30,6 +30,6 @@ mod tests {
         |efgh
         "
         .strip_margin();
-        assert_eq!(x, "\nabcd\nefgh\n");
+        assert_eq!(x, "abcd\nefgh");
     }
 }
