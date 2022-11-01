@@ -1,5 +1,5 @@
 mod expression;
-pub use expression::{BinaryOperator, BoolOperator, Expr};
+pub use expression::{BinaryOperator, BoolOperator, CompareOperator, Expr, Number};
 
 mod statement;
 use rustpython_parser::error::ParseError;

@@ -258,7 +258,7 @@ impl NameStore {
 #[cfg(test)]
 mod tests {
     use optpy_parser::parse;
-    use optpy_test_helper::{assign, call_fn, call_method, expr, ident, tuple, StripMargin};
+    use optpy_test_helper::{to_python_code, StripMargin};
 
     use super::*;
 
@@ -271,20 +271,12 @@ mod tests {
         .strip_margin();
         let ast = parse(code).unwrap();
         let resolved = resolve_names(&ast).unwrap();
-        assert_eq!(
-            resolved,
-            vec![
-                assign(
-                    tuple!(ident("__v0"), ident("__v1")),
-                    call_fn!(
-                        "map",
-                        ident("int"),
-                        call_method!(call_fn!("input"), "split")
-                    )
-                ),
-                expr(call_fn!("print", ident("__v0")))
-            ]
-        );
+
+        let expected = r"
+            |__v0, __v1 = map(int, input().split())
+            |print(__v0)"
+            .strip_margin();
+        assert_eq!(to_python_code(&resolved).join("\n"), expected.trim());
     }
 
     #[test]
@@ -308,6 +300,35 @@ mod tests {
             |print(__v3)
             |"
         .strip_margin();
-        assert_eq!(resolved, parse(expected).unwrap());
+        assert_eq!(to_python_code(&resolved).join("\n"), expected.trim());
+
+        let code = r"
+            |a, b = map(int, input().split())
+            |c = a + b
+            |def f(a):
+            |   def g(a):
+            |       return a + b + c
+            |   return g(b) + a
+            |d = f(a + b + c)
+            |print(d)
+        "
+        .strip_margin();
+
+        let expected = r"
+            |__v0, __v1 = map(int, input().split())
+            |__v2 = __v0 + __v1
+            |def __f0(__v3):
+            |    def __f1(__v4):
+            |        return __v4 + __v1 + __v2
+            |    return __f1(__v1) + __v3
+            |__v5 = __f0(__v0 + __v1 + __v2)
+            |print(__v5)
+        "
+        .strip_margin();
+
+        assert_eq!(
+            to_python_code(&resolve_names(&parse(code).unwrap()).unwrap()).join("\n"),
+            expected.trim()
+        );
     }
 }
