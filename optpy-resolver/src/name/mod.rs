@@ -2,15 +2,13 @@ use std::collections::HashMap;
 
 use optpy_parser::{Expr, Statement};
 
-use crate::error::{Error, Result};
-
-pub fn resolve_names(statements: &[Statement]) -> Result<Vec<Statement>> {
+pub fn resolve_names(statements: &[Statement]) -> Vec<Statement> {
     let mut variables = NameStore::new("__v");
     let mut functions = NameStore::new("__f");
     let ctx = ContextPath::default();
     collect_names(statements, &mut variables, &mut functions, &ctx);
-    let statements = resolve_statements(statements, &variables, &functions, &ctx)?;
-    Ok(statements)
+    let statements = resolve_statements(statements, &variables, &functions, &ctx);
+    statements
 }
 
 fn collect_names(
@@ -58,52 +56,43 @@ fn resolve_statements(
     variables: &NameStore,
     functions: &NameStore,
     ctx: &ContextPath,
-) -> Result<Vec<Statement>> {
+) -> Vec<Statement> {
     statements
         .iter()
         .map(|s| match s {
             Statement::Assign { target, value } => {
-                let target = resolve_expr(target, variables, functions, ctx)?;
-                let value = resolve_expr(value, variables, functions, ctx)?;
-                Ok(Statement::Assign { target, value })
+                let target = resolve_expr(target, variables, functions, ctx);
+                let value = resolve_expr(value, variables, functions, ctx);
+                Statement::Assign { target, value }
             }
-            Statement::Expression(expr) => Ok(Statement::Expression(resolve_expr(
-                expr, variables, functions, ctx,
-            )?)),
+            Statement::Expression(expr) => {
+                Statement::Expression(resolve_expr(expr, variables, functions, ctx))
+            }
             Statement::If { test, body, orelse } => {
-                let test = resolve_expr(test, variables, functions, ctx)?;
-                let body = resolve_statements(body, variables, functions, ctx)?;
-                let orelse = resolve_statements(orelse, variables, functions, ctx)?;
-                Ok(Statement::If { test, body, orelse })
+                let test = resolve_expr(test, variables, functions, ctx);
+                let body = resolve_statements(body, variables, functions, ctx);
+                let orelse = resolve_statements(orelse, variables, functions, ctx);
+                Statement::If { test, body, orelse }
             }
             Statement::Func { name, args, body } => {
-                let resolved_name = functions.resolve(name, ctx).ok_or_else(|| {
-                    Error::Unresolved(format!("name {} couldn't be resolved in {:?}", name, ctx))
-                })?;
+                let resolved_name = functions.resolve(name, ctx).expect("invalid");
                 let ctx = ctx.join(name);
                 let args = args
                     .iter()
-                    .map(|arg| {
-                        variables.resolve(arg, &ctx).ok_or_else(|| {
-                            Error::Unresolved(format!(
-                                "name {} couldn't be resolved in {:?}",
-                                arg, ctx
-                            ))
-                        })
-                    })
-                    .collect::<Result<_>>()?;
-                let body = resolve_statements(body, variables, functions, &ctx)?;
-                Ok(Statement::Func {
+                    .map(|arg| variables.resolve(arg, &ctx).expect("invalid"))
+                    .collect::<Vec<_>>();
+                let body = resolve_statements(body, variables, functions, &ctx);
+                Statement::Func {
                     name: resolved_name,
                     args,
                     body,
-                })
+                }
             }
             Statement::Return(expr) => match expr {
-                Some(expr) => Ok(Statement::Return(Some(resolve_expr(
-                    expr, variables, functions, ctx,
-                )?))),
-                None => Ok(Statement::Return(None)),
+                Some(expr) => {
+                    Statement::Return(Some(resolve_expr(expr, variables, functions, ctx)))
+                }
+                None => Statement::Return(None),
             },
         })
         .collect()
@@ -114,7 +103,7 @@ fn resolve_expr(
     variables: &NameStore,
     functions: &NameStore,
     ctx: &ContextPath,
-) -> Result<Expr> {
+) -> Expr {
     match expr {
         Expr::CallFunction { name, args } => {
             let name = match functions.resolve(name, ctx) {
@@ -124,21 +113,21 @@ fn resolve_expr(
                     name.to_string()
                 }
             };
-            let args = resolve_exprs(args, variables, functions, ctx)?;
-            Ok(Expr::CallFunction { name, args })
+            let args = resolve_exprs(args, variables, functions, ctx);
+            Expr::CallFunction { name, args }
         }
         Expr::CallMethod { value, name, args } => {
-            let value = resolve_expr(value, variables, functions, ctx)?;
-            let args = resolve_exprs(args, variables, functions, ctx)?;
-            Ok(Expr::CallMethod {
+            let value = resolve_expr(value, variables, functions, ctx);
+            let args = resolve_exprs(args, variables, functions, ctx);
+            Expr::CallMethod {
                 value: Box::new(value),
                 name: name.clone(),
                 args,
-            })
+            }
         }
         Expr::Tuple(exprs) => {
-            let exprs = resolve_exprs(exprs, variables, functions, ctx)?;
-            Ok(Expr::Tuple(exprs))
+            let exprs = resolve_exprs(exprs, variables, functions, ctx);
+            Expr::Tuple(exprs)
         }
         Expr::VariableName(name) => {
             let name = match variables.resolve(name, ctx) {
@@ -148,34 +137,34 @@ fn resolve_expr(
                     name.to_string()
                 }
             };
-            Ok(Expr::VariableName(name))
+            Expr::VariableName(name)
         }
         Expr::BoolOperation { op, conditions } => {
-            let conditions = resolve_exprs(conditions, variables, functions, ctx)?;
-            Ok(Expr::BoolOperation {
+            let conditions = resolve_exprs(conditions, variables, functions, ctx);
+            Expr::BoolOperation {
                 op: *op,
                 conditions,
-            })
+            }
         }
         Expr::Compare { left, right, op } => {
-            let left = resolve_expr(left, variables, functions, ctx)?;
-            let right = resolve_expr(right, variables, functions, ctx)?;
-            Ok(Expr::Compare {
+            let left = resolve_expr(left, variables, functions, ctx);
+            let right = resolve_expr(right, variables, functions, ctx);
+            Expr::Compare {
                 left: Box::new(left),
                 right: Box::new(right),
                 op: *op,
-            })
+            }
         }
         Expr::BinaryOperation { left, right, op } => {
-            let left = resolve_expr(left, variables, functions, ctx)?;
-            let right = resolve_expr(right, variables, functions, ctx)?;
-            Ok(Expr::BinaryOperation {
+            let left = resolve_expr(left, variables, functions, ctx);
+            let right = resolve_expr(right, variables, functions, ctx);
+            Expr::BinaryOperation {
                 left: Box::new(left),
                 right: Box::new(right),
                 op: *op,
-            })
+            }
         }
-        Expr::Number(number) => Ok(Expr::Number(number.clone())),
+        Expr::Number(number) => Expr::Number(number.clone()),
     }
 }
 
@@ -184,11 +173,11 @@ fn resolve_exprs(
     variables: &NameStore,
     functions: &NameStore,
     ctx: &ContextPath,
-) -> Result<Vec<Expr>> {
+) -> Vec<Expr> {
     exprs
         .iter()
         .map(|expr| resolve_expr(expr, variables, functions, ctx))
-        .collect::<Result<Vec<_>>>()
+        .collect::<Vec<_>>()
 }
 
 #[derive(Clone, Eq, Hash, PartialEq, Debug)]
@@ -270,7 +259,7 @@ mod tests {
             |"
         .strip_margin();
         let ast = parse(code).unwrap();
-        let resolved = resolve_names(&ast).unwrap();
+        let resolved = resolve_names(&ast);
 
         let expected = r"
             |__v0, __v1 = map(int, input().split())
@@ -290,7 +279,7 @@ mod tests {
             |"
         .strip_margin();
         let ast = parse(code).unwrap();
-        let resolved = resolve_names(&ast).unwrap();
+        let resolved = resolve_names(&ast);
 
         let expected = r"
             |__v0, __v1 = map(int, input().split())
@@ -327,7 +316,7 @@ mod tests {
         .strip_margin();
 
         assert_eq!(
-            to_python_code(&resolve_names(&parse(code).unwrap()).unwrap()).join("\n"),
+            to_python_code(&resolve_names(&parse(code).unwrap())).join("\n"),
             expected
         );
 
@@ -358,7 +347,7 @@ mod tests {
         .strip_margin();
 
         assert_eq!(
-            to_python_code(&resolve_names(&parse(code).unwrap()).unwrap()).join("\n"),
+            to_python_code(&resolve_names(&parse(code).unwrap())).join("\n"),
             expected
         );
     }
