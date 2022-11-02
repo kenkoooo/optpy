@@ -2,7 +2,7 @@ use rustpython_parser::ast::StatementType;
 
 use crate::expression::Expr;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Statement {
     Assign {
         target: Expr,

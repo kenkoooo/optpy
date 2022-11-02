@@ -36,9 +36,9 @@ print(a)
             [
                 Assign {
                     target: Tuple(vec![
-                        Ident("a".into()),
-                        Ident("b".into()),
-                        Ident("c".into())
+                        VariableName("a".into()),
+                        VariableName("b".into()),
+                        VariableName("c".into())
                     ]),
                     value: CallMethod {
                         value: Box::new(CallFunction {
@@ -51,7 +51,7 @@ print(a)
                 },
                 Expression(CallFunction {
                     name: "print".into(),
-                    args: vec![Ident("a".into())]
+                    args: vec![VariableName("a".into())]
                 })
             ]
         );
@@ -73,9 +73,9 @@ print(result)
             [
                 Assign {
                     target: Tuple(vec![
-                        Ident("a".into()),
-                        Ident("b".into()),
-                        Ident("c".into())
+                        VariableName("a".into()),
+                        VariableName("b".into()),
+                        VariableName("c".into())
                     ]),
                     value: CallMethod {
                         value: Box::new(CallFunction {
@@ -91,29 +91,29 @@ print(result)
                         op: expression::BoolOperator::And,
                         conditions: vec![
                             Compare {
-                                left: Box::new(Ident("a".into())),
-                                right: Box::new(Ident("c".into())),
+                                left: Box::new(VariableName("a".into())),
+                                right: Box::new(VariableName("c".into())),
                                 op: expression::CompareOperator::LessOrEqual
                             },
                             Compare {
-                                left: Box::new(Ident("c".into())),
-                                right: Box::new(Ident("b".into())),
+                                left: Box::new(VariableName("c".into())),
+                                right: Box::new(VariableName("b".into())),
                                 op: expression::CompareOperator::Less
                             }
                         ]
                     },
                     body: vec![Assign {
-                        target: Ident("result".into()),
+                        target: VariableName("result".into()),
                         value: Number(expression::Number::Int("1".into()))
                     }],
                     orelse: vec![Assign {
-                        target: Ident("result".into()),
+                        target: VariableName("result".into()),
                         value: Number(expression::Number::Int("2".into()))
                     }]
                 },
                 Expression(CallFunction {
                     name: "print".into(),
-                    args: vec![Ident("result".into())]
+                    args: vec![VariableName("result".into())]
                 }),
             ]
         );
@@ -134,9 +134,9 @@ print(e)
             [
                 Assign {
                     target: Tuple(vec![
-                        Ident("a".into()),
-                        Ident("b".into()),
-                        Ident("c".into())
+                        VariableName("a".into()),
+                        VariableName("b".into()),
+                        VariableName("c".into())
                     ]),
                     value: CallMethod {
                         value: Box::new(CallFunction {
@@ -151,21 +151,21 @@ print(e)
                     name: "f".into(),
                     args: vec!["d".into()],
                     body: vec![Return(Some(BinaryOperation {
-                        left: Box::new(Ident("a".into())),
-                        right: Box::new(Ident("d".into())),
+                        left: Box::new(VariableName("a".into())),
+                        right: Box::new(VariableName("d".into())),
                         op: BinaryOperator::Add
                     }))]
                 },
                 Assign {
-                    target: Ident("e".into()),
+                    target: VariableName("e".into()),
                     value: CallFunction {
                         name: "f".into(),
-                        args: vec![Ident("b".into())]
+                        args: vec![VariableName("b".into())]
                     }
                 },
                 Expression(CallFunction {
                     name: "print".into(),
-                    args: vec![Ident("e".into())]
+                    args: vec![VariableName("e".into())]
                 })
             ]
         );

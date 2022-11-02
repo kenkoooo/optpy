@@ -62,7 +62,7 @@ fn format_expr(expr: &Expr) -> String {
             .map(|arg| format_expr(arg))
             .collect::<Vec<_>>()
             .join(", "),
-        Expr::Ident(name) => name.clone(),
+        Expr::VariableName(name) => name.clone(),
         Expr::BoolOperation { op, conditions } => {
             let op = format_bool_operator(op);
             conditions

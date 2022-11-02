@@ -1,6 +1,6 @@
 use rustpython_parser::ast::ExpressionType;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Expr {
     CallFunction {
         name: String,
@@ -12,7 +12,7 @@ pub enum Expr {
         args: Vec<Expr>,
     },
     Tuple(Vec<Expr>),
-    Ident(String),
+    VariableName(String),
     BoolOperation {
         op: BoolOperator,
         conditions: Vec<Expr>,
@@ -37,7 +37,7 @@ impl Expr {
                 let elements = parse_expressions(elements);
                 Expr::Tuple(elements)
             }
-            ExpressionType::Identifier { name } => Expr::Ident(name.into()),
+            ExpressionType::Identifier { name } => Expr::VariableName(name.into()),
             ExpressionType::Call {
                 function,
                 args,

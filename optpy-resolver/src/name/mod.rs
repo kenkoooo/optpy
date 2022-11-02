@@ -46,7 +46,7 @@ fn collect_variable_names(expr: &Expr, variables: &mut NameStore, ctx: &ContextP
                 collect_variable_names(variable, variables, ctx);
             }
         }
-        Expr::Ident(name) => {
+        Expr::VariableName(name) => {
             variables.declare(name, ctx);
         }
         _ => todo!(),
@@ -140,7 +140,7 @@ fn resolve_expr(
             let exprs = resolve_exprs(exprs, variables, functions, ctx)?;
             Ok(Expr::Tuple(exprs))
         }
-        Expr::Ident(name) => {
+        Expr::VariableName(name) => {
             let name = match variables.resolve(name, ctx) {
                 Some(name) => name,
                 None => {
@@ -148,7 +148,7 @@ fn resolve_expr(
                     name.to_string()
                 }
             };
-            Ok(Expr::Ident(name))
+            Ok(Expr::VariableName(name))
         }
         Expr::BoolOperation { op, conditions } => {
             let conditions = resolve_exprs(conditions, variables, functions, ctx)?;
