@@ -373,6 +373,17 @@ name = "optpy"
 version = "0.1.0"
 
 [[package]]
+name = "optpy-generator"
+version = "0.1.0"
+dependencies = [
+ "optpy-parser",
+ "optpy-resolver",
+ "optpy-test-helper",
+ "proc-macro2",
+ "quote",
+]
+
+[[package]]
 name = "optpy-parser"
 version = "0.1.0"
 dependencies = [

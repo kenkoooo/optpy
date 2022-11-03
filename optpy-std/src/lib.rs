@@ -1,9 +1,10 @@
 pub mod value {
     use std::rc::Rc;
 
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq, Clone)]
     pub enum Value {
         List(Vec<Value>),
+        Tuple(Vec<Value>),
         String(Rc<String>),
         None,
     }
@@ -18,6 +19,17 @@ pub mod value {
                 ),
                 _ => panic!("undefined method"),
             }
+        }
+
+        pub fn shallow_copy(&self) -> Self {
+            todo!()
+        }
+        pub fn assign(&self, value: Value) {
+            todo!()
+        }
+
+        pub fn tuple(tuple: &[Value]) -> Self {
+            Self::Tuple(tuple.iter().map(|v| v.shallow_copy()).collect())
         }
     }
 

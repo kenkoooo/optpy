@@ -7,4 +7,10 @@ publish = false
 [dependencies]
 
 [workspace]
-members = ["optpy-parser", "optpy-resolver", "optpy-test-helper", "optpy-std"]
+members = [
+    "optpy-parser",
+    "optpy-resolver",
+    "optpy-test-helper",
+    "optpy-std",
+    "optpy-generator",
+]
