@@ -10,7 +10,7 @@ pub fn parse<S: AsRef<str>>(code: S) -> Result<Vec<Statement>, ParseError> {
     let statements = ast
         .statements
         .iter()
-        .map(|s| Statement::parse(&s.node))
+        .flat_map(|s| Statement::parse(&s.node))
         .collect();
     Ok(statements)
 }
@@ -23,6 +23,13 @@ mod tests {
     use super::*;
     use Expr::*;
     use Statement::*;
+
+    #[test]
+    fn test_tuple_assign() {
+        let code = r"
+a = b[0]";
+        let statements = parse(code).unwrap();
+    }
 
     #[test]
     fn basic() {

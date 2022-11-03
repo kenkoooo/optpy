@@ -165,6 +165,14 @@ fn resolve_expr(
             }
         }
         Expr::Number(number) => Expr::Number(number.clone()),
+        Expr::Index { value, index } => {
+            let value = resolve_expr(value, variables, functions, ctx);
+            let index = resolve_expr(index, variables, functions, ctx);
+            Expr::Index {
+                value: Box::new(value),
+                index: Box::new(index),
+            }
+        }
     }
 }
 

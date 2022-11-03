@@ -23,16 +23,24 @@ pub enum Statement {
 }
 
 impl Statement {
-    pub fn parse(statement: &StatementType) -> Self {
+    pub fn parse(statement: &StatementType) -> Vec<Self> {
         match statement {
             StatementType::Assign { targets, value } => {
                 assert_eq!(targets.len(), 1);
-                let target = Expr::parse(&targets[0].node);
                 let value = Expr::parse(&value.node);
-                Self::Assign { target, value }
+                match &targets[0].node {
+                    rustpython_parser::ast::ExpressionType::Tuple { elements } => {
+                        let tmp = Expr::VariableName("__tmp_for_tuple".into());
+                        todo!()
+                    }
+                    target => {
+                        let target = Expr::parse(target);
+                        vec![Self::Assign { target, value }]
+                    }
+                }
             }
             StatementType::Expression { expression } => {
-                Self::Expression(Expr::parse(&expression.node))
+                vec![Self::Expression(Expr::parse(&expression.node))]
             }
             StatementType::If { test, body, orelse } => {
                 let test = Expr::parse(&test.node);
@@ -41,7 +49,7 @@ impl Statement {
                     .as_ref()
                     .map(|s| parse_statements(s))
                     .unwrap_or_default();
-                Self::If { test, body, orelse }
+                vec![Self::If { test, body, orelse }]
             }
             StatementType::FunctionDef {
                 is_async: _,
@@ -54,11 +62,11 @@ impl Statement {
                 let name = name.to_string();
                 let args = args.args.iter().map(|arg| arg.arg.clone()).collect();
                 let body = parse_statements(body);
-                Self::Func { name, args, body }
+                vec![Self::Func { name, args, body }]
             }
             StatementType::Return { value } => {
                 let value = value.as_ref().map(|value| Expr::parse(&value.node));
-                Self::Return(value)
+                vec![Self::Return(value)]
             }
             statement => todo!("{:?}", statement),
         }
@@ -68,6 +76,6 @@ impl Statement {
 fn parse_statements(statements: &[rustpython_parser::ast::Statement]) -> Vec<Statement> {
     statements
         .iter()
-        .map(|s| Statement::parse(&s.node))
+        .flat_map(|s| Statement::parse(&s.node))
         .collect()
 }

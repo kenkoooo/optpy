@@ -157,6 +157,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
             quote! { #left #op #right }
         }
         Expr::Number(number) => format_number(number),
+        Expr::Index { value, index } => todo!(),
     }
 }
 

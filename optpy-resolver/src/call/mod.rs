@@ -230,6 +230,10 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
             list_from_expr(right, function_name, store);
         }
         Expr::Number(_) => {}
+        Expr::Index { value, index } => {
+            list_from_expr(value, function_name, store);
+            list_from_expr(index, function_name, store);
+        }
     }
 }
 fn list_from_exprs(exprs: &[Expr], function_name: &str, store: &mut ReferenceStore) {

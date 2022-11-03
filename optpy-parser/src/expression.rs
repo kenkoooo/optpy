@@ -27,6 +27,10 @@ pub enum Expr {
         right: Box<Expr>,
         op: BinaryOperator,
     },
+    Index {
+        value: Box<Expr>,
+        index: Box<Expr>,
+    },
     Number(Number),
 }
 
@@ -99,6 +103,14 @@ impl Expr {
                     left: Box::new(left),
                     right: Box::new(right),
                     op: BinaryOperator::parse(op),
+                }
+            }
+            ExpressionType::Subscript { a, b } => {
+                let a = Expr::parse(&a.node);
+                let b = Expr::parse(&b.node);
+                Self::Index {
+                    value: Box::new(a),
+                    index: Box::new(b),
                 }
             }
             expr => todo!("unsupported expression: {:?}", expr),

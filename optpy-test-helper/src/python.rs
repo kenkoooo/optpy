@@ -89,6 +89,9 @@ fn format_expr(expr: &Expr) -> String {
             optpy_parser::Number::Int(int) => int.to_string(),
             optpy_parser::Number::Float(float) => float.to_string(),
         },
+        Expr::Index { value, index } => {
+            format!("{}[{}]", format_expr(value), format_expr(index))
+        }
     }
 }
 
