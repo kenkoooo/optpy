@@ -25,13 +25,6 @@ mod tests {
     use Statement::*;
 
     #[test]
-    fn test_tuple_assign() {
-        let code = r"
-a = b[0]";
-        let statements = parse(code).unwrap();
-    }
-
-    #[test]
     fn basic() {
         let code = r"
 a, b, c = input().split()
@@ -42,11 +35,7 @@ print(a)
             statements,
             [
                 Assign {
-                    target: Tuple(vec![
-                        VariableName("a".into()),
-                        VariableName("b".into()),
-                        VariableName("c".into())
-                    ]),
+                    target: VariableName("__tmp_for_tuple".into()),
                     value: CallMethod {
                         value: Box::new(CallFunction {
                             name: "input".into(),
@@ -54,6 +43,27 @@ print(a)
                         }),
                         name: "split".into(),
                         args: vec![]
+                    }
+                },
+                Assign {
+                    target: VariableName("a".into()),
+                    value: Index {
+                        value: Box::new(VariableName("__tmp_for_tuple".into())),
+                        index: Box::new(Number(crate::Number::Int("0".into())))
+                    }
+                },
+                Assign {
+                    target: VariableName("b".into()),
+                    value: Index {
+                        value: Box::new(VariableName("__tmp_for_tuple".into())),
+                        index: Box::new(Number(crate::Number::Int("1".into())))
+                    }
+                },
+                Assign {
+                    target: VariableName("c".into()),
+                    value: Index {
+                        value: Box::new(VariableName("__tmp_for_tuple".into())),
+                        index: Box::new(Number(crate::Number::Int("2".into())))
                     }
                 },
                 Expression(CallFunction {
@@ -79,11 +89,7 @@ print(result)
             statements,
             [
                 Assign {
-                    target: Tuple(vec![
-                        VariableName("a".into()),
-                        VariableName("b".into()),
-                        VariableName("c".into())
-                    ]),
+                    target: VariableName("__tmp_for_tuple".into()),
                     value: CallMethod {
                         value: Box::new(CallFunction {
                             name: "input".into(),
@@ -91,6 +97,27 @@ print(result)
                         }),
                         name: "split".into(),
                         args: vec![]
+                    }
+                },
+                Assign {
+                    target: VariableName("a".into()),
+                    value: Index {
+                        value: Box::new(VariableName("__tmp_for_tuple".into())),
+                        index: Box::new(Number(crate::Number::Int("0".into())))
+                    }
+                },
+                Assign {
+                    target: VariableName("b".into()),
+                    value: Index {
+                        value: Box::new(VariableName("__tmp_for_tuple".into())),
+                        index: Box::new(Number(crate::Number::Int("1".into())))
+                    }
+                },
+                Assign {
+                    target: VariableName("c".into()),
+                    value: Index {
+                        value: Box::new(VariableName("__tmp_for_tuple".into())),
+                        index: Box::new(Number(crate::Number::Int("2".into())))
                     }
                 },
                 If {
@@ -140,11 +167,7 @@ print(e)
             statements,
             [
                 Assign {
-                    target: Tuple(vec![
-                        VariableName("a".into()),
-                        VariableName("b".into()),
-                        VariableName("c".into())
-                    ]),
+                    target: VariableName("__tmp_for_tuple".into()),
                     value: CallMethod {
                         value: Box::new(CallFunction {
                             name: "input".into(),
@@ -152,6 +175,27 @@ print(e)
                         }),
                         name: "split".into(),
                         args: vec![]
+                    }
+                },
+                Assign {
+                    target: VariableName("a".into()),
+                    value: Index {
+                        value: Box::new(VariableName("__tmp_for_tuple".into())),
+                        index: Box::new(Number(crate::Number::Int("0".into())))
+                    }
+                },
+                Assign {
+                    target: VariableName("b".into()),
+                    value: Index {
+                        value: Box::new(VariableName("__tmp_for_tuple".into())),
+                        index: Box::new(Number(crate::Number::Int("1".into())))
+                    }
+                },
+                Assign {
+                    target: VariableName("c".into()),
+                    value: Index {
+                        value: Box::new(VariableName("__tmp_for_tuple".into())),
+                        index: Box::new(Number(crate::Number::Int("2".into())))
                     }
                 },
                 Func {

@@ -157,7 +157,13 @@ fn format_expr(expr: &Expr) -> TokenStream {
             quote! { #left #op #right }
         }
         Expr::Number(number) => format_number(number),
-        Expr::Index { value, index } => todo!(),
+        Expr::Index { value, index } => {
+            let value = format_expr(value);
+            let index = format_expr(index);
+            quote! {
+                #value .index( #index )
+            }
+        }
     }
 }
 
@@ -217,6 +223,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore]
     fn test_aa() {
         let code = r"
             |__v0, __v1 = map(int, input().split())

@@ -1,6 +1,6 @@
 use rustpython_parser::ast::StatementType;
 
-use crate::expression::Expr;
+use crate::{expression::Expr, Number};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Statement {
@@ -30,8 +30,23 @@ impl Statement {
                 let value = Expr::parse(&value.node);
                 match &targets[0].node {
                     rustpython_parser::ast::ExpressionType::Tuple { elements } => {
-                        let tmp = Expr::VariableName("__tmp_for_tuple".into());
-                        todo!()
+                        let mut result = vec![];
+                        let tmp_target = Expr::VariableName("__tmp_for_tuple".into());
+                        result.push(Self::Assign {
+                            target: tmp_target.clone(),
+                            value,
+                        });
+
+                        for (i, element) in elements.iter().enumerate() {
+                            result.push(Self::Assign {
+                                target: Expr::parse(&element.node),
+                                value: Expr::Index {
+                                    value: Box::new(tmp_target.clone()),
+                                    index: Box::new(Expr::Number(Number::Int(i.to_string()))),
+                                },
+                            });
+                        }
+                        result
                     }
                     target => {
                         let target = Expr::parse(target);

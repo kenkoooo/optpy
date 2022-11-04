@@ -294,6 +294,8 @@ mod tests {
     use optpy_parser::parse;
     use optpy_test_helper::{to_python_code, StripMargin};
 
+    use crate::resolve_names;
+
     use super::*;
 
     #[test]
@@ -311,18 +313,21 @@ mod tests {
             .strip_margin();
 
         let expected = r"
-            |__v0, __v1 = map(int, input().split())
-            |__v2 = __v0 + __v1
-            |def __f0(__v3, __v1):
-            |    def __f1(__v4, __v1, __v2):
-            |        __v5 = __v1 + __v2
-            |        return __v4 + __v5
-            |    return __f1(__v1, __v1, __v2) + __v3
-            |__v6 = __f0(__v0 + __v1 + __v2, __v1)
-            |print(__v6)"
+            |__v0 = map(int, input().split())
+            |__v1 = __v0[0]
+            |__v2 = __v0[1]
+            |__v3 = __v1 + __v2
+            |def __f0(__v4, __v2):
+            |    def __f1(__v5, __v2, __v3):
+            |        __v6 = __v2 + __v3
+            |        return __v5 + __v6
+            |    return __f1(__v2, __v2, __v3) + __v4
+            |__v7 = __f0(__v1 + __v2 + __v3, __v2)
+            |print(__v7)"
             .strip_margin();
 
         let ast = parse(code).unwrap();
+        let ast = resolve_names(&ast);
         let (statements, definitions) = resolve_function_calls(&ast);
         assert_eq!(to_python_code(&statements).join("\n"), expected);
         assert_eq!(
@@ -334,12 +339,13 @@ mod tests {
                         "__v0".into(),
                         "__v1".into(),
                         "__v2".into(),
-                        "__v6".into(),
+                        "__v3".into(),
+                        "__v7".into(),
                         "int".into()
                     ])
                 ),
                 ("__f0".into(), BTreeSet::from([])),
-                ("__f1".into(), BTreeSet::from(["__v5".into()]))
+                ("__f1".into(), BTreeSet::from(["__v6".into()]))
             ])
         );
     }

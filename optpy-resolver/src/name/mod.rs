@@ -270,8 +270,10 @@ mod tests {
         let resolved = resolve_names(&ast);
 
         let expected = r"
-            |__v0, __v1 = map(int, input().split())
-            |print(__v0)"
+            |__v0 = map(int, input().split())
+            |__v1 = __v0[0]
+            |__v2 = __v0[1]
+            |print(__v1)"
             .strip_margin();
         assert_eq!(to_python_code(&resolved).join("\n"), expected);
     }
@@ -290,13 +292,14 @@ mod tests {
         let resolved = resolve_names(&ast);
 
         let expected = r"
-            |__v0, __v1 = map(int, input().split())
-            |def __f0(__v2):
-            |    return __v2 + __v1
-            |__v3 = __f0(__v0)
-            |print(__v3)
-            |"
-        .strip_margin();
+            |__v0 = map(int, input().split())
+            |__v1 = __v0[0]
+            |__v2 = __v0[1]
+            |def __f0(__v3):
+            |    return __v3 + __v2
+            |__v4 = __f0(__v1)
+            |print(__v4)"
+            .strip_margin();
         assert_eq!(to_python_code(&resolved).join("\n"), expected);
 
         let code = r"
@@ -312,16 +315,17 @@ mod tests {
         .strip_margin();
 
         let expected = r"
-            |__v0, __v1 = map(int, input().split())
-            |__v2 = __v0 + __v1
-            |def __f0(__v3):
-            |    def __f1(__v4):
-            |        return __v4 + __v1 + __v2
-            |    return __f1(__v1) + __v3
-            |__v5 = __f0(__v0 + __v1 + __v2)
-            |print(__v5)
-        "
-        .strip_margin();
+            |__v0 = map(int, input().split())
+            |__v1 = __v0[0]
+            |__v2 = __v0[1]
+            |__v3 = __v1 + __v2
+            |def __f0(__v4):
+            |    def __f1(__v5):
+            |        return __v5 + __v2 + __v3
+            |    return __f1(__v2) + __v4
+            |__v6 = __f0(__v1 + __v2 + __v3)
+            |print(__v6)"
+            .strip_margin();
 
         assert_eq!(
             to_python_code(&resolve_names(&parse(code).unwrap())).join("\n"),
@@ -342,17 +346,18 @@ mod tests {
         .strip_margin();
 
         let expected = r"
-            |__v0, __v1 = map(int, input().split())
-            |__v2 = __v0 + __v1
-            |def __f0(__v3):
-            |    def __f1(__v4):
-            |        __v5 = __v1 + __v2
-            |        return __v4 + __v5
-            |    return __f1(__v1) + __v3
-            |__v6 = __f0(__v0 + __v1 + __v2)
-            |print(__v6)    
-        "
-        .strip_margin();
+            |__v0 = map(int, input().split())
+            |__v1 = __v0[0]
+            |__v2 = __v0[1]
+            |__v3 = __v1 + __v2
+            |def __f0(__v4):
+            |    def __f1(__v5):
+            |        __v6 = __v2 + __v3
+            |        return __v5 + __v6
+            |    return __f1(__v2) + __v4
+            |__v7 = __f0(__v1 + __v2 + __v3)
+            |print(__v7)"
+            .strip_margin();
 
         assert_eq!(
             to_python_code(&resolve_names(&parse(code).unwrap())).join("\n"),
