@@ -24,9 +24,6 @@ pub mod value {
         pub fn shallow_copy(&self) -> Self {
             todo!()
         }
-        pub fn assign(&self, value: Value) {
-            todo!()
-        }
 
         pub fn tuple(tuple: &[Value]) -> Self {
             Self::Tuple(tuple.iter().map(|v| v.shallow_copy()).collect())

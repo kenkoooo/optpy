@@ -46,7 +46,7 @@ fn format_statement(
             let target = format_expr(target);
             let value = format_expr(value);
             quote! {
-                #target .assign( #value );
+                #target = #value;
             }
         }
         Statement::Expression(expr) => {
@@ -223,18 +223,17 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore]
     fn test_aa() {
         let code = r"
-            |__v0, __v1 = map(int, input().split())
-            |__v2 = __v0 + __v1
-            |def __f0(__v3, __v1):
-            |    def __f1(__v4, __v1, __v2):
-            |        __v5 = __v1 + __v2
-            |        return __v4 + __v5
-            |    return __f1(__v1, __v1, __v2) + __v3
-            |__v6 = __f0(__v0 + __v1 + __v2, __v1)
-            |print(__v6)"
+            |a, b = map(int, input().split())
+            |c = a + b
+            |def f(a):
+            |    def g(a):
+            |        d = b + c
+            |        return d + a
+            |    return g(b) + a
+            |d = f(a + b + c)
+            |print(d)"
             .strip_margin();
         let ast = parse(code).unwrap();
         let ast = resolve_names(&ast);
@@ -247,22 +246,25 @@ mod tests {
                     let mut __v0 = Value::None;
                     let mut __v1 = Value::None;
                     let mut __v2 = Value::None;
-                    let mut __v9 = Value::None;
+                    let mut __v3 = Value::None;
+                    let mut __v7 = Value::None;
                     let mut int = Value::None;
-                    Value::tuple(&[__v0, __v1]).assign(map(int, input().split()));
-                    __v2.assign(__v0 + __v1);
-                    fn __f0(__v3: Value, __v4: Value, __v2: Value) -> Value {
-                        fn __f1(__v5: Value, __v6: Value, __v7: Value) -> Value {
-                            let mut __v8 = Value::None;
-                            __v8.assign(__v6 + __v7);
-                            return __v5 + __v8;
+                    __v0 = map(int, input().split());
+                    __v1 = __v0.index(0i64);
+                    __v2 = __v0.index(1i64);
+                    __v3 = __v1 + __v2;
+                    fn __f0(__v4: Value, __v2: Value) -> Value {
+                        fn __f1(__v5: Value, __v2: Value, __v3: Value) -> Value {
+                            let mut __v6 = Value::None;
+                            __v6 = __v2 + __v3;
+                            return __v6 + __v5;
                             return Value::None;
                         }
-                        return __f1(__v4, __v4, __v2) + __v3;
+                        return __f1(__v2, __v2, __v3) + __v4;
                         return Value::None;
                     }
-                    __v9.assign(__f0(__v0 + __v1 + __v2, __v1, __v2));
-                    print(__v9);
+                    __v7 = __f0(__v1 + __v2 + __v3, __v2);
+                    print(__v7);
                 }
             }
             .to_string()
