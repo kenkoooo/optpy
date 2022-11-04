@@ -5,6 +5,10 @@ edition = "2021"
 publish = false
 
 [dependencies]
+clap = { version = "4.0.19", features = ["derive"] }
+optpy-parser = { path = "./optpy-parser" }
+optpy-resolver = { path = "./optpy-resolver" }
+optpy-generator = { path = "./optpy-generator" }
 
 [workspace]
 members = [

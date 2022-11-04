@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use optpy_parser::{Expr, Statement};
 
-pub fn resolve_names(statements: &[Statement]) -> Vec<Statement> {
+pub(super) fn resolve_names(statements: &[Statement]) -> Vec<Statement> {
     let mut variables = NameStore::new("__v");
     let mut functions = NameStore::new("__f");
     let ctx = ContextPath::default();
@@ -164,7 +164,6 @@ fn resolve_expr(
                 op: *op,
             }
         }
-        Expr::Number(number) => Expr::Number(number.clone()),
         Expr::Index { value, index } => {
             let value = resolve_expr(value, variables, functions, ctx);
             let index = resolve_expr(index, variables, functions, ctx);
@@ -173,6 +172,7 @@ fn resolve_expr(
                 index: Box::new(index),
             }
         }
+        Expr::ConstantString(_) | Expr::Number(_) => expr.clone(),
     }
 }
 

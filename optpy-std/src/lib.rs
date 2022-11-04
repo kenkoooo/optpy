@@ -1,11 +1,14 @@
 pub mod value {
-    use std::rc::Rc;
+    use std::{
+        ops::{Mul, Rem},
+        rc::Rc,
+    };
 
     #[derive(Debug, PartialEq, Eq, Clone)]
     pub enum Value {
         List(Vec<Value>),
-        Tuple(Vec<Value>),
         String(Rc<String>),
+        Int64(i64),
         None,
     }
 
@@ -25,14 +28,42 @@ pub mod value {
             todo!()
         }
 
-        pub fn tuple(tuple: &[Value]) -> Self {
-            Self::Tuple(tuple.iter().map(|v| v.shallow_copy()).collect())
+        pub fn index(&self, index: Self) -> Self {
+            match (self, index) {
+                (Self::List(list), Self::Int64(i)) => list[i as usize].shallow_copy(),
+                _ => todo!(),
+            }
         }
     }
 
-    impl<S: AsRef<str>> From<S> for Value {
-        fn from(s: S) -> Self {
-            Value::String(Rc::new(s.as_ref().to_string()))
+    impl From<&str> for Value {
+        fn from(s: &str) -> Self {
+            Value::String(Rc::new(s.to_string()))
+        }
+    }
+    impl From<i64> for Value {
+        fn from(v: i64) -> Self {
+            Value::Int64(v)
+        }
+    }
+    impl Rem for Value {
+        type Output = Value;
+
+        fn rem(self, rhs: Self) -> Self::Output {
+            match (self, rhs) {
+                (Self::Int64(lhs), Self::Int64(rhs)) => Self::Int64(lhs % rhs),
+                _ => todo!(),
+            }
+        }
+    }
+    impl Mul for Value {
+        type Output = Value;
+
+        fn mul(self, rhs: Self) -> Self::Output {
+            match (self, rhs) {
+                (Self::Int64(lhs), Self::Int64(rhs)) => Self::Int64(lhs * rhs),
+                _ => todo!(),
+            }
         }
     }
 }
@@ -47,4 +78,16 @@ pub mod builtin {
         stdin().read_line(&mut buf).unwrap();
         Value::String(Rc::new(buf.trim().to_string()))
     }
+
+    pub fn print(value: Value) {
+        match value {
+            Value::String(s) => {
+                println!("{}", s);
+            }
+            _ => todo!(),
+        }
+    }
 }
+
+pub use builtin::*;
+pub use value::*;

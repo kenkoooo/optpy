@@ -92,6 +92,7 @@ fn format_expr(expr: &Expr) -> String {
         Expr::Index { value, index } => {
             format!("{}[{}]", format_expr(value), format_expr(index))
         }
+        Expr::ConstantString(value) => format!(r#""{value}""#),
     }
 }
 
@@ -105,10 +106,13 @@ fn format_compare_operator(op: &CompareOperator) -> String {
     match op {
         CompareOperator::Less => " < ".to_string(),
         CompareOperator::LessOrEqual => " <= ".to_string(),
+        CompareOperator::Equal => " == ".to_string(),
     }
 }
 fn format_binary_operator(op: &BinaryOperator) -> String {
     match op {
         BinaryOperator::Add => " + ".to_string(),
+        BinaryOperator::Mul => " * ".to_string(),
+        BinaryOperator::Mod => " % ".to_string(),
     }
 }

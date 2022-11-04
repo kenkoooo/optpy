@@ -32,6 +32,7 @@ pub enum Expr {
         index: Box<Expr>,
     },
     Number(Number),
+    ConstantString(String),
 }
 
 impl Expr {
@@ -113,6 +114,12 @@ impl Expr {
                     index: Box::new(b),
                 }
             }
+            ExpressionType::String { value } => match value {
+                rustpython_parser::ast::StringGroup::Constant { value } => {
+                    Self::ConstantString(value.to_string())
+                }
+                value => todo!("{:?}", value),
+            },
             expr => todo!("unsupported expression: {:?}", expr),
         }
     }
@@ -140,6 +147,7 @@ impl BoolOperator {
 pub enum CompareOperator {
     Less,
     LessOrEqual,
+    Equal,
 }
 
 impl CompareOperator {
@@ -147,6 +155,7 @@ impl CompareOperator {
         match op {
             rustpython_parser::ast::Comparison::LessOrEqual => Self::LessOrEqual,
             rustpython_parser::ast::Comparison::Less => Self::Less,
+            rustpython_parser::ast::Comparison::Equal => Self::Equal,
             op => todo!("{:?}", op),
         }
     }
@@ -161,12 +170,16 @@ pub enum Number {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BinaryOperator {
     Add,
+    Mul,
+    Mod,
 }
 
 impl BinaryOperator {
     pub fn parse(op: &rustpython_parser::ast::Operator) -> Self {
         match op {
             rustpython_parser::ast::Operator::Add => Self::Add,
+            rustpython_parser::ast::Operator::Mult => Self::Mul,
+            rustpython_parser::ast::Operator::Mod => Self::Mod,
             op => todo!("{:?}", op),
         }
     }

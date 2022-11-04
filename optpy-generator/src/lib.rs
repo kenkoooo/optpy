@@ -164,6 +164,11 @@ fn format_expr(expr: &Expr) -> TokenStream {
                 #value .index( #index )
             }
         }
+        Expr::ConstantString(value) => {
+            quote! {
+                Value::from(#value)
+            }
+        }
     }
 }
 
@@ -181,11 +186,14 @@ fn format_compare_operator(op: &CompareOperator) -> TokenStream {
     match op {
         CompareOperator::Less => quote! { < },
         CompareOperator::LessOrEqual => quote! { <= },
+        CompareOperator::Equal => quote! { == },
     }
 }
 fn format_binary_operator(op: &BinaryOperator) -> TokenStream {
     match op {
         BinaryOperator::Add => quote! { + },
+        BinaryOperator::Mul => quote! { * },
+        BinaryOperator::Mod => quote! { % },
     }
 }
 
@@ -194,7 +202,7 @@ fn format_number(number: &Number) -> TokenStream {
         Number::Int(int) => match int.parse::<i64>() {
             Ok(int) => {
                 quote! {
-                    #int
+                    Value::from(#int)
                 }
             }
             Err(_) => {
@@ -204,7 +212,7 @@ fn format_number(number: &Number) -> TokenStream {
         Number::Float(float) => match float.parse::<f64>() {
             Ok(float) => {
                 quote! {
-                    #float
+                    Value::from(#float)
                 }
             }
             Err(e) => {
@@ -217,7 +225,7 @@ fn format_number(number: &Number) -> TokenStream {
 #[cfg(test)]
 mod tests {
     use optpy_parser::parse;
-    use optpy_resolver::{resolve_function_calls, resolve_names};
+    use optpy_resolver::resolve;
     use optpy_test_helper::StripMargin;
 
     use super::*;
@@ -236,8 +244,7 @@ mod tests {
             |print(d)"
             .strip_margin();
         let ast = parse(code).unwrap();
-        let ast = resolve_names(&ast);
-        let (ast, definitions) = resolve_function_calls(&ast);
+        let (ast, definitions) = resolve(&ast);
         let code = generate_code(&ast, &definitions);
         assert_eq!(
             code.to_string(),
@@ -248,10 +255,9 @@ mod tests {
                     let mut __v2 = Value::None;
                     let mut __v3 = Value::None;
                     let mut __v7 = Value::None;
-                    let mut int = Value::None;
-                    __v0 = map(int, input().split());
-                    __v1 = __v0.index(0i64);
-                    __v2 = __v0.index(1i64);
+                    __v0 = map_int(input().split());
+                    __v1 = __v0.index(Value::from(0i64));
+                    __v2 = __v0.index(Value::from(1i64));
                     __v3 = __v1 + __v2;
                     fn __f0(__v4: Value, __v2: Value) -> Value {
                         fn __f1(__v5: Value, __v2: Value, __v3: Value) -> Value {

@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{Expr, Statement};
 
-pub fn resolve_function_calls(
+pub(super) fn resolve_function_calls(
     statements: &[Statement],
 ) -> (Vec<Statement>, BTreeMap<String, BTreeSet<String>>) {
     let mut store = ReferenceStore::default();
@@ -229,11 +229,11 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
             list_from_expr(left, function_name, store);
             list_from_expr(right, function_name, store);
         }
-        Expr::Number(_) => {}
         Expr::Index { value, index } => {
             list_from_expr(value, function_name, store);
             list_from_expr(index, function_name, store);
         }
+        Expr::Number(_) | Expr::ConstantString(_) => {}
     }
 }
 fn list_from_exprs(exprs: &[Expr], function_name: &str, store: &mut ReferenceStore) {
@@ -294,7 +294,7 @@ mod tests {
     use optpy_parser::parse;
     use optpy_test_helper::{to_python_code, StripMargin};
 
-    use crate::resolve_names;
+    use crate::resolve;
 
     use super::*;
 
@@ -313,7 +313,7 @@ mod tests {
             .strip_margin();
 
         let expected = r"
-            |__v0 = map(int, input().split())
+            |__v0 = map_int(input().split())
             |__v1 = __v0[0]
             |__v2 = __v0[1]
             |__v3 = __v1 + __v2
@@ -327,8 +327,7 @@ mod tests {
             .strip_margin();
 
         let ast = parse(code).unwrap();
-        let ast = resolve_names(&ast);
-        let (statements, definitions) = resolve_function_calls(&ast);
+        let (statements, definitions) = resolve(&ast);
         assert_eq!(to_python_code(&statements).join("\n"), expected);
         assert_eq!(
             definitions,
@@ -341,7 +340,6 @@ mod tests {
                         "__v2".into(),
                         "__v3".into(),
                         "__v7".into(),
-                        "int".into()
                     ])
                 ),
                 ("__f0".into(), BTreeSet::from([])),
