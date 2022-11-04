@@ -9,6 +9,7 @@ clap = { version = "4.0.19", features = ["derive"] }
 optpy-parser = { path = "./optpy-parser" }
 optpy-resolver = { path = "./optpy-resolver" }
 optpy-generator = { path = "./optpy-generator" }
+anyhow = { version = "1.0.66", features = ["backtrace"] }
 
 [workspace]
 members = [
@@ -18,3 +19,6 @@ members = [
     "optpy-std",
     "optpy-generator",
 ]
+
+[dev-dependencies]
+tempfile = "3.3.0"

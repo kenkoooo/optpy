@@ -1,12 +1,13 @@
 pub mod value {
     use std::{
+        cell::RefCell,
         ops::{Mul, Rem},
         rc::Rc,
     };
 
     #[derive(Debug, PartialEq, Eq, Clone)]
     pub enum Value {
-        List(Vec<Value>),
+        List(Rc<RefCell<Vec<Value>>>),
         String(Rc<String>),
         Int64(i64),
         None,
@@ -15,22 +16,24 @@ pub mod value {
     impl Value {
         pub fn split(&self) -> Self {
             match self {
-                Value::String(s) => Self::List(
-                    s.split_whitespace()
+                Value::String(s) => {
+                    let list = s
+                        .split_whitespace()
                         .map(|s| Self::String(Rc::new(s.to_string())))
-                        .collect(),
-                ),
+                        .collect();
+                    Self::List(Rc::new(RefCell::new(list)))
+                }
                 _ => panic!("undefined method"),
             }
         }
 
         pub fn shallow_copy(&self) -> Self {
-            todo!()
+            self.clone()
         }
 
         pub fn index(&self, index: Self) -> Self {
             match (self, index) {
-                (Self::List(list), Self::Int64(i)) => list[i as usize].shallow_copy(),
+                (Self::List(list), Self::Int64(i)) => list.borrow()[i as usize].shallow_copy(),
                 _ => todo!(),
             }
         }
@@ -69,7 +72,7 @@ pub mod value {
 }
 
 pub mod builtin {
-    use std::{io::stdin, rc::Rc};
+    use std::{cell::RefCell, io::stdin, rc::Rc};
 
     use crate::value::Value;
 
@@ -85,6 +88,33 @@ pub mod builtin {
                 println!("{}", s);
             }
             _ => todo!(),
+        }
+    }
+
+    pub fn map_int(value: Value) -> Value {
+        match value {
+            Value::List(list) => {
+                let list = list
+                    .borrow()
+                    .iter()
+                    .map(|v| int(v.shallow_copy()))
+                    .collect();
+                Value::List(Rc::new(RefCell::new(list)))
+            }
+            _ => todo!(),
+        }
+    }
+    pub fn int(value: Value) -> Value {
+        match value {
+            Value::String(s) => {
+                if let Ok(i) = s.parse::<i64>() {
+                    Value::Int64(i)
+                } else {
+                    todo!()
+                }
+            }
+            Value::Int64(_) => value,
+            _ => panic!("invalid"),
         }
     }
 }
