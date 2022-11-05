@@ -18,13 +18,17 @@ pub fn execute(code: &str, input: &str) -> Result<String> {
     write(&file, code)?;
 
     Command::new("rustfmt").args([&file]).output()?;
-    Command::new("rustc")
+    let output = Command::new("rustc")
         .arg("-o")
         .arg(&path)
         .arg(&file)
         .output()?;
 
-    assert!(path.exists());
+    assert!(
+        path.exists(),
+        "{}",
+        String::from_utf8(output.stderr).unwrap()
+    );
     let process = Command::new(&path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

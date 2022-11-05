@@ -27,3 +27,13 @@ else:
 ("3 4\n", "Even\n"),
 ("3 5\n", "Odd\n")
 }
+
+optpy_integration_test! {
+test_count,
+r#"
+s = input()
+print(s.count('1'))
+"#,
+("101\n", "2\n"),
+("000\n", "0\n")
+}

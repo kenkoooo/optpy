@@ -37,6 +37,25 @@ pub mod value {
                 _ => todo!(),
             }
         }
+
+        pub fn count(&self, value: Value) -> Value {
+            match (self, value) {
+                (Value::String(lhs), Value::String(rhs)) => {
+                    let mut i = 0;
+                    let mut result = 0;
+                    while i < lhs.len() {
+                        if lhs[i..].starts_with(rhs.as_ref()) {
+                            i += rhs.len();
+                            result += 1;
+                        } else {
+                            i += 1;
+                        }
+                    }
+                    Value::Int64(result)
+                }
+                _ => todo!(),
+            }
+        }
     }
 
     impl From<&str> for Value {
@@ -86,6 +105,9 @@ pub mod builtin {
         match value {
             Value::String(s) => {
                 println!("{}", s);
+            }
+            Value::Int64(i) => {
+                println!("{}", i);
             }
             _ => todo!(),
         }
