@@ -15,6 +15,7 @@ pub mod value {
         List(Vec<Value>),
         String(Rc<String>),
         Int64(i64),
+        Boolean(bool),
         None,
     }
 
@@ -24,6 +25,29 @@ pub mod value {
                 inner: Rc::new(RefCell::new(self)),
             }
         }
+    }
+
+    macro_rules! impl_value_compare {
+        ($name:ident, $op:ident) => {
+            pub fn $name(&self, value: Value) -> Value {
+                match (&*self.inner.borrow(), &*value.inner.borrow()) {
+                    (Inner::Int64(lhs), Inner::Int64(rhs)) => Inner::Boolean(lhs.$op(rhs)).into(),
+                    _ => todo!(),
+                }
+            }
+        };
+    }
+
+    macro_rules! impl_value_binop {
+        ($name:ident, $op:ident) => {
+            pub fn $name(&self, rhs: Value) -> Value {
+                use std::ops::*;
+                match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
+                    (Inner::Int64(lhs), Inner::Int64(rhs)) => Inner::Int64(lhs.$op(rhs)).into(),
+                    _ => todo!(),
+                }
+            }
+        };
     }
 
     impl Value {
@@ -93,6 +117,22 @@ pub mod value {
                         None => Inner::None.into(),
                     }
                 }
+                _ => todo!(),
+            }
+        }
+        impl_value_compare!(is_gt, gt);
+        impl_value_compare!(is_lt, lt);
+        impl_value_compare!(is_le, le);
+        impl_value_compare!(is_eq, eq);
+        impl_value_compare!(is_ne, ne);
+
+        impl_value_binop!(__add, add);
+        impl_value_binop!(__mul, mul);
+        impl_value_binop!(__mod, rem);
+
+        pub fn test(&self) -> bool {
+            match &*self.inner.borrow() {
+                Inner::Boolean(x) => *x,
                 _ => todo!(),
             }
         }

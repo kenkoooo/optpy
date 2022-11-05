@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{BinaryOperator, BoolOperator, CompareOperator, Expr, Number, Statement};
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
 
 pub fn generate_code(
@@ -66,7 +66,7 @@ fn format_statement(
                 .map(|s| format_statement(s, definitions))
                 .collect::<Vec<_>>();
             quote! {
-                if #test {
+                if (#test).test() {
                     #(#body);*
                 } else {
                     #(#orelse);*
@@ -107,7 +107,7 @@ fn format_statement(
                 .map(|s| format_statement(s, definitions))
                 .collect::<Vec<_>>();
             quote! {
-                while #test {
+                while (#test).test() {
                     #(#body);*
                 }
             }
@@ -123,12 +123,12 @@ fn format_expr(expr: &Expr) -> TokenStream {
             if let Some(macro_name) = name.strip_suffix("!") {
                 let name = format_ident!("{}", macro_name);
                 quote! {
-                    #name !( #(#args),* )
+                    #name !( #(#args .shallow_copy()),* )
                 }
             } else {
                 let name = format_ident!("{}", name);
                 quote! {
-                    #name ( #(#args),* )
+                    #name ( #(#args .shallow_copy()),* )
                 }
             }
         }
@@ -137,7 +137,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
             let name = format_ident!("{}", name);
             let args = format_exprs(args);
             quote! {
-                #value . #name ( #(#args),* )
+                #value . #name ( #(#args .shallow_copy()),* )
             }
         }
         Expr::Tuple(values) => {
@@ -167,14 +167,14 @@ fn format_expr(expr: &Expr) -> TokenStream {
         Expr::Compare { left, right, op } => {
             let left = format_expr(left);
             let right = format_expr(right);
-            let op = format_compare_operator(op);
-            quote! { #left #op #right }
+            let op = format_compare_ident(op);
+            quote! { #left . #op (#right.shallow_copy()) }
         }
         Expr::BinaryOperation { left, right, op } => {
             let left = format_expr(left);
             let right = format_expr(right);
-            let op = format_binary_operator(op);
-            quote! { #left #op #right }
+            let op = format_binary_ident(op);
+            quote! { #left . #op (#right.shallow_copy()) }
         }
         Expr::Number(number) => format_number(number),
         Expr::Index { value, index } => {
@@ -213,21 +213,21 @@ fn format_boolean_operator(op: &BoolOperator) -> TokenStream {
         BoolOperator::Or => quote! { || },
     }
 }
-fn format_compare_operator(op: &CompareOperator) -> TokenStream {
+fn format_compare_ident(op: &CompareOperator) -> Ident {
     match op {
-        CompareOperator::Less => quote! { < },
-        CompareOperator::LessOrEqual => quote! { <= },
-        CompareOperator::Equal => quote! { == },
-        CompareOperator::Greater => quote! { > },
-        CompareOperator::NotEqual => quote! { != },
+        CompareOperator::Less => format_ident!("is_lt"),
+        CompareOperator::LessOrEqual => format_ident!("is_le"),
+        CompareOperator::Equal => format_ident!("is_eq"),
+        CompareOperator::Greater => format_ident!("is_gt"),
+        CompareOperator::NotEqual => format_ident!("is_ne"),
     }
 }
-fn format_binary_operator(op: &BinaryOperator) -> TokenStream {
+fn format_binary_ident(op: &BinaryOperator) -> Ident {
     match op {
-        BinaryOperator::Add => quote! { + },
-        BinaryOperator::Mul => quote! { * },
-        BinaryOperator::Mod => quote! { % },
-        BinaryOperator::FloorDiv => quote! { / },
+        BinaryOperator::Add => format_ident!("__add"),
+        BinaryOperator::Mul => format_ident!("__mul"),
+        BinaryOperator::Mod => format_ident!("__mod"),
+        BinaryOperator::FloorDiv => format_ident!("__floor_div"),
     }
 }
 
@@ -253,61 +253,5 @@ fn format_number(number: &Number) -> TokenStream {
                 panic!("unsupported float value: {} {:?}", float, e);
             }
         },
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use optpy_parser::parse;
-    use optpy_resolver::resolve;
-    use optpy_test_helper::StripMargin;
-
-    use super::*;
-
-    #[test]
-    fn test_generator() {
-        let code = r"
-            |a, b = map(int, input().split())
-            |c = a + b
-            |def f(a):
-            |    def g(a):
-            |        d = b + c
-            |        return d + a
-            |    return g(b) + a
-            |d = f(a + b + c)
-            |print(d)"
-            .strip_margin();
-        let ast = parse(code).unwrap();
-        let (ast, definitions) = resolve(&ast);
-        let code = generate_code(&ast, &definitions);
-        assert_eq!(
-            code.to_string(),
-            quote! {
-                fn main() {
-                    let mut __v0 = Value::none();
-                    let mut __v1 = Value::none();
-                    let mut __v2 = Value::none();
-                    let mut __v3 = Value::none();
-                    let mut __v7 = Value::none();
-                    __v0.assign(map_int(input().split()));
-                    __v1.assign(__v0.index(Value::from(0i64)));
-                    __v2.assign(__v0.index(Value::from(1i64)));
-                    __v3.assign(__v1 + __v2);
-                    fn __f0(__v4: Value, __v2: Value) -> Value {
-                        fn __f1(__v5: Value, __v2: Value, __v3: Value) -> Value {
-                            let mut __v6 = Value::none();
-                            __v6.assign(__v2 + __v3);
-                            return __v6 + __v5;
-                            return Value::none();
-                        }
-                        return __f1(__v2, __v2, __v3) + __v4;
-                        return Value::none();
-                    }
-                    __v7.assign(__f0(__v1 + __v2 + __v3, __v2));
-                    print(__v7);
-                }
-            }
-            .to_string()
-        );
     }
 }

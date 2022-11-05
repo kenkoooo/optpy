@@ -72,3 +72,16 @@ print(count)
 ("101\n", "2\n"),
 ("000\n", "0\n")
 }
+
+optpy_integration_test! {
+test_for_loop,
+r#"
+N = int(input())
+ans = 0
+for i in range(N):
+    ans += i
+print(ans)
+"#,
+("5\n", "10\n"),
+("10\n", "45\n")
+}

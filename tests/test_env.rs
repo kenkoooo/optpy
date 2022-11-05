@@ -1,5 +1,5 @@
 use std::{
-    fs::write,
+    fs::{read_to_string, write},
     io::{Read, Write},
     process::{Command, Stdio},
 };
@@ -18,6 +18,8 @@ pub fn execute(code: &str, input: &str) -> Result<String> {
     write(&file, code)?;
 
     Command::new("rustfmt").args([&file]).output()?;
+    let code = read_to_string(&file)?;
+
     let output = Command::new("rustc")
         .arg("-o")
         .arg(&path)
@@ -26,8 +28,9 @@ pub fn execute(code: &str, input: &str) -> Result<String> {
 
     assert!(
         path.exists(),
-        "{}",
-        String::from_utf8(output.stderr).unwrap()
+        "{}\n{}",
+        String::from_utf8(output.stderr).unwrap(),
+        code
     );
     let process = Command::new(&path)
         .stdin(Stdio::piped())
