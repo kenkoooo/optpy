@@ -76,6 +76,26 @@ pub mod value {
                 _ => todo!(),
             }
         }
+
+        pub fn reverse(&mut self) {
+            match &mut *self.inner.borrow_mut() {
+                Inner::List(list) => list.reverse(),
+                _ => todo!(),
+            }
+        }
+
+        pub fn pop(&mut self) -> Value {
+            match &mut *self.inner.borrow_mut() {
+                Inner::List(list) => {
+                    let last = list.pop();
+                    match last {
+                        Some(element) => element,
+                        None => Inner::None.into(),
+                    }
+                }
+                _ => todo!(),
+            }
+        }
     }
 
     impl From<&str> for Value {
@@ -160,7 +180,38 @@ pub mod builtin {
             _ => panic!("invalid"),
         }
     }
+
+    pub fn list(value: Value) -> Value {
+        match &*value.inner.borrow() {
+            Inner::List(list) => Inner::List(list.clone()).into(),
+            _ => todo!(),
+        }
+    }
+
+    pub fn range1(value: Value) -> Value {
+        match &*value.inner.borrow() {
+            Inner::Int64(i) => {
+                let list = (0..(*i)).map(|i| Inner::Int64(i).into()).collect();
+                Inner::List(list).into()
+            }
+            _ => todo!(),
+        }
+    }
+
+    pub fn len(value: Value) -> Value {
+        match &*value.inner.borrow() {
+            Inner::List(list) => Inner::Int64(list.len() as i64).into(),
+            _ => todo!(),
+        }
+    }
 }
 
 pub use builtin::*;
 pub use value::*;
+
+#[macro_export]
+macro_rules! range {
+    ($stop:expr) => {
+        range1($stop)
+    };
+}

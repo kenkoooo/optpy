@@ -59,6 +59,11 @@ impl ExprResolve for Expr {
                         name: "map_int".into(),
                         args,
                     }
+                } else if name == "range" {
+                    Expr::CallFunction {
+                        name: "range!".to_string(),
+                        args: args.resolve(),
+                    }
                 } else {
                     Expr::CallFunction {
                         name: name.to_string(),
