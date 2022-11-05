@@ -131,5 +131,6 @@ fn format_binary_operator(op: &BinaryOperator) -> String {
         BinaryOperator::Add => " + ".to_string(),
         BinaryOperator::Mul => " * ".to_string(),
         BinaryOperator::Mod => " % ".to_string(),
+        BinaryOperator::FloorDiv => " // ".to_string(),
     }
 }

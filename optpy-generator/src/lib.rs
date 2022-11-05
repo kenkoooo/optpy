@@ -220,6 +220,7 @@ fn format_binary_operator(op: &BinaryOperator) -> TokenStream {
         BinaryOperator::Add => quote! { + },
         BinaryOperator::Mul => quote! { * },
         BinaryOperator::Mod => quote! { % },
+        BinaryOperator::FloorDiv => quote! { / },
     }
 }
 

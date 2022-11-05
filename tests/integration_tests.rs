@@ -11,6 +11,17 @@ macro_rules! optpy_integration_test {
             }
         }
     };
+    (ignore, $name:ident, $code:expr, $(($input:expr, $output:expr)),+) => {
+        #[test]
+        #[ignore]
+        fn $name() {
+            let code = $code;
+            let tests = [$(($input, $output)),+];
+            for (input, output) in tests {
+                assert_eq!(test_env::execute(code, input).unwrap(), output);
+            }
+        }
+    };
 }
 
 optpy_integration_test! {
@@ -37,26 +48,27 @@ print(s.count('1'))
 ("000\n", "0\n")
 }
 
-// optpy_integration_test! {
-// test_while_loop,
-// r#"
-// N = int(input())
-// A = list(map(int, input().split()))
+optpy_integration_test! {
+ignore,
+test_while_loop,
+r#"
+N = int(input())
+A = list(map(int, input().split()))
 
-// flag = 0
-// count = 0
+flag = 0
+count = 0
 
-// while True:
-//     for i in range(N):
-//         if A[i] % 2 != 0:
-//             flag = 1
-//     if flag == 1:
-//         break
-//     for i in range(N):
-//         A[i] = A[i]//2
-//     count += 1
-// print(count)
-// "#,
-// ("101\n", "2\n"),
-// ("000\n", "0\n")
-// }
+while True:
+    for i in range(N):
+        if A[i] % 2 != 0:
+            flag = 1
+    if flag == 1:
+        break
+    for i in range(N):
+        A[i] = A[i]//2
+    count += 1
+print(count)
+"#,
+("101\n", "2\n"),
+("000\n", "0\n")
+}

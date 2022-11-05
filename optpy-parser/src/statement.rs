@@ -1,6 +1,6 @@
 use rustpython_parser::ast::StatementType;
 
-use crate::{expression::Expr, BoolOperator, CompareOperator, Number};
+use crate::{expression::Expr, BinaryOperator, BoolOperator, CompareOperator, Number};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Statement {
@@ -155,6 +155,18 @@ impl Statement {
                 ]
             }
             StatementType::Break => vec![Statement::Break],
+            StatementType::AugAssign { target, op, value } => {
+                let target = Expr::parse(&target.node);
+                let value = Expr::parse(&value.node);
+                vec![Statement::Assign {
+                    target: target.clone(),
+                    value: Expr::BinaryOperation {
+                        left: Box::new(target),
+                        right: Box::new(value),
+                        op: BinaryOperator::parse(op),
+                    },
+                }]
+            }
             statement => todo!("{:?}", statement),
         }
     }
