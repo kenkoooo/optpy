@@ -37,3 +37,27 @@ print(s.count('1'))
 ("101\n", "2\n"),
 ("000\n", "0\n")
 }
+
+optpy_integration_test! {
+test_while_loop,
+r#"
+N = int(input())
+A = list(map(int, input().split()))
+
+flag = 0
+count = 0
+
+while True:
+    for i in range(N):
+        if A[i] % 2 != 0:
+            flag = 1
+    if flag == 1:
+        break
+    for i in range(N):
+        A[i] = A[i]//2
+    count += 1
+print(count)
+"#,
+("101\n", "2\n"),
+("000\n", "0\n")
+}

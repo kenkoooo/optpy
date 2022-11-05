@@ -100,6 +100,18 @@ fn format_statement(
                 }
             }
         },
+        Statement::While { test, body } => {
+            let test = format_expr(test);
+            let body = body
+                .iter()
+                .map(|s| format_statement(s, definitions))
+                .collect::<Vec<_>>();
+            quote! {
+                while #test {
+                    #(#body);*
+                }
+            }
+        }
     }
 }
 
@@ -167,6 +179,17 @@ fn format_expr(expr: &Expr) -> TokenStream {
         Expr::ConstantString(value) => {
             quote! {
                 Value::from(#value)
+            }
+        }
+        Expr::ConstantBoolean(b) => {
+            if *b {
+                quote! {
+                    true
+                }
+            } else {
+                quote! {
+                    false
+                }
             }
         }
     }

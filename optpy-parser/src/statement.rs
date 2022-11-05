@@ -20,6 +20,10 @@ pub enum Statement {
         body: Vec<Statement>,
     },
     Return(Option<Expr>),
+    While {
+        test: Expr,
+        body: Vec<Statement>,
+    },
 }
 
 impl Statement {
@@ -82,6 +86,15 @@ impl Statement {
             StatementType::Return { value } => {
                 let value = value.as_ref().map(|value| Expr::parse(&value.node));
                 vec![Self::Return(value)]
+            }
+            StatementType::While {
+                test,
+                body,
+                orelse: _,
+            } => {
+                let test = Expr::parse(&test.node);
+                let body = parse_statements(body);
+                vec![Statement::While { test, body }]
             }
             statement => todo!("{:?}", statement),
         }

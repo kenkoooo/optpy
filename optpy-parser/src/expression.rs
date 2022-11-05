@@ -33,6 +33,7 @@ pub enum Expr {
     },
     Number(Number),
     ConstantString(String),
+    ConstantBoolean(bool),
 }
 
 impl Expr {
@@ -120,6 +121,7 @@ impl Expr {
                 }
                 value => todo!("{:?}", value),
             },
+            ExpressionType::True => Self::ConstantBoolean(true),
             expr => todo!("unsupported expression: {:?}", expr),
         }
     }

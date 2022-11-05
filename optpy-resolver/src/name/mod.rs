@@ -6,12 +6,12 @@ pub(super) fn resolve_names(statements: &[Statement]) -> Vec<Statement> {
     let mut variables = NameStore::new("__v");
     let mut functions = NameStore::new("__f");
     let ctx = ContextPath::default();
-    collect_names(statements, &mut variables, &mut functions, &ctx);
+    collect_declarations(statements, &mut variables, &mut functions, &ctx);
     let statements = resolve_statements(statements, &variables, &functions, &ctx);
     statements
 }
 
-fn collect_names(
+fn collect_declarations(
     statements: &[Statement],
     variables: &mut NameStore,
     functions: &mut NameStore,
@@ -21,8 +21,8 @@ fn collect_names(
         match statement {
             Statement::Assign { target, .. } => collect_variable_names(target, variables, ctx),
             Statement::If { body, orelse, .. } => {
-                collect_names(body, variables, functions, ctx);
-                collect_names(orelse, variables, functions, ctx);
+                collect_declarations(body, variables, functions, ctx);
+                collect_declarations(orelse, variables, functions, ctx);
             }
             Statement::Func { name, args, body } => {
                 functions.declare(name, ctx);
@@ -30,7 +30,10 @@ fn collect_names(
                 for arg in args {
                     variables.declare(arg, &ctx);
                 }
-                collect_names(body, variables, functions, &ctx);
+                collect_declarations(body, variables, functions, &ctx);
+            }
+            Statement::While { body, .. } => {
+                collect_declarations(body, variables, functions, ctx);
             }
             Statement::Return(_) | Statement::Expression(_) => continue,
         }
@@ -94,6 +97,11 @@ fn resolve_statements(
                 }
                 None => Statement::Return(None),
             },
+            Statement::While { test, body } => {
+                let test = resolve_expr(test, variables, functions, ctx);
+                let body = resolve_statements(body, variables, functions, ctx);
+                Statement::While { test, body }
+            }
         })
         .collect()
 }
@@ -172,7 +180,7 @@ fn resolve_expr(
                 index: Box::new(index),
             }
         }
-        Expr::ConstantString(_) | Expr::Number(_) => expr.clone(),
+        Expr::ConstantString(_) | Expr::Number(_) | Expr::ConstantBoolean(_) => expr.clone(),
     }
 }
 

@@ -33,6 +33,13 @@ pub fn to_python_code(statements: &[Statement]) -> Vec<String> {
                 Some(expr) => result.push(format!("return {}", format_expr(expr))),
                 None => result.push("return".to_string()),
             },
+            Statement::While { test, body } => {
+                result.push(format!("while {}:", format_expr(test)));
+                let body = to_python_code(body);
+                for line in body {
+                    result.push(format!("    {line}"));
+                }
+            }
         }
     }
     result
@@ -93,6 +100,13 @@ fn format_expr(expr: &Expr) -> String {
             format!("{}[{}]", format_expr(value), format_expr(index))
         }
         Expr::ConstantString(value) => format!(r#""{value}""#),
+        Expr::ConstantBoolean(b) => {
+            if *b {
+                "True".to_string()
+            } else {
+                "False".to_string()
+            }
+        }
     }
 }
 

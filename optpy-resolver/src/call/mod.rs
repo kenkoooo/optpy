@@ -53,6 +53,11 @@ fn resolve_statement(
         Statement::Return(expr) => {
             Statement::Return(expr.as_ref().map(|e| resolve_expr(e, extensions)))
         }
+        Statement::While { test, body } => {
+            let test = resolve_expr(test, extensions);
+            let body = resolve_statements(body, extensions);
+            Statement::While { test, body }
+        }
     }
 }
 
@@ -195,6 +200,10 @@ fn list_variable_contexts(
                     store.record(arg, name);
                 }
             }
+            Statement::While { test, body } => {
+                list_from_expr(test, function_name, store);
+                list_variable_contexts(body, function_name, store);
+            }
         }
     }
 }
@@ -233,7 +242,7 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
             list_from_expr(value, function_name, store);
             list_from_expr(index, function_name, store);
         }
-        Expr::Number(_) | Expr::ConstantString(_) => {}
+        Expr::Number(_) | Expr::ConstantString(_) | Expr::ConstantBoolean(_) => {}
     }
 }
 fn list_from_exprs(exprs: &[Expr], function_name: &str, store: &mut ReferenceStore) {

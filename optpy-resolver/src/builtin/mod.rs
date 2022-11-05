@@ -27,6 +27,10 @@ impl StatementResolve for Statement {
                 body: body.resolve(),
             },
             Statement::Return(v) => Statement::Return(v.as_ref().map(|e| e.resolve())),
+            Statement::While { test, body } => Statement::While {
+                test: test.resolve(),
+                body: body.resolve(),
+            },
         }
     }
 }
@@ -85,7 +89,10 @@ impl ExprResolve for Expr {
                 value: Box::new(value.resolve()),
                 index: Box::new(index.resolve()),
             },
-            Expr::Number(_) | Expr::ConstantString(_) | Expr::VariableName(_) => self.clone(),
+            Expr::Number(_)
+            | Expr::ConstantString(_)
+            | Expr::VariableName(_)
+            | Expr::ConstantBoolean(_) => self.clone(),
         }
     }
 }
