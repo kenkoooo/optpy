@@ -58,6 +58,7 @@ fn resolve_statement(
             let body = resolve_statements(body, extensions);
             Statement::While { test, body }
         }
+        Statement::Break => Statement::Break,
     }
 }
 
@@ -204,6 +205,7 @@ fn list_variable_contexts(
                 list_from_expr(test, function_name, store);
                 list_variable_contexts(body, function_name, store);
             }
+            Statement::Break => continue,
         }
     }
 }

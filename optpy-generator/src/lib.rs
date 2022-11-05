@@ -112,6 +112,7 @@ fn format_statement(
                 }
             }
         }
+        Statement::Break => quote! { break; },
     }
 }
 
@@ -210,6 +211,8 @@ fn format_compare_operator(op: &CompareOperator) -> TokenStream {
         CompareOperator::Less => quote! { < },
         CompareOperator::LessOrEqual => quote! { <= },
         CompareOperator::Equal => quote! { == },
+        CompareOperator::Greater => quote! { > },
+        CompareOperator::NotEqual => quote! { != },
     }
 }
 fn format_binary_operator(op: &BinaryOperator) -> TokenStream {

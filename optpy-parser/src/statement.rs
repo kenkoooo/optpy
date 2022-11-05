@@ -1,6 +1,6 @@
 use rustpython_parser::ast::StatementType;
 
-use crate::{expression::Expr, Number};
+use crate::{expression::Expr, BoolOperator, CompareOperator, Number};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Statement {
@@ -24,6 +24,7 @@ pub enum Statement {
         test: Expr,
         body: Vec<Statement>,
     },
+    Break,
 }
 
 impl Statement {
@@ -96,6 +97,64 @@ impl Statement {
                 let body = parse_statements(body);
                 vec![Statement::While { test, body }]
             }
+            StatementType::For {
+                is_async: _,
+                target,
+                iter,
+                body,
+                orelse: _,
+            } => {
+                // __tmp_variable_for_for_loop_ = list(iter)
+                // __tmp_variable_for_for_loop_.reverse()
+                // while len(__tmp_variable_for_for_loop_) > 0:
+                //     target = __tmp_variable_for_for_loop_.pop()
+                //     ..
+                let tmp_variable = Expr::VariableName(format!(
+                    "__tmp_variable_for_for_loop_{}_{}",
+                    iter.location.row(),
+                    iter.location.column()
+                ));
+                let target = Expr::parse(&target.node);
+                let iter = Expr::parse(&iter.node);
+                let mut while_body = vec![Statement::Assign {
+                    target: target.clone(),
+                    value: Expr::CallMethod {
+                        value: Box::new(tmp_variable.clone()),
+                        name: "pop".into(),
+                        args: vec![],
+                    },
+                }];
+                while_body.extend(parse_statements(body));
+                vec![
+                    Statement::Assign {
+                        target: tmp_variable.clone(),
+                        value: Expr::CallFunction {
+                            name: "list".to_string(),
+                            args: vec![iter],
+                        },
+                    },
+                    Statement::Expression(Expr::CallMethod {
+                        value: Box::new(tmp_variable.clone()),
+                        name: "reverse".into(),
+                        args: vec![],
+                    }),
+                    Statement::While {
+                        test: Expr::BoolOperation {
+                            op: BoolOperator::And,
+                            conditions: vec![Expr::Compare {
+                                left: Box::new(Expr::CallFunction {
+                                    name: "len".into(),
+                                    args: vec![tmp_variable.clone()],
+                                }),
+                                right: Box::new(Expr::Number(Number::Int("0".into()))),
+                                op: CompareOperator::Greater,
+                            }],
+                        },
+                        body: while_body,
+                    },
+                ]
+            }
+            StatementType::Break => vec![Statement::Break],
             statement => todo!("{:?}", statement),
         }
     }

@@ -221,4 +221,20 @@ print(e)
             ]
         );
     }
+
+    #[test]
+    fn test_for_loop() {
+        let code = r"
+for i in range(N):
+    print(i)
+";
+        let expected = r"
+__tmp_variable_for_for_loop_2_15 = list(range(N))
+__tmp_variable_for_for_loop_2_15.reverse()
+while len(__tmp_variable_for_for_loop_2_15) > 0:
+    i = __tmp_variable_for_for_loop_2_15.pop()
+    print(i)
+";
+        assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
+    }
 }

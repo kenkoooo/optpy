@@ -31,6 +31,7 @@ impl StatementResolve for Statement {
                 test: test.resolve(),
                 body: body.resolve(),
             },
+            Statement::Break => Statement::Break,
         }
     }
 }

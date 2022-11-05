@@ -35,7 +35,7 @@ fn collect_declarations(
             Statement::While { body, .. } => {
                 collect_declarations(body, variables, functions, ctx);
             }
-            Statement::Return(_) | Statement::Expression(_) => continue,
+            Statement::Return(_) | Statement::Expression(_) | Statement::Break => continue,
         }
     }
 }
@@ -102,6 +102,7 @@ fn resolve_statements(
                 let body = resolve_statements(body, variables, functions, ctx);
                 Statement::While { test, body }
             }
+            Statement::Break => Statement::Break,
         })
         .collect()
 }

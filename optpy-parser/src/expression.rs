@@ -149,7 +149,9 @@ impl BoolOperator {
 pub enum CompareOperator {
     Less,
     LessOrEqual,
+    Greater,
     Equal,
+    NotEqual,
 }
 
 impl CompareOperator {
@@ -158,6 +160,8 @@ impl CompareOperator {
             rustpython_parser::ast::Comparison::LessOrEqual => Self::LessOrEqual,
             rustpython_parser::ast::Comparison::Less => Self::Less,
             rustpython_parser::ast::Comparison::Equal => Self::Equal,
+            rustpython_parser::ast::Comparison::Greater => Self::Greater,
+            rustpython_parser::ast::Comparison::NotEqual => Self::NotEqual,
             op => todo!("{:?}", op),
         }
     }

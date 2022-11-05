@@ -40,6 +40,7 @@ pub fn to_python_code(statements: &[Statement]) -> Vec<String> {
                     result.push(format!("    {line}"));
                 }
             }
+            Statement::Break => result.push("break".into()),
         }
     }
     result
@@ -121,6 +122,8 @@ fn format_compare_operator(op: &CompareOperator) -> String {
         CompareOperator::Less => " < ".to_string(),
         CompareOperator::LessOrEqual => " <= ".to_string(),
         CompareOperator::Equal => " == ".to_string(),
+        CompareOperator::Greater => " > ".to_string(),
+        CompareOperator::NotEqual => " != ".to_string(),
     }
 }
 fn format_binary_operator(op: &BinaryOperator) -> String {
