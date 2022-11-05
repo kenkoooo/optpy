@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use optpy_std::value::Value;
 
 #[test]
@@ -8,9 +6,6 @@ fn test_split() {
     let list = value.split();
     assert_eq!(
         list,
-        Value::List(Rc::new(RefCell::new(vec![
-            Value::from("abc"),
-            Value::from("efg")
-        ])))
+        Value::from(vec![Value::from("abc"), Value::from("efg")])
     );
 }

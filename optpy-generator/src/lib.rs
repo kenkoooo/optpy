@@ -26,7 +26,7 @@ fn generate_function_body(
         for variable in definitions {
             let variable = format_ident!("{}", variable);
             result.append_all(quote! {
-                let mut #variable = Value::None;
+                let mut #variable = Value::none();
             });
         }
     }
@@ -83,7 +83,7 @@ fn format_statement(
             quote! {
                 fn #name( #(#args: Value),*  ) -> Value {
                     #body
-                    return Value::None;
+                    return Value::none();
                 }
             }
         }
@@ -96,7 +96,7 @@ fn format_statement(
             }
             None => {
                 quote! {
-                    return Value::None;
+                    return Value::none();
                 }
             }
         },
@@ -277,24 +277,24 @@ mod tests {
             code.to_string(),
             quote! {
                 fn main() {
-                    let mut __v0 = Value::None;
-                    let mut __v1 = Value::None;
-                    let mut __v2 = Value::None;
-                    let mut __v3 = Value::None;
-                    let mut __v7 = Value::None;
+                    let mut __v0 = Value::none();
+                    let mut __v1 = Value::none();
+                    let mut __v2 = Value::none();
+                    let mut __v3 = Value::none();
+                    let mut __v7 = Value::none();
                     __v0 = map_int(input().split());
                     __v1 = __v0.index(Value::from(0i64));
                     __v2 = __v0.index(Value::from(1i64));
                     __v3 = __v1 + __v2;
                     fn __f0(__v4: Value, __v2: Value) -> Value {
                         fn __f1(__v5: Value, __v2: Value, __v3: Value) -> Value {
-                            let mut __v6 = Value::None;
+                            let mut __v6 = Value::none();
                             __v6 = __v2 + __v3;
                             return __v6 + __v5;
-                            return Value::None;
+                            return Value::none();
                         }
                         return __f1(__v2, __v2, __v3) + __v4;
-                        return Value::None;
+                        return Value::none();
                     }
                     __v7 = __f0(__v1 + __v2 + __v3, __v2);
                     print(__v7);

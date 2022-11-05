@@ -6,22 +6,38 @@ pub mod value {
     };
 
     #[derive(Debug, PartialEq, Eq, Clone)]
-    pub enum Value {
-        List(Rc<RefCell<Vec<Value>>>),
+    pub struct Value {
+        pub inner: Rc<RefCell<Inner>>,
+    }
+
+    #[derive(Debug, PartialEq, Eq, Clone)]
+    pub enum Inner {
+        List(Vec<Value>),
         String(Rc<String>),
         Int64(i64),
         None,
     }
 
+    impl Into<Value> for Inner {
+        fn into(self) -> Value {
+            Value {
+                inner: Rc::new(RefCell::new(self)),
+            }
+        }
+    }
+
     impl Value {
+        pub fn none() -> Self {
+            Inner::None.into()
+        }
         pub fn split(&self) -> Self {
-            match self {
-                Value::String(s) => {
+            match &*self.inner.borrow() {
+                Inner::String(s) => {
                     let list = s
                         .split_whitespace()
-                        .map(|s| Self::String(Rc::new(s.to_string())))
+                        .map(|s| Inner::String(Rc::new(s.to_string())).into())
                         .collect();
-                    Self::List(Rc::new(RefCell::new(list)))
+                    Inner::List(list).into()
                 }
                 _ => panic!("undefined method"),
             }
@@ -32,15 +48,19 @@ pub mod value {
         }
 
         pub fn index(&self, index: Self) -> Self {
-            match (self, index) {
-                (Self::List(list), Self::Int64(i)) => list.borrow()[i as usize].shallow_copy(),
+            match (&*self.inner.borrow(), &*index.inner.borrow()) {
+                (Inner::List(list), Inner::Int64(i)) => list[*i as usize].shallow_copy(),
                 _ => todo!(),
             }
         }
 
+        pub fn assign(&mut self, value: Value) {
+            self.inner = value.inner.clone();
+        }
+
         pub fn count(&self, value: Value) -> Value {
-            match (self, value) {
-                (Value::String(lhs), Value::String(rhs)) => {
+            match (&*self.inner.borrow(), &*value.inner.borrow()) {
+                (Inner::String(lhs), Inner::String(rhs)) => {
                     let mut i = 0;
                     let mut result = 0;
                     while i < lhs.len() {
@@ -51,7 +71,7 @@ pub mod value {
                             i += 1;
                         }
                     }
-                    Value::Int64(result)
+                    Inner::Int64(result).into()
                 }
                 _ => todo!(),
             }
@@ -60,20 +80,25 @@ pub mod value {
 
     impl From<&str> for Value {
         fn from(s: &str) -> Self {
-            Value::String(Rc::new(s.to_string()))
+            Inner::String(Rc::new(s.to_string())).into()
         }
     }
     impl From<i64> for Value {
         fn from(v: i64) -> Self {
-            Value::Int64(v)
+            Inner::Int64(v).into()
+        }
+    }
+    impl From<Vec<Value>> for Value {
+        fn from(list: Vec<Value>) -> Self {
+            Inner::List(list).into()
         }
     }
     impl Rem for Value {
         type Output = Value;
 
         fn rem(self, rhs: Self) -> Self::Output {
-            match (self, rhs) {
-                (Self::Int64(lhs), Self::Int64(rhs)) => Self::Int64(lhs % rhs),
+            match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
+                (Inner::Int64(lhs), Inner::Int64(rhs)) => Inner::Int64(lhs % rhs).into(),
                 _ => todo!(),
             }
         }
@@ -82,8 +107,8 @@ pub mod value {
         type Output = Value;
 
         fn mul(self, rhs: Self) -> Self::Output {
-            match (self, rhs) {
-                (Self::Int64(lhs), Self::Int64(rhs)) => Self::Int64(lhs * rhs),
+            match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
+                (Inner::Int64(lhs), Inner::Int64(rhs)) => Inner::Int64(lhs * rhs).into(),
                 _ => todo!(),
             }
         }
@@ -91,22 +116,22 @@ pub mod value {
 }
 
 pub mod builtin {
-    use std::{cell::RefCell, io::stdin, rc::Rc};
+    use std::io::stdin;
 
-    use crate::value::Value;
+    use crate::value::{Inner, Value};
 
     pub fn input() -> Value {
         let mut buf = String::new();
         stdin().read_line(&mut buf).unwrap();
-        Value::String(Rc::new(buf.trim().to_string()))
+        Value::from(buf.trim())
     }
 
     pub fn print(value: Value) {
-        match value {
-            Value::String(s) => {
+        match &*value.inner.borrow() {
+            Inner::String(s) => {
                 println!("{}", s);
             }
-            Value::Int64(i) => {
+            Inner::Int64(i) => {
                 println!("{}", i);
             }
             _ => todo!(),
@@ -114,28 +139,24 @@ pub mod builtin {
     }
 
     pub fn map_int(value: Value) -> Value {
-        match value {
-            Value::List(list) => {
-                let list = list
-                    .borrow()
-                    .iter()
-                    .map(|v| int(v.shallow_copy()))
-                    .collect();
-                Value::List(Rc::new(RefCell::new(list)))
+        match &*value.inner.borrow() {
+            Inner::List(list) => {
+                let list = list.iter().map(|v| int(v.shallow_copy())).collect();
+                Inner::List(list).into()
             }
             _ => todo!(),
         }
     }
     pub fn int(value: Value) -> Value {
-        match value {
-            Value::String(s) => {
+        match &*value.inner.borrow() {
+            Inner::String(s) => {
                 if let Ok(i) = s.parse::<i64>() {
-                    Value::Int64(i)
+                    Inner::Int64(i).into()
                 } else {
                     todo!()
                 }
             }
-            Value::Int64(_) => value,
+            Inner::Int64(_) => value.clone(),
             _ => panic!("invalid"),
         }
     }
