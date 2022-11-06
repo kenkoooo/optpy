@@ -39,6 +39,20 @@ else:
 }
 
 optpy_integration_test! {
+test_multiple_if_conditions,
+r#"
+a, b, c = map(int, input().split())
+ans = a * b
+if a <= b < c:
+    print("IN")
+else:
+    print("OUT")
+"#,
+("3 4 5\n", "IN\n"),
+("3 5 4\n", "OUT\n")
+}
+
+optpy_integration_test! {
 test_count,
 r#"
 s = input()

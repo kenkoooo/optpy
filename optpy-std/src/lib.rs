@@ -130,6 +130,27 @@ pub mod value {
         impl_value_binop!(__mul, mul);
         impl_value_binop!(__mod, rem);
 
+        pub fn __floor_div(&self, rhs: Value) -> Value {
+            match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
+                (Inner::Int64(lhs), Inner::Int64(rhs)) => Inner::Int64(lhs / rhs).into(),
+                _ => todo!(),
+            }
+        }
+
+        pub fn __bool_or(&self, rhs: Value) -> Value {
+            match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
+                (Inner::Boolean(lhs), Inner::Boolean(rhs)) => Inner::Boolean(*lhs || *rhs).into(),
+                _ => todo!(),
+            }
+        }
+
+        pub fn __bool_and(&self, rhs: Value) -> Value {
+            match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
+                (Inner::Boolean(lhs), Inner::Boolean(rhs)) => Inner::Boolean(*lhs && *rhs).into(),
+                _ => todo!(),
+            }
+        }
+
         pub fn test(&self) -> bool {
             match &*self.inner.borrow() {
                 Inner::Boolean(x) => *x,
@@ -151,6 +172,11 @@ pub mod value {
     impl From<Vec<Value>> for Value {
         fn from(list: Vec<Value>) -> Self {
             Inner::List(list).into()
+        }
+    }
+    impl From<bool> for Value {
+        fn from(b: bool) -> Self {
+            Inner::Boolean(b).into()
         }
     }
     impl Rem for Value {

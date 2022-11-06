@@ -153,14 +153,12 @@ fn format_expr(expr: &Expr) -> TokenStream {
             }
         }
         Expr::BoolOperation { op, conditions } => {
-            let op = format_boolean_operator(op);
+            let op = format_boolean_operation(op);
             let conditions = format_exprs(conditions);
-            let mut result = TokenStream::new();
-            for (i, condition) in conditions.iter().enumerate() {
-                if i > 0 {
-                    result.append_all(quote! { #op });
-                }
-                result.append_all(quote! { #condition })
+            let head = &conditions[0];
+            let mut result = quote! { #head };
+            for condition in conditions.iter().skip(1) {
+                result = quote! { #condition . #op (#result .shallow_copy()) };
             }
             result
         }
@@ -181,7 +179,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
             let value = format_expr(value);
             let index = format_expr(index);
             quote! {
-                #value .index( #index )
+                #value .index( #index .shallow_copy() )
             }
         }
         Expr::ConstantString(value) => {
@@ -192,11 +190,11 @@ fn format_expr(expr: &Expr) -> TokenStream {
         Expr::ConstantBoolean(b) => {
             if *b {
                 quote! {
-                    true
+                    Value::from(true)
                 }
             } else {
                 quote! {
-                    false
+                    Value::from(false)
                 }
             }
         }
@@ -207,10 +205,10 @@ fn format_exprs(exprs: &[Expr]) -> Vec<TokenStream> {
     exprs.iter().map(|e| format_expr(e)).collect()
 }
 
-fn format_boolean_operator(op: &BoolOperator) -> TokenStream {
+fn format_boolean_operation(op: &BoolOperator) -> Ident {
     match op {
-        BoolOperator::And => quote! { && },
-        BoolOperator::Or => quote! { || },
+        BoolOperator::And => format_ident!("__bool_and"),
+        BoolOperator::Or => format_ident!("__bool_or"),
     }
 }
 fn format_compare_ident(op: &CompareOperator) -> Ident {
