@@ -6,8 +6,9 @@ macro_rules! optpy_integration_test {
         fn $name() {
             let code = $code;
             let tests = [$(($input, $output)),+];
-            for (input, output) in tests {
-                assert_eq!(test_env::execute(code, input).unwrap(), output);
+            for (input, expected) in tests {
+                let (output, code) = test_env::execute(code, input).unwrap();
+                assert_eq!(output, expected, "{}", code);
             }
         }
     };
@@ -17,8 +18,9 @@ macro_rules! optpy_integration_test {
         fn $name() {
             let code = $code;
             let tests = [$(($input, $output)),+];
-            for (input, output) in tests {
-                assert_eq!(test_env::execute(code, input).unwrap(), output);
+            for (input, expected) in tests {
+                let (output, code) = test_env::execute(code, input).unwrap();
+                assert_eq!(output, expected, "{}", code);
             }
         }
     };
@@ -63,8 +65,17 @@ print(s.count('1'))
 }
 
 optpy_integration_test! {
-ignore,
-test_while_loop,
+test_list_add_assign,
+r"
+A = list(map(int, input().split()))
+A[0] += 1
+print(A[0])
+",
+("1 2 3\n", "2\n")
+}
+
+optpy_integration_test! {
+test_solve_abc081_b,
 r#"
 N = int(input())
 A = list(map(int, input().split()))
@@ -83,8 +94,8 @@ while True:
     count += 1
 print(count)
 "#,
-("101\n", "2\n"),
-("000\n", "0\n")
+("3\n8 12 40\n", "2\n"),
+("4\n5 6 8 10\n", "0\n")
 }
 
 optpy_integration_test! {

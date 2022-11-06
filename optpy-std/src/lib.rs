@@ -68,7 +68,8 @@ pub mod value {
         }
 
         pub fn shallow_copy(&self) -> Self {
-            self.clone()
+            let rc = Rc::clone(&self.inner);
+            Self { inner: rc }
         }
 
         pub fn index(&self, index: Self) -> Self {
@@ -79,7 +80,7 @@ pub mod value {
         }
 
         pub fn assign(&mut self, value: Value) {
-            self.inner = value.inner.clone();
+            self.inner.replace(value.inner.borrow().clone());
         }
 
         pub fn count(&self, value: Value) -> Value {

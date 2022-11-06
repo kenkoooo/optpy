@@ -9,7 +9,7 @@ use tempfile::tempdir;
 
 use optpy::compile;
 
-pub fn execute(code: &str, input: &str) -> Result<String> {
+pub fn execute(code: &str, input: &str) -> Result<(String, String)> {
     let dir = tempdir()?;
     let file = dir.path().join("a.rs");
     let path = dir.path().join("a");
@@ -19,7 +19,6 @@ pub fn execute(code: &str, input: &str) -> Result<String> {
 
     Command::new("rustfmt").args([&file]).output()?;
     let code = read_to_string(&file)?;
-
     let output = Command::new("rustc")
         .arg("-o")
         .arg(&path)
@@ -41,5 +40,5 @@ pub fn execute(code: &str, input: &str) -> Result<String> {
     let mut output = String::new();
     process.stdout.unwrap().read_to_string(&mut output)?;
 
-    Ok(output)
+    Ok((output, code))
 }

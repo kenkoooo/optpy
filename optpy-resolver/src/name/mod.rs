@@ -54,6 +54,7 @@ fn collect_variable_names(expr: &Expr, variables: &mut NameStore, ctx: &ContextP
             collect_variable_names(value, variables, ctx);
             collect_variable_names(index, variables, ctx);
         }
+        Expr::Number(_) => {}
         expr => todo!("{:?}", expr),
     }
 }
