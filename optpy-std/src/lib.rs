@@ -297,7 +297,7 @@ macro_rules! range {
 
 #[macro_export]
 macro_rules! print {
-    ($($arg:expr)*) => {
+    ($($arg:expr),+) => {
         let s = [$($arg),+].iter().map(|v| v.to_string()).collect::<Vec<_>>();
         println!("{}", s.join(" "));
     };

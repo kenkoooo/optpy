@@ -129,9 +129,9 @@ optpy_integration_test! {
 test_recursive_fibonacci,
 r#"
 def fib(n):
-  if n == 1 or n == 0:
+    if n == 1 or n == 0:
     return 1
-  return fib(n - 1) + fib(n - 2)
+    return fib(n - 1) + fib(n - 2)
 n = int(input())
 n = fib(n)
 print(n)
@@ -141,4 +141,15 @@ print(n)
 ("2\n", "2\n"),
 ("3\n", "3\n"),
 ("4\n", "5\n")
+}
+
+optpy_integration_test! {
+test_multiple_print,
+r#"
+A = 1
+B = 2
+S = "hello"
+print(A+B, S)
+"#,
+("", "3 hello\n")
 }
