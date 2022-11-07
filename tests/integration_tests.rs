@@ -110,3 +110,17 @@ print(ans)
 ("5\n", "10\n"),
 ("10\n", "45\n")
 }
+
+optpy_integration_test! {
+test_ops,
+r#"
+N, M = map(int, input().split())
+print(N + M)
+print(N * M)
+print(N - M)
+print(N / M)
+print(N // M)
+"#,
+("4 2\n", "6\n8\n2\n2\n2\n"),
+("1 2\n", "3\n2\n-1\n0.5\n0\n")
+}

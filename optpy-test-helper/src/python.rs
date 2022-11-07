@@ -129,7 +129,9 @@ fn format_compare_operator(op: &CompareOperator) -> String {
 fn format_binary_operator(op: &BinaryOperator) -> String {
     match op {
         BinaryOperator::Add => " + ".to_string(),
+        BinaryOperator::Sub => " - ".to_string(),
         BinaryOperator::Mul => " * ".to_string(),
+        BinaryOperator::Div => " / ".to_string(),
         BinaryOperator::Mod => " % ".to_string(),
         BinaryOperator::FloorDiv => " // ".to_string(),
     }

@@ -176,7 +176,9 @@ pub enum Number {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BinaryOperator {
     Add,
+    Sub,
     Mul,
+    Div,
     Mod,
     FloorDiv,
 }
@@ -185,7 +187,9 @@ impl BinaryOperator {
     pub fn parse(op: &rustpython_parser::ast::Operator) -> Self {
         match op {
             rustpython_parser::ast::Operator::Add => Self::Add,
+            rustpython_parser::ast::Operator::Sub => Self::Sub,
             rustpython_parser::ast::Operator::Mult => Self::Mul,
+            rustpython_parser::ast::Operator::Div => Self::Div,
             rustpython_parser::ast::Operator::Mod => Self::Mod,
             rustpython_parser::ast::Operator::FloorDiv => Self::FloorDiv,
             op => todo!("{:?}", op),

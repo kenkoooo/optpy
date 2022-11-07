@@ -223,7 +223,9 @@ fn format_compare_ident(op: &CompareOperator) -> Ident {
 fn format_binary_ident(op: &BinaryOperator) -> Ident {
     match op {
         BinaryOperator::Add => format_ident!("__add"),
+        BinaryOperator::Sub => format_ident!("__sub"),
         BinaryOperator::Mul => format_ident!("__mul"),
+        BinaryOperator::Div => format_ident!("__div"),
         BinaryOperator::Mod => format_ident!("__mod"),
         BinaryOperator::FloorDiv => format_ident!("__floor_div"),
     }

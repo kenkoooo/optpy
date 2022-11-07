@@ -5,16 +5,17 @@ pub mod value {
         rc::Rc,
     };
 
-    #[derive(Debug, PartialEq, Eq, Clone)]
+    #[derive(Debug, PartialEq, Clone)]
     pub struct Value {
         pub inner: Rc<RefCell<Inner>>,
     }
 
-    #[derive(Debug, PartialEq, Eq, Clone)]
+    #[derive(Debug, PartialEq, Clone)]
     pub enum Inner {
         List(Vec<Value>),
         String(Rc<String>),
         Int64(i64),
+        Float(f64),
         Boolean(bool),
         None,
     }
@@ -128,12 +129,25 @@ pub mod value {
         impl_value_compare!(is_ne, ne);
 
         impl_value_binop!(__add, add);
+        impl_value_binop!(__sub, sub);
         impl_value_binop!(__mul, mul);
         impl_value_binop!(__mod, rem);
 
         pub fn __floor_div(&self, rhs: Value) -> Value {
             match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
                 (Inner::Int64(lhs), Inner::Int64(rhs)) => Inner::Int64(lhs / rhs).into(),
+                _ => todo!(),
+            }
+        }
+        pub fn __div(&self, rhs: Value) -> Value {
+            match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
+                (Inner::Int64(lhs), Inner::Int64(rhs)) => {
+                    if lhs % rhs == 0 {
+                        Inner::Int64(lhs / rhs).into()
+                    } else {
+                        Inner::Float(*lhs as f64 / *rhs as f64).into()
+                    }
+                }
                 _ => todo!(),
             }
         }
@@ -220,6 +234,9 @@ pub mod builtin {
             }
             Inner::Int64(i) => {
                 println!("{}", i);
+            }
+            Inner::Float(f) => {
+                println!("{}", f);
             }
             _ => todo!(),
         }
