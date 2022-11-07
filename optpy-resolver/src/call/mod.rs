@@ -334,7 +334,7 @@ mod tests {
             |        return __v5 + __v6
             |    return __f1(__v2, __v2, __v3) + __v4
             |__v7 = __f0(__v1 + __v2 + __v3, __v2)
-            |print(__v7)"
+            |print!(__v7)"
             .strip_margin();
 
         let ast = parse(code).unwrap();

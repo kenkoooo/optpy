@@ -64,6 +64,11 @@ impl ExprResolve for Expr {
                         name: "range!".to_string(),
                         args: args.resolve(),
                     }
+                } else if name == "print" {
+                    Expr::CallFunction {
+                        name: "print!".to_string(),
+                        args: args.resolve(),
+                    }
                 } else {
                     Expr::CallFunction {
                         name: name.to_string(),

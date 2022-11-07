@@ -194,6 +194,16 @@ pub mod value {
             Inner::Boolean(b).into()
         }
     }
+    impl ToString for Value {
+        fn to_string(&self) -> String {
+            match &*self.inner.borrow() {
+                Inner::String(s) => s.to_string(),
+                Inner::Int64(i) => i.to_string(),
+                Inner::Float(f) => f.to_string(),
+                _ => todo!(),
+            }
+        }
+    }
     impl Rem for Value {
         type Output = Value;
 
@@ -225,21 +235,6 @@ pub mod builtin {
         let mut buf = String::new();
         stdin().read_line(&mut buf).unwrap();
         Value::from(buf.trim())
-    }
-
-    pub fn print(value: Value) {
-        match &*value.inner.borrow() {
-            Inner::String(s) => {
-                println!("{}", s);
-            }
-            Inner::Int64(i) => {
-                println!("{}", i);
-            }
-            Inner::Float(f) => {
-                println!("{}", f);
-            }
-            _ => todo!(),
-        }
     }
 
     pub fn map_int(value: Value) -> Value {
@@ -297,5 +292,13 @@ pub use value::*;
 macro_rules! range {
     ($stop:expr) => {
         range1($stop)
+    };
+}
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:expr)*) => {
+        let s = [$($arg),+].iter().map(|v| v.to_string()).collect::<Vec<_>>();
+        println!("{}", s.join(" "));
     };
 }
