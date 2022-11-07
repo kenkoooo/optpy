@@ -9,17 +9,21 @@ use optpy::compile;
 
 #[derive(Parser, Debug)]
 struct Args {
+    /// Input Python file
     input: PathBuf,
 
-    #[clap(default_value = "./a.rs")]
-    output: PathBuf,
+    output: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    let code = read_to_string(args.input)?;
+    let code = read_to_string(&args.input)?;
     let result = compile(code)?;
 
-    write(args.output, result)?;
+    let output = match args.output.as_ref() {
+        Some(output) => output.clone(),
+        None => args.input.with_extension("rs"),
+    };
+    write(output, result)?;
     Ok(())
 }
