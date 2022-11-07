@@ -186,6 +186,10 @@ fn resolve_expr(
                 index: Box::new(index),
             }
         }
+        Expr::List(list) => {
+            let list = resolve_exprs(list, variables, functions, ctx);
+            Expr::List(list)
+        }
         Expr::ConstantString(_) | Expr::Number(_) | Expr::ConstantBoolean(_) => expr.clone(),
     }
 }

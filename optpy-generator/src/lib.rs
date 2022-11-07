@@ -182,6 +182,12 @@ fn format_expr(expr: &Expr) -> TokenStream {
                 #value .index( #index .shallow_copy() )
             }
         }
+        Expr::List(list) => {
+            let list = format_exprs(list);
+            quote! {
+                Value::from(vec![#(#list),*])
+            }
+        }
         Expr::ConstantString(value) => {
             quote! {
                 Value::from(#value)

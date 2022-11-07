@@ -153,3 +153,14 @@ print(A+B, S)
 "#,
 ("", "3 hello\n")
 }
+
+optpy_integration_test! {
+test_list_initialization,
+r#"
+A = []
+A.append("A")
+A.append("B")
+print(A[0], A[1])
+"#,
+("", "A B\n")
+}

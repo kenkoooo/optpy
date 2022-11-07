@@ -34,6 +34,7 @@ pub enum Expr {
     Number(Number),
     ConstantString(String),
     ConstantBoolean(bool),
+    List(Vec<Expr>),
 }
 
 impl Expr {
@@ -122,6 +123,10 @@ impl Expr {
                 value => todo!("{:?}", value),
             },
             ExpressionType::True => Self::ConstantBoolean(true),
+            ExpressionType::List { elements } => {
+                let list = parse_expressions(elements);
+                Self::List(list)
+            }
             expr => todo!("unsupported expression: {:?}", expr),
         }
     }

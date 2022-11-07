@@ -93,6 +93,10 @@ fn format_expr(expr: &Expr) -> String {
             format_binary_operator(op),
             format_expr(right)
         ),
+        Expr::List(list) => {
+            let list = list.iter().map(|arg| format_expr(arg)).collect::<Vec<_>>();
+            format!("[{}]", list.join(", "))
+        }
         Expr::Number(number) => match number {
             optpy_parser::Number::Int(int) => int.to_string(),
             optpy_parser::Number::Float(float) => float.to_string(),

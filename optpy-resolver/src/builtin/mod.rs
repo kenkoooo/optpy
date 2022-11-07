@@ -100,6 +100,7 @@ impl ExprResolve for Expr {
                 value: Box::new(value.resolve()),
                 index: Box::new(index.resolve()),
             },
+            Expr::List(list) => Expr::List(list.resolve()),
             Expr::Number(_)
             | Expr::ConstantString(_)
             | Expr::VariableName(_)

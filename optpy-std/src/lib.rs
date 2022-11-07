@@ -122,6 +122,15 @@ pub mod value {
                 _ => todo!(),
             }
         }
+        pub fn append(&mut self, value: Value) {
+            match &mut *self.inner.borrow_mut() {
+                Inner::List(list) => {
+                    list.push(value);
+                }
+                _ => todo!(),
+            }
+        }
+
         impl_value_compare!(is_gt, gt);
         impl_value_compare!(is_lt, lt);
         impl_value_compare!(is_le, le);

@@ -244,6 +244,9 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
             list_from_expr(value, function_name, store);
             list_from_expr(index, function_name, store);
         }
+        Expr::List(list) => {
+            list_from_exprs(list, function_name, store);
+        }
         Expr::Number(_) | Expr::ConstantString(_) | Expr::ConstantBoolean(_) => {}
     }
 }
