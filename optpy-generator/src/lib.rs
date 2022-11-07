@@ -120,7 +120,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
     match expr {
         Expr::CallFunction { name, args } => {
             let args = format_exprs(args);
-            if let Some(macro_name) = name.strip_suffix("!") {
+            if let Some(macro_name) = name.strip_suffix("__macro__") {
                 let name = format_ident!("{}", macro_name);
                 quote! {
                     #name !( #(#args .shallow_copy()),* )

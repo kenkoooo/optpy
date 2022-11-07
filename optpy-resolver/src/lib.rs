@@ -5,6 +5,7 @@ use optpy_parser::Statement;
 mod builtin;
 mod call;
 mod name;
+pub mod util;
 
 pub fn resolve(statements: &[Statement]) -> (Vec<Statement>, BTreeMap<String, BTreeSet<String>>) {
     let statements = name::resolve_names(statements);

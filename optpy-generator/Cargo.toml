@@ -10,5 +10,4 @@ optpy-parser = { path = "../optpy-parser" }
 proc-macro2 = "1.0.47"
 
 [dev-dependencies]
-optpy-test-helper = { path = "../optpy-test-helper" }
 optpy-resolver = { path = "../optpy-resolver" }

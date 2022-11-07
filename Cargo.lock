@@ -522,7 +522,6 @@ version = "0.1.0"
 dependencies = [
  "optpy-parser",
  "optpy-resolver",
- "optpy-test-helper",
  "proc-macro2",
  "quote",
 ]
@@ -539,19 +538,11 @@ name = "optpy-resolver"
 version = "0.1.0"
 dependencies = [
  "optpy-parser",
- "optpy-test-helper",
 ]
 
 [[package]]
 name = "optpy-std"
 version = "0.1.0"
-
-[[package]]
-name = "optpy-test-helper"
-version = "0.1.0"
-dependencies = [
- "optpy-parser",
-]
 
 [[package]]
 name = "ordermap"

@@ -6,6 +6,3 @@ publish = false
 
 [dependencies]
 optpy-parser = { path = "../optpy-parser" }
-
-[dev-dependencies]
-optpy-test-helper = { path = "../optpy-test-helper" }

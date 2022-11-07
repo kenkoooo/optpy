@@ -61,12 +61,12 @@ impl ExprResolve for Expr {
                     }
                 } else if name == "range" {
                     Expr::CallFunction {
-                        name: "range!".to_string(),
+                        name: "range__macro__".to_string(),
                         args: args.resolve(),
                     }
                 } else if name == "print" {
                     Expr::CallFunction {
-                        name: "print!".to_string(),
+                        name: "print__macro__".to_string(),
                         args: args.resolve(),
                     }
                 } else {

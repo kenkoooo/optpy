@@ -273,7 +273,8 @@ impl NameStore {
 #[cfg(test)]
 mod tests {
     use optpy_parser::parse;
-    use optpy_test_helper::{to_python_code, StripMargin};
+
+    use crate::util::StripMargin;
 
     use super::*;
 
@@ -293,7 +294,7 @@ mod tests {
             |__v2 = __v0[1]
             |print(__v1)"
             .strip_margin();
-        assert_eq!(to_python_code(&resolved).join("\n"), expected);
+        assert_eq!(resolved, parse(expected).unwrap());
     }
 
     #[test]
@@ -318,7 +319,7 @@ mod tests {
             |__v4 = __f0(__v1)
             |print(__v4)"
             .strip_margin();
-        assert_eq!(to_python_code(&resolved).join("\n"), expected);
+        assert_eq!(resolved, parse(expected).unwrap());
 
         let code = r"
             |a, b = map(int, input().split())
@@ -346,8 +347,8 @@ mod tests {
             .strip_margin();
 
         assert_eq!(
-            to_python_code(&resolve_names(&parse(code).unwrap())).join("\n"),
-            expected
+            resolve_names(&parse(code).unwrap()),
+            parse(expected).unwrap()
         );
 
         let code = r"
@@ -378,8 +379,8 @@ mod tests {
             .strip_margin();
 
         assert_eq!(
-            to_python_code(&resolve_names(&parse(code).unwrap())).join("\n"),
-            expected
+            resolve_names(&parse(code).unwrap()),
+            parse(expected).unwrap()
         );
     }
 }

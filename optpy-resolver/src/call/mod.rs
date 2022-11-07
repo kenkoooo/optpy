@@ -306,9 +306,8 @@ impl ReferenceStore {
 #[cfg(test)]
 mod tests {
     use optpy_parser::parse;
-    use optpy_test_helper::{to_python_code, StripMargin};
 
-    use crate::resolve;
+    use crate::{resolve, util::StripMargin};
 
     use super::*;
 
@@ -337,12 +336,12 @@ mod tests {
             |        return __v5 + __v6
             |    return __f1(__v2, __v2, __v3) + __v4
             |__v7 = __f0(__v1 + __v2 + __v3, __v2)
-            |print!(__v7)"
+            |print__macro__(__v7)"
             .strip_margin();
 
         let ast = parse(code).unwrap();
         let (statements, definitions) = resolve(&ast);
-        assert_eq!(to_python_code(&statements).join("\n"), expected);
+        assert_eq!(statements, parse(expected).unwrap());
         assert_eq!(
             definitions,
             BTreeMap::from([

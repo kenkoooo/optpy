@@ -12,13 +12,7 @@ optpy-generator = { path = "./optpy-generator" }
 anyhow = { version = "1.0.66", features = ["backtrace"] }
 
 [workspace]
-members = [
-    "optpy-parser",
-    "optpy-resolver",
-    "optpy-test-helper",
-    "optpy-std",
-    "optpy-generator",
-]
+members = ["optpy-parser", "optpy-resolver", "optpy-std", "optpy-generator"]
 
 [dev-dependencies]
 tempfile = "3.3.0"
