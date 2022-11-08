@@ -2,7 +2,6 @@
 name = "optpy"
 version = "0.1.0"
 edition = "2021"
-publish = false
 
 [dependencies]
 clap = { version = "4.0.19", features = ["derive"] }
@@ -10,6 +9,8 @@ optpy-parser = { path = "./optpy-parser" }
 optpy-resolver = { path = "./optpy-resolver" }
 optpy-generator = { path = "./optpy-generator" }
 anyhow = { version = "1.0.66", features = ["backtrace"] }
+env_logger = "0.9.3"
+log = "0.4.17"
 
 [workspace]
 members = ["optpy-parser", "optpy-resolver", "optpy-std", "optpy-generator"]
