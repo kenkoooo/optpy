@@ -1,4 +1,4 @@
-use rustpython_parser::ast::{ExpressionType, StatementType};
+use rustpython_parser::ast::{ExprKind, Stmt, StmtKind};
 
 use crate::{expression::Expr, BinaryOperator, BoolOperator, CompareOperator, Number};
 
@@ -28,42 +28,43 @@ pub enum Statement {
 }
 
 impl Statement {
-    pub fn parse(statement: &StatementType) -> Vec<Self> {
+    pub fn parse(statement: &StmtKind) -> Vec<Self> {
         match statement {
-            StatementType::Assign { targets, value } => {
+            StmtKind::Assign {
+                targets,
+                value,
+                type_comment: _,
+            } => {
                 assert_eq!(targets.len(), 1);
                 parse_assignment(&targets[0].node, Expr::parse(&value.node))
             }
-            StatementType::Expression { expression } => {
-                vec![Self::Expression(Expr::parse(&expression.node))]
+            StmtKind::Expr { value } => {
+                vec![Self::Expression(Expr::parse(&value.node))]
             }
-            StatementType::If { test, body, orelse } => {
+            StmtKind::If { test, body, orelse } => {
                 let test = Expr::parse(&test.node);
                 let body = parse_statements(body);
-                let orelse = orelse
-                    .as_ref()
-                    .map(|s| parse_statements(s))
-                    .unwrap_or_default();
+                let orelse = parse_statements(orelse);
                 vec![Self::If { test, body, orelse }]
             }
-            StatementType::FunctionDef {
-                is_async: _,
+            StmtKind::FunctionDef {
                 decorator_list: _,
                 returns: _,
                 name,
                 args,
                 body,
+                type_comment: _,
             } => {
                 let name = name.to_string();
-                let args = args.args.iter().map(|arg| arg.arg.clone()).collect();
+                let args = args.args.iter().map(|arg| arg.node.arg.clone()).collect();
                 let body = parse_statements(body);
                 vec![Self::Func { name, args, body }]
             }
-            StatementType::Return { value } => {
+            StmtKind::Return { value } => {
                 let value = value.as_ref().map(|value| Expr::parse(&value.node));
                 vec![Self::Return(value)]
             }
-            StatementType::While {
+            StmtKind::While {
                 test,
                 body,
                 orelse: _,
@@ -72,12 +73,12 @@ impl Statement {
                 let body = parse_statements(body);
                 vec![Statement::While { test, body }]
             }
-            StatementType::For {
-                is_async: _,
+            StmtKind::For {
                 target,
                 iter,
                 body,
                 orelse: _,
+                type_comment: _,
             } => {
                 // __tmp_variable_for_for_loop_ = list(iter)
                 // __tmp_variable_for_for_loop_.reverse()
@@ -121,7 +122,7 @@ impl Statement {
                                     name: "len".into(),
                                     args: vec![tmp_variable.clone()],
                                 }),
-                                right: Box::new(Expr::Number(Number::Int("0".into()))),
+                                right: Box::new(Expr::ConstantNumber(Number::Int("0".into()))),
                                 op: CompareOperator::Greater,
                             }],
                         },
@@ -129,8 +130,8 @@ impl Statement {
                     },
                 ]
             }
-            StatementType::Break => vec![Statement::Break],
-            StatementType::AugAssign { target, op, value } => {
+            StmtKind::Break => vec![Statement::Break],
+            StmtKind::AugAssign { target, op, value } => {
                 let target = Expr::parse(&target.node);
                 let value = Expr::parse(&value.node);
                 vec![Statement::Assign {
@@ -147,16 +148,16 @@ impl Statement {
     }
 }
 
-fn parse_statements(statements: &[rustpython_parser::ast::Statement]) -> Vec<Statement> {
+fn parse_statements(statements: &[Stmt]) -> Vec<Statement> {
     statements
         .iter()
         .flat_map(|s| Statement::parse(&s.node))
         .collect()
 }
 
-fn parse_assignment(target: &ExpressionType, value: Expr) -> Vec<Statement> {
+fn parse_assignment(target: &ExprKind, value: Expr) -> Vec<Statement> {
     match target {
-        rustpython_parser::ast::ExpressionType::Tuple { elements } => {
+        ExprKind::Tuple { elts, ctx: _ } => {
             let mut result = vec![];
             let tmp_target = Expr::VariableName("__tmp_for_tuple".into());
             result.push(Statement::Assign {
@@ -164,12 +165,12 @@ fn parse_assignment(target: &ExpressionType, value: Expr) -> Vec<Statement> {
                 value,
             });
 
-            for (i, element) in elements.iter().enumerate() {
+            for (i, element) in elts.iter().enumerate() {
                 result.push(Statement::Assign {
                     target: Expr::parse(&element.node),
                     value: Expr::Index {
                         value: Box::new(tmp_target.clone()),
-                        index: Box::new(Expr::Number(Number::Int(i.to_string()))),
+                        index: Box::new(Expr::ConstantNumber(Number::Int(i.to_string()))),
                     },
                 });
             }

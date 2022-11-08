@@ -174,7 +174,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
             let op = format_binary_ident(op);
             quote! { #left . #op (#right.shallow_copy()) }
         }
-        Expr::Number(number) => format_number(number),
+        Expr::ConstantNumber(number) => format_number(number),
         Expr::Index { value, index } => {
             let value = format_expr(value);
             let index = format_expr(index);

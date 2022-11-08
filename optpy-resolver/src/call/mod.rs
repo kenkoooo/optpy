@@ -247,7 +247,7 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
         Expr::List(list) => {
             list_from_exprs(list, function_name, store);
         }
-        Expr::Number(_) | Expr::ConstantString(_) | Expr::ConstantBoolean(_) => {}
+        Expr::ConstantNumber(_) | Expr::ConstantString(_) | Expr::ConstantBoolean(_) => {}
     }
 }
 fn list_from_exprs(exprs: &[Expr], function_name: &str, store: &mut ReferenceStore) {

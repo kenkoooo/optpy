@@ -6,12 +6,8 @@ use rustpython_parser::error::ParseError;
 pub use statement::Statement;
 
 pub fn parse<S: AsRef<str>>(code: S) -> Result<Vec<Statement>, ParseError> {
-    let ast = rustpython_parser::parser::parse_program(code.as_ref())?;
-    let statements = ast
-        .statements
-        .iter()
-        .flat_map(|s| Statement::parse(&s.node))
-        .collect();
+    let ast = rustpython_parser::parser::parse_program(code.as_ref(), "<embedded>")?;
+    let statements = ast.iter().flat_map(|s| Statement::parse(&s.node)).collect();
     Ok(statements)
 }
 
@@ -49,21 +45,21 @@ print(a)
                     target: VariableName("a".into()),
                     value: Index {
                         value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(Number(crate::Number::Int("0".into())))
+                        index: Box::new(ConstantNumber(crate::Number::Int("0".into())))
                     }
                 },
                 Assign {
                     target: VariableName("b".into()),
                     value: Index {
                         value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(Number(crate::Number::Int("1".into())))
+                        index: Box::new(ConstantNumber(crate::Number::Int("1".into())))
                     }
                 },
                 Assign {
                     target: VariableName("c".into()),
                     value: Index {
                         value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(Number(crate::Number::Int("2".into())))
+                        index: Box::new(ConstantNumber(crate::Number::Int("2".into())))
                     }
                 },
                 Expression(CallFunction {
@@ -103,21 +99,21 @@ print(result)
                     target: VariableName("a".into()),
                     value: Index {
                         value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(Number(crate::Number::Int("0".into())))
+                        index: Box::new(ConstantNumber(crate::Number::Int("0".into())))
                     }
                 },
                 Assign {
                     target: VariableName("b".into()),
                     value: Index {
                         value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(Number(crate::Number::Int("1".into())))
+                        index: Box::new(ConstantNumber(crate::Number::Int("1".into())))
                     }
                 },
                 Assign {
                     target: VariableName("c".into()),
                     value: Index {
                         value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(Number(crate::Number::Int("2".into())))
+                        index: Box::new(ConstantNumber(crate::Number::Int("2".into())))
                     }
                 },
                 If {
@@ -138,11 +134,11 @@ print(result)
                     },
                     body: vec![Assign {
                         target: VariableName("result".into()),
-                        value: Number(expression::Number::Int("1".into()))
+                        value: ConstantNumber(expression::Number::Int("1".into()))
                     }],
                     orelse: vec![Assign {
                         target: VariableName("result".into()),
-                        value: Number(expression::Number::Int("2".into()))
+                        value: ConstantNumber(expression::Number::Int("2".into()))
                     }]
                 },
                 Expression(CallFunction {
@@ -181,21 +177,21 @@ print(e)
                     target: VariableName("a".into()),
                     value: Index {
                         value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(Number(crate::Number::Int("0".into())))
+                        index: Box::new(ConstantNumber(crate::Number::Int("0".into())))
                     }
                 },
                 Assign {
                     target: VariableName("b".into()),
                     value: Index {
                         value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(Number(crate::Number::Int("1".into())))
+                        index: Box::new(ConstantNumber(crate::Number::Int("1".into())))
                     }
                 },
                 Assign {
                     target: VariableName("c".into()),
                     value: Index {
                         value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(Number(crate::Number::Int("2".into())))
+                        index: Box::new(ConstantNumber(crate::Number::Int("2".into())))
                     }
                 },
                 Func {
@@ -229,10 +225,10 @@ for i in range(N):
     print(i)
 ";
         let expected = r"
-__tmp_variable_for_for_loop_2_15 = list(range(N))
-__tmp_variable_for_for_loop_2_15.reverse()
-while len(__tmp_variable_for_for_loop_2_15) > 0:
-    i = __tmp_variable_for_for_loop_2_15.pop()
+__tmp_variable_for_for_loop_2_9 = list(range(N))
+__tmp_variable_for_for_loop_2_9.reverse()
+while len(__tmp_variable_for_for_loop_2_9) > 0:
+    i = __tmp_variable_for_for_loop_2_9.pop()
     print(i)
 ";
         assert_eq!(parse(code).unwrap(), parse(expected).unwrap());

@@ -1,4 +1,4 @@
-use rustpython_parser::ast::ExpressionType;
+use rustpython_parser::ast::{Boolop, Cmpop, ExprKind};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Expr {
@@ -31,100 +31,108 @@ pub enum Expr {
         value: Box<Expr>,
         index: Box<Expr>,
     },
-    Number(Number),
+    ConstantNumber(Number),
     ConstantString(String),
     ConstantBoolean(bool),
     List(Vec<Expr>),
 }
 
 impl Expr {
-    pub fn parse(expr: &ExpressionType) -> Self {
+    pub fn parse(expr: &ExprKind) -> Self {
         match expr {
-            ExpressionType::Tuple { elements } => {
-                let elements = parse_expressions(elements);
+            ExprKind::Tuple { elts, ctx: _ } => {
+                let elements = parse_expressions(elts);
                 Expr::Tuple(elements)
             }
-            ExpressionType::Identifier { name } => Expr::VariableName(name.into()),
-            ExpressionType::Call {
-                function,
+            ExprKind::Name { id, ctx: _ } => Expr::VariableName(id.into()),
+            ExprKind::Call {
                 args,
                 keywords,
+                func,
             } => {
                 assert!(keywords.is_empty());
                 let args = parse_expressions(args);
-                match &function.node {
-                    ExpressionType::Attribute { value, name } => {
+                match &func.node {
+                    ExprKind::Attribute {
+                        value,
+                        attr,
+                        ctx: _,
+                    } => {
                         let value = Expr::parse(&value.node);
                         Expr::CallMethod {
                             value: Box::new(value),
-                            name: name.into(),
+                            name: attr.into(),
                             args,
                         }
                     }
-                    ExpressionType::Identifier { name } => Expr::CallFunction {
-                        name: name.into(),
+                    ExprKind::Name { id, ctx: _ } => Expr::CallFunction {
+                        name: id.into(),
                         args,
                     },
                     function => todo!("{:#?}", function),
                 }
             }
-            ExpressionType::BoolOp { op, values } => {
+            ExprKind::BoolOp { op, values } => {
                 let conditions = parse_expressions(values);
                 let op = BoolOperator::parse(op);
                 Expr::BoolOperation { op, conditions }
             }
-            ExpressionType::Compare { vals, ops } => {
+            ExprKind::Compare {
+                left,
+                ops,
+                comparators,
+            } => {
                 let mut conditions = vec![];
-                assert_eq!(vals.len(), ops.len() + 1);
-                for (i, op) in ops.iter().enumerate() {
-                    let left = Expr::parse(&vals[i].node);
-                    let right = Expr::parse(&vals[i + 1].node);
+                let mut left = Expr::parse(&left.node);
+                for (op, right) in ops.iter().zip(comparators) {
+                    let op = CompareOperator::parse(op);
+                    let right = Expr::parse(&right.node);
                     conditions.push(Expr::Compare {
                         left: Box::new(left),
-                        right: Box::new(right),
-                        op: CompareOperator::parse(op),
-                    })
+                        right: Box::new(right.clone()),
+                        op,
+                    });
+                    left = right;
                 }
                 Expr::BoolOperation {
                     op: BoolOperator::And,
                     conditions,
                 }
             }
-            ExpressionType::Number { value } => match value {
-                rustpython_parser::ast::Number::Integer { value } => {
-                    Expr::Number(Number::Int(value.to_string()))
-                }
-                rustpython_parser::ast::Number::Float { value } => {
-                    Expr::Number(Number::Float(value.to_string()))
-                }
-                value => todo!("{:?}", value),
-            },
-            ExpressionType::Binop { a, op, b } => {
-                let left = Expr::parse(&a.node);
-                let right = Expr::parse(&b.node);
+            ExprKind::BinOp { op, left, right } => {
+                let left = Expr::parse(&left.node);
+                let right = Expr::parse(&right.node);
                 Self::BinaryOperation {
                     left: Box::new(left),
                     right: Box::new(right),
                     op: BinaryOperator::parse(op),
                 }
             }
-            ExpressionType::Subscript { a, b } => {
-                let a = Expr::parse(&a.node);
-                let b = Expr::parse(&b.node);
+            ExprKind::Subscript {
+                value,
+                slice,
+                ctx: _,
+            } => {
+                let value = Expr::parse(&value.node);
+                let index = Expr::parse(&slice.node);
                 Self::Index {
-                    value: Box::new(a),
-                    index: Box::new(b),
+                    value: Box::new(value),
+                    index: Box::new(index),
                 }
             }
-            ExpressionType::String { value } => match value {
-                rustpython_parser::ast::StringGroup::Constant { value } => {
-                    Self::ConstantString(value.to_string())
+            ExprKind::Constant { value, kind: _ } => match value {
+                rustpython_parser::ast::Constant::Bool(b) => Expr::ConstantBoolean(*b),
+                rustpython_parser::ast::Constant::Str(s) => Expr::ConstantString(s.clone()),
+                rustpython_parser::ast::Constant::Int(i) => {
+                    Expr::ConstantNumber(Number::Int(i.to_string()))
+                }
+                rustpython_parser::ast::Constant::Float(f) => {
+                    Expr::ConstantNumber(Number::Float(f.to_string()))
                 }
                 value => todo!("{:?}", value),
             },
-            ExpressionType::True => Self::ConstantBoolean(true),
-            ExpressionType::List { elements } => {
-                let list = parse_expressions(elements);
+            ExprKind::List { elts, ctx: _ } => {
+                let list = parse_expressions(elts);
                 Self::List(list)
             }
             expr => todo!("unsupported expression: {:?}", expr),
@@ -132,7 +140,7 @@ impl Expr {
     }
 }
 
-fn parse_expressions(expressions: &[rustpython_parser::ast::Expression]) -> Vec<Expr> {
+fn parse_expressions(expressions: &[rustpython_parser::ast::Expr]) -> Vec<Expr> {
     expressions.iter().map(|e| Expr::parse(&e.node)).collect()
 }
 
@@ -142,10 +150,10 @@ pub enum BoolOperator {
     Or,
 }
 impl BoolOperator {
-    pub fn parse(op: &rustpython_parser::ast::BooleanOperator) -> Self {
+    pub fn parse(op: &Boolop) -> Self {
         match op {
-            rustpython_parser::ast::BooleanOperator::And => Self::And,
-            rustpython_parser::ast::BooleanOperator::Or => Self::Or,
+            Boolop::And => Self::And,
+            Boolop::Or => Self::Or,
         }
     }
 }
@@ -160,13 +168,13 @@ pub enum CompareOperator {
 }
 
 impl CompareOperator {
-    pub fn parse(op: &rustpython_parser::ast::Comparison) -> Self {
+    pub fn parse(op: &Cmpop) -> Self {
         match op {
-            rustpython_parser::ast::Comparison::LessOrEqual => Self::LessOrEqual,
-            rustpython_parser::ast::Comparison::Less => Self::Less,
-            rustpython_parser::ast::Comparison::Equal => Self::Equal,
-            rustpython_parser::ast::Comparison::Greater => Self::Greater,
-            rustpython_parser::ast::Comparison::NotEqual => Self::NotEqual,
+            Cmpop::LtE => Self::LessOrEqual,
+            Cmpop::Lt => Self::Less,
+            Cmpop::Eq => Self::Equal,
+            Cmpop::Gt => Self::Greater,
+            Cmpop::NotEq => Self::NotEqual,
             op => todo!("{:?}", op),
         }
     }
