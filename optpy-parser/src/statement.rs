@@ -1,4 +1,4 @@
-use rustpython_parser::ast::StatementType;
+use rustpython_parser::ast::{ExpressionType, StatementType};
 
 use crate::{expression::Expr, BinaryOperator, BoolOperator, CompareOperator, Number};
 
@@ -32,32 +32,7 @@ impl Statement {
         match statement {
             StatementType::Assign { targets, value } => {
                 assert_eq!(targets.len(), 1);
-                let value = Expr::parse(&value.node);
-                match &targets[0].node {
-                    rustpython_parser::ast::ExpressionType::Tuple { elements } => {
-                        let mut result = vec![];
-                        let tmp_target = Expr::VariableName("__tmp_for_tuple".into());
-                        result.push(Self::Assign {
-                            target: tmp_target.clone(),
-                            value,
-                        });
-
-                        for (i, element) in elements.iter().enumerate() {
-                            result.push(Self::Assign {
-                                target: Expr::parse(&element.node),
-                                value: Expr::Index {
-                                    value: Box::new(tmp_target.clone()),
-                                    index: Box::new(Expr::Number(Number::Int(i.to_string()))),
-                                },
-                            });
-                        }
-                        result
-                    }
-                    target => {
-                        let target = Expr::parse(target);
-                        vec![Self::Assign { target, value }]
-                    }
-                }
+                parse_assignment(&targets[0].node, Expr::parse(&value.node))
             }
             StatementType::Expression { expression } => {
                 vec![Self::Expression(Expr::parse(&expression.node))]
@@ -114,17 +89,17 @@ impl Statement {
                     iter.location.row(),
                     iter.location.column()
                 ));
-                let target = Expr::parse(&target.node);
                 let iter = Expr::parse(&iter.node);
-                let mut while_body = vec![Statement::Assign {
-                    target: target.clone(),
-                    value: Expr::CallMethod {
+                let mut while_body = parse_assignment(
+                    &target.node,
+                    Expr::CallMethod {
                         value: Box::new(tmp_variable.clone()),
                         name: "pop".into(),
                         args: vec![],
                     },
-                }];
+                );
                 while_body.extend(parse_statements(body));
+
                 vec![
                     Statement::Assign {
                         target: tmp_variable.clone(),
@@ -177,4 +152,32 @@ fn parse_statements(statements: &[rustpython_parser::ast::Statement]) -> Vec<Sta
         .iter()
         .flat_map(|s| Statement::parse(&s.node))
         .collect()
+}
+
+fn parse_assignment(target: &ExpressionType, value: Expr) -> Vec<Statement> {
+    match target {
+        rustpython_parser::ast::ExpressionType::Tuple { elements } => {
+            let mut result = vec![];
+            let tmp_target = Expr::VariableName("__tmp_for_tuple".into());
+            result.push(Statement::Assign {
+                target: tmp_target.clone(),
+                value,
+            });
+
+            for (i, element) in elements.iter().enumerate() {
+                result.push(Statement::Assign {
+                    target: Expr::parse(&element.node),
+                    value: Expr::Index {
+                        value: Box::new(tmp_target.clone()),
+                        index: Box::new(Expr::Number(Number::Int(i.to_string()))),
+                    },
+                });
+            }
+            result
+        }
+        target => {
+            let target = Expr::parse(target);
+            vec![Statement::Assign { target, value }]
+        }
+    }
 }
