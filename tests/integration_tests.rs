@@ -164,3 +164,13 @@ print(A[0], A[1])
 "#,
 ("", "A B\n")
 }
+
+optpy_integration_test! {
+test_tuple_for_target,
+r#"
+A = [["A", "B"] , ["C", "D"]]
+for a, b in A:
+    print(b, a)
+"#,
+("", "B A\nD C\n")
+}
