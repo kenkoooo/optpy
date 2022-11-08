@@ -101,7 +101,7 @@ impl ExprResolve for Expr {
                 index: Box::new(index.resolve()),
             },
             Expr::List(list) => Expr::List(list.resolve()),
-            Expr::Number(_)
+            Expr::ConstantNumber(_)
             | Expr::ConstantString(_)
             | Expr::VariableName(_)
             | Expr::ConstantBoolean(_) => self.clone(),

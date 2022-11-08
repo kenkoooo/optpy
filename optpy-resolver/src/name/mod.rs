@@ -54,7 +54,7 @@ fn collect_variable_names(expr: &Expr, variables: &mut NameStore, ctx: &ContextP
             collect_variable_names(value, variables, ctx);
             collect_variable_names(index, variables, ctx);
         }
-        Expr::Number(_) => {}
+        Expr::ConstantNumber(_) => {}
         expr => todo!("{:?}", expr),
     }
 }
@@ -190,7 +190,9 @@ fn resolve_expr(
             let list = resolve_exprs(list, variables, functions, ctx);
             Expr::List(list)
         }
-        Expr::ConstantString(_) | Expr::Number(_) | Expr::ConstantBoolean(_) => expr.clone(),
+        Expr::ConstantString(_) | Expr::ConstantNumber(_) | Expr::ConstantBoolean(_) => {
+            expr.clone()
+        }
     }
 }
 
