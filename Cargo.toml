@@ -2,7 +2,6 @@
 name = "optpy"
 version = "0.1.0"
 edition = "2021"
-publish = false
 
 [dependencies]
 clap = { version = "4.0.19", features = ["derive"] }
