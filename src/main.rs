@@ -12,10 +12,12 @@ struct Args {
     /// Input Python file
     input: PathBuf,
 
+    /// Path to output Rust file
     output: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
+    env_logger::init();
     let args = Args::parse();
     let code = read_to_string(&args.input)?;
     let result = compile(code)?;
@@ -24,6 +26,8 @@ fn main() -> Result<()> {
         Some(output) => output.clone(),
         None => args.input.with_extension("rs"),
     };
-    write(output, result)?;
+    write(&output, result)?;
+    log::info!("Generated {:?}", output);
+
     Ok(())
 }
