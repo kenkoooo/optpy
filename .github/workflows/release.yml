@@ -27,3 +27,9 @@ jobs:
 
       - name: Build executables
         run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          files: target/${{ matrix.target }}/release/optpy
