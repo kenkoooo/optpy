@@ -29,9 +29,14 @@ jobs:
 
       - name: Build executables
         run: cargo build --release --target ${{ matrix.target }}
+        
+      - name: Compress the executable
+        run: |
+          gzip target/${{ matrix.target }}/release/optpy
+          mv target/${{ matrix.target }}/release/optpy.gz optpy-${{ matrix.target }}.gz
 
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: target/${{ matrix.target }}/release/optpy
+          files: optpy-${{ matrix.target }}.gz
