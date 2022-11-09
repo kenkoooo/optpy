@@ -32,8 +32,9 @@ jobs:
         
       - name: Compress the executable
         run: |
-          gzip target/${{ matrix.target }}/release/optpy
-          mv target/${{ matrix.target }}/release/optpy.gz optpy-${{ matrix.target }}.gz
+          VERSION=$(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")
+          gzip -f target/${{ matrix.target }}/release/optpy
+          mv target/${{ matrix.target }}/release/optpy.gz optpy-${VERSION}-${{ matrix.target }}.gz
 
       - name: Release
         uses: softprops/action-gh-release@v1
