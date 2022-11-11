@@ -176,6 +176,16 @@ for a, b in A:
 }
 
 optpy_integration_test! {
+test_assign_self,
+r#"
+x = [0]
+x[0] = x[0]
+print(x[0])
+"#,
+("", "0\n")
+}
+
+optpy_integration_test! {
 test_assign_in_loop,
 r#"
 for i in [0, 1, 2]:
@@ -196,3 +206,5 @@ print(arr[0])
 "#,
 ("", "200\n")
 }
+
+
