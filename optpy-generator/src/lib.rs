@@ -48,7 +48,7 @@ fn format_statement(
             let target = format_expr(target);
             let value = format_expr(value);
             quote! {
-                #target.assign(#value.shallow_copy());
+                #target.assign(& #value);
             }
         }
         Statement::Expression(expr) => {
@@ -83,7 +83,7 @@ fn format_statement(
             let body = generate_function_body(body, name, definitions);
             let name = format_ident!("{}", name);
             quote! {
-                fn #name( #(#args: Value),*  ) -> Value {
+                fn #name( #(#args: &Value),*  ) -> Value {
                     #(let mut #args = #args.shallow_copy();),*
                     #body
                     return Value::none();
@@ -127,12 +127,12 @@ fn format_expr(expr: &Expr) -> TokenStream {
             if let Some(macro_name) = name.strip_suffix("__macro__") {
                 let name = format_ident!("{}", macro_name);
                 quote! {
-                    #name !( #(#args .shallow_copy()),* )
+                    #name !( #(&#args),* )
                 }
             } else {
                 let name = format_ident!("{}", name);
                 quote! {
-                    #name ( #(#args .shallow_copy()),* )
+                    #name ( #(&#args),* )
                 }
             }
         }
@@ -141,7 +141,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
             let name = format_ident!("{}", name);
             let args = format_exprs(args);
             quote! {
-                #value . #name ( #(#args .shallow_copy()),* )
+                #value . #name ( #(&#args),* )
             }
         }
         Expr::Tuple(values) => {
@@ -173,20 +173,20 @@ fn format_expr(expr: &Expr) -> TokenStream {
             let left = format_expr(left);
             let right = format_expr(right);
             let op = format_compare_ident(op);
-            quote! { #left . #op (#right.shallow_copy()) }
+            quote! { #left . #op (&#right) }
         }
         Expr::BinaryOperation { left, right, op } => {
             let left = format_expr(left);
             let right = format_expr(right);
             let op = format_binary_ident(op);
-            quote! { #left . #op (#right.shallow_copy()) }
+            quote! { #left . #op (&#right) }
         }
         Expr::ConstantNumber(number) => format_number(number),
         Expr::Index { value, index } => {
             let value = format_expr(value);
             let index = format_expr(index);
             quote! {
-                #value .index( #index .shallow_copy() )
+                #value .index(& #index )
             }
         }
         Expr::List(list) => {
