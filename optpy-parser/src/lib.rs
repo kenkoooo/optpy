@@ -5,9 +5,14 @@ mod statement;
 use rustpython_parser::error::ParseError;
 pub use statement::Statement;
 
+mod simplify;
+
 pub fn parse<S: AsRef<str>>(code: S) -> Result<Vec<Statement>, ParseError> {
     let ast = rustpython_parser::parser::parse_program(code.as_ref(), "<embedded>")?;
-    let statements = ast.iter().flat_map(|s| Statement::parse(&s.node)).collect();
+    let statements = ast.iter().map(|s| Statement::parse(&s.node)).collect();
+    // TODO list comprehension
+    let statements = simplify::simplify_for_loops(statements);
+    let statements = simplify::simplify_tuple_assignments(statements);
     Ok(statements)
 }
 
@@ -225,10 +230,10 @@ for i in range(N):
     print(i)
 ";
         let expected = r"
-__tmp_variable_for_for_loop_2_9 = list(range(N))
-__tmp_variable_for_for_loop_2_9.reverse()
-while len(__tmp_variable_for_for_loop_2_9) > 0:
-    i = __tmp_variable_for_for_loop_2_9.pop()
+__tmp_for_loop_iter_14800386153579835208 = list(range(N))
+__tmp_for_loop_iter_14800386153579835208.reverse()
+while len(__tmp_for_loop_iter_14800386153579835208) > 0:
+    i = __tmp_for_loop_iter_14800386153579835208.pop()
     print(i)
 ";
         assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
