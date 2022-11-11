@@ -250,6 +250,7 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
             list_from_exprs(list, function_name, store);
         }
         Expr::ConstantNumber(_) | Expr::ConstantString(_) | Expr::ConstantBoolean(_) => {}
+        expr => unreachable!("{:?}", expr),
     }
 }
 fn list_from_exprs(exprs: &[Expr], function_name: &str, store: &mut ReferenceStore) {

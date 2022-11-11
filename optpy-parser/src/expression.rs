@@ -35,6 +35,10 @@ pub enum Expr {
     ConstantString(String),
     ConstantBoolean(bool),
     List(Vec<Expr>),
+    ListComprehension {
+        value: Box<Expr>,
+        generators: Vec<Comprehension>,
+    },
 }
 
 impl Expr {
@@ -135,6 +139,30 @@ impl Expr {
                 let list = parse_expressions(elts);
                 Self::List(list)
             }
+            ExprKind::ListComp { elt, generators } => {
+                let value = Expr::parse(&elt.node);
+                let generators = generators
+                    .iter()
+                    .map(
+                        |rustpython_parser::ast::Comprehension {
+                             target, iter, ifs, ..
+                         }| {
+                            let target = Expr::parse(&target.node);
+                            let iter = Expr::parse(&iter.node);
+                            let ifs = parse_expressions(ifs);
+                            Comprehension {
+                                target: Box::new(target),
+                                iter: Box::new(iter),
+                                ifs,
+                            }
+                        },
+                    )
+                    .collect();
+                Self::ListComprehension {
+                    value: Box::new(value),
+                    generators,
+                }
+            }
             expr => todo!("unsupported expression: {:?}", expr),
         }
     }
@@ -208,4 +236,11 @@ impl BinaryOperator {
             op => todo!("{:?}", op),
         }
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct Comprehension {
+    target: Box<Expr>,
+    iter: Box<Expr>,
+    ifs: Vec<Expr>,
 }
