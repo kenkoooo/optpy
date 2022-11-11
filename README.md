@@ -1,5 +1,8 @@
 # optpy
 
+[![CI](https://github.com/kenkoooo/optpy/actions/workflows/ci.yml/badge.svg)](https://github.com/kenkoooo/optpy/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/kenkoooo/optpy/branch/main/graph/badge.svg?token=HIXDTWK17I)](https://codecov.io/gh/kenkoooo/optpy)
+
 `optpy` is a transpiler to generate a Rust file from a Python file.
 
 
