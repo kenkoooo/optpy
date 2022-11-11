@@ -207,4 +207,13 @@ print(arr[0])
 ("", "200\n")
 }
 
-
+optpy_integration_test! {
+test_unary_op,
+r#"
+def f():
+    return 1
+a = [-1, +1, -1.5, +1.5, -f(), +f()]
+print(a[0], a[1], a[2], a[3], a[4], a[5])
+"#,
+("", "-1 1 -1.5 1.5 -1 1\n")
+}

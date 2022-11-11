@@ -1,6 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use optpy_parser::{BinaryOperator, BoolOperator, CompareOperator, Expr, Number, Statement};
+use optpy_parser::{
+    BinaryOperator, BoolOperator, CompareOperator, Expr, Number, Statement, UnaryOperator,
+};
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
 
@@ -206,6 +208,13 @@ fn format_expr(expr: &Expr) -> TokenStream {
                 }
             }
         }
+        Expr::UnaryOperation { value, op } => {
+            let value = format_expr(value);
+            let op = format_unary_ident(op);
+            quote! {
+                #value . #op ()
+            }
+        }
         expr => unimplemented!("{:?}", expr),
     }
 }
@@ -237,6 +246,12 @@ fn format_binary_ident(op: &BinaryOperator) -> Ident {
         BinaryOperator::Div => format_ident!("__div"),
         BinaryOperator::Mod => format_ident!("__mod"),
         BinaryOperator::FloorDiv => format_ident!("__floor_div"),
+    }
+}
+fn format_unary_ident(op: &UnaryOperator) -> Ident {
+    match op {
+        UnaryOperator::Add => format_ident!("__unary_add"),
+        UnaryOperator::Sub => format_ident!("__unary_sub"),
     }
 }
 

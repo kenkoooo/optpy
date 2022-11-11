@@ -250,6 +250,9 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
             list_from_exprs(list, function_name, store);
         }
         Expr::ConstantNumber(_) | Expr::ConstantString(_) | Expr::ConstantBoolean(_) => {}
+        Expr::UnaryOperation { value, op: _ } => {
+            list_from_expr(value, function_name, store);
+        }
         expr => unreachable!("{:?}", expr),
     }
 }
@@ -259,7 +262,7 @@ fn list_from_exprs(exprs: &[Expr], function_name: &str, store: &mut ReferenceSto
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 struct ReferenceStore {
     variable_functions: BTreeMap<String, BTreeSet<String>>,
     function_variables: BTreeMap<String, BTreeSet<String>>,
@@ -295,7 +298,7 @@ impl ReferenceStore {
         let variables = self
             .function_variables
             .remove(function_name)
-            .expect("invalid");
+            .unwrap_or_default();
         for variable in variables {
             assert!(self
                 .variable_functions
@@ -308,7 +311,7 @@ impl ReferenceStore {
 
 #[cfg(test)]
 mod tests {
-    use optpy_parser::parse;
+    use optpy_parser::{parse, Number};
 
     use crate::{resolve, util::StripMargin};
 
@@ -360,6 +363,44 @@ mod tests {
                 ),
                 ("__f0".into(), BTreeSet::from([])),
                 ("__f1".into(), BTreeSet::from(["__v6".into()]))
+            ])
+        );
+    }
+
+    #[test]
+    fn test_non_variable_function() {
+        let code = r"
+            |def f():
+            |   return 1
+            |print(f())"
+            .strip_margin();
+
+        let ast = parse(code).unwrap();
+        let (statements, definitions) = resolve(&ast);
+        assert_eq!(
+            statements,
+            [
+                Statement::Func {
+                    name: "__f0".into(),
+                    args: vec![],
+                    body: vec![Statement::Return(Some(Expr::ConstantNumber(Number::Int(
+                        "1".into()
+                    ))))]
+                },
+                Statement::Expression(Expr::CallFunction {
+                    name: "print__macro__".into(),
+                    args: vec![Expr::CallFunction {
+                        name: "__f0".into(),
+                        args: vec![]
+                    }]
+                })
+            ]
+        );
+        assert_eq!(
+            definitions,
+            BTreeMap::from([
+                ("".into(), BTreeSet::from([])),
+                ("__f0".into(), BTreeSet::from([])),
             ])
         );
     }

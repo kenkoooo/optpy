@@ -1,5 +1,5 @@
 mod expression;
-pub use expression::{BinaryOperator, BoolOperator, CompareOperator, Expr, Number};
+pub use expression::{BinaryOperator, BoolOperator, CompareOperator, Expr, Number, UnaryOperator};
 
 mod statement;
 use rustpython_parser::error::ParseError;
@@ -244,23 +244,23 @@ while len(__tmp_for_loop_iter_14800386153579835208) > 0:
         let code = r"a = [[i*j for j in range(M)] for i in range(N)]";
 
         let expected = r"
-def __f2093947204604468815():
+def __f15179191387192794179():
     __result = []
-    __tmp_for_loop_iter_8972402058792239477 = list(range(N))
-    __tmp_for_loop_iter_8972402058792239477.reverse()
-    while len(__tmp_for_loop_iter_8972402058792239477) > 0:
-        i = __tmp_for_loop_iter_8972402058792239477.pop()
-        def __f9396250878134232951():
+    __tmp_for_loop_iter_8723995406448537821 = list(range(N))
+    __tmp_for_loop_iter_8723995406448537821.reverse()
+    while len(__tmp_for_loop_iter_8723995406448537821) > 0:
+        i = __tmp_for_loop_iter_8723995406448537821.pop()
+        def __f862823992932926381():
             __result = []
-            __tmp_for_loop_iter_13945119744480575688 = list(range(M))
-            __tmp_for_loop_iter_13945119744480575688.reverse()
-            while len(__tmp_for_loop_iter_13945119744480575688) > 0:
-                j = __tmp_for_loop_iter_13945119744480575688.pop()
+            __tmp_for_loop_iter_324655153418689908 = list(range(M))
+            __tmp_for_loop_iter_324655153418689908.reverse()
+            while len(__tmp_for_loop_iter_324655153418689908) > 0:
+                j = __tmp_for_loop_iter_324655153418689908.pop()
                 __result.append(i * j)
             return __result
-        __result.append(__f9396250878134232951())
+        __result.append(__f862823992932926381())
     return __result
-a = __f2093947204604468815()
+a = __f15179191387192794179()
 ";
         assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
     }

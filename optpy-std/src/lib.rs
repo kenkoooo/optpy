@@ -176,6 +176,17 @@ pub mod value {
             }
         }
 
+        pub fn __unary_add(&self) -> Value {
+            self.shallow_copy()
+        }
+        pub fn __unary_sub(&self) -> Value {
+            match &*self.inner.borrow() {
+                Inner::Int64(i) => Inner::Int64(-i).into(),
+                Inner::Float(f) => Inner::Float(-f).into(),
+                _ => todo!(),
+            }
+        }
+
         pub fn test(&self) -> bool {
             match &*self.inner.borrow() {
                 Inner::Boolean(x) => *x,
@@ -192,6 +203,11 @@ pub mod value {
     impl From<i64> for Value {
         fn from(v: i64) -> Self {
             Inner::Int64(v).into()
+        }
+    }
+    impl From<f64> for Value {
+        fn from(v: f64) -> Self {
+            Inner::Float(v).into()
         }
     }
     impl From<Vec<Value>> for Value {
