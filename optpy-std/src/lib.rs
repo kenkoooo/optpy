@@ -51,7 +51,14 @@ pub mod value {
                 use std::ops::*;
                 match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
                     (Inner::Int64(lhs), Inner::Int64(rhs)) => Inner::Int64(lhs.$op(rhs)).into(),
-                    _ => todo!(),
+                    (Inner::Float(lhs), Inner::Float(rhs)) => Inner::Float(lhs.$op(rhs)).into(),
+                    (Inner::Int64(lhs), Inner::Float(rhs)) => {
+                        Inner::Float((*lhs as f64).$op(rhs)).into()
+                    }
+                    (Inner::Float(lhs), Inner::Int64(rhs)) => {
+                        Inner::Float(lhs.$op(*rhs as f64)).into()
+                    }
+                    _ => todo!("{:?} {:?}", self, rhs),
                 }
             }
         };
@@ -165,20 +172,6 @@ pub mod value {
                         Inner::Float(*lhs as f64 / *rhs as f64).into()
                     }
                 }
-                _ => todo!(),
-            }
-        }
-
-        pub fn __bool_or(&self, rhs: Value) -> Value {
-            match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
-                (Inner::Boolean(lhs), Inner::Boolean(rhs)) => Inner::Boolean(*lhs || *rhs).into(),
-                _ => todo!(),
-            }
-        }
-
-        pub fn __bool_and(&self, rhs: Value) -> Value {
-            match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
-                (Inner::Boolean(lhs), Inner::Boolean(rhs)) => Inner::Boolean(*lhs && *rhs).into(),
                 _ => todo!(),
             }
         }
