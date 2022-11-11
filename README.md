@@ -7,7 +7,7 @@ https://user-images.githubusercontent.com/9150073/200675788-267792f1-a14c-4746-a
 
 ## Installation
 
-[Archives of precompiled binaries are available for Linux and macOS.](https://github.com/kenkoooo/optpy/releases) The macOS binary is not tested.
+[Archives of precompiled binaries are available for Linux and macOS.](https://github.com/kenkoooo/optpy/releases)
 
 ## Usage
 
@@ -18,7 +18,7 @@ https://user-images.githubusercontent.com/9150073/200675788-267792f1-a14c-4746-a
 # Features
 - [x] Functions
 - [x] `for` & `while` loops
+- [x] List comprehension
 - [ ] Classes
 - [ ] Modules
-- [ ] List comprehension
 - [ ] And so many things
