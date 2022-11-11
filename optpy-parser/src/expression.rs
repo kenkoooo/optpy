@@ -240,7 +240,7 @@ impl BinaryOperator {
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Comprehension {
-    target: Box<Expr>,
-    iter: Box<Expr>,
-    ifs: Vec<Expr>,
+    pub target: Box<Expr>,
+    pub iter: Box<Expr>,
+    pub ifs: Vec<Expr>,
 }
