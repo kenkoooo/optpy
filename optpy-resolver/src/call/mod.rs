@@ -59,6 +59,7 @@ fn resolve_statement(
             Statement::While { test, body }
         }
         Statement::Break => Statement::Break,
+        statement => unreachable!("{:?}", statement),
     }
 }
 
@@ -206,6 +207,7 @@ fn list_variable_contexts(
                 list_variable_contexts(body, function_name, store);
             }
             Statement::Break => continue,
+            statement => unreachable!("{:?}", statement),
         }
     }
 }

@@ -113,6 +113,7 @@ fn format_statement(
             }
         }
         Statement::Break => quote! { break; },
+        statement => unreachable!("{:?}", statement),
     }
 }
 

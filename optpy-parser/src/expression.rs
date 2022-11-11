@@ -1,6 +1,6 @@
 use rustpython_parser::ast::{Boolop, Cmpop, ExprKind};
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Expr {
     CallFunction {
         name: String,
@@ -144,7 +144,7 @@ fn parse_expressions(expressions: &[rustpython_parser::ast::Expr]) -> Vec<Expr> 
     expressions.iter().map(|e| Expr::parse(&e.node)).collect()
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum BoolOperator {
     And,
     Or,
@@ -158,7 +158,7 @@ impl BoolOperator {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum CompareOperator {
     Less,
     LessOrEqual,
@@ -180,13 +180,13 @@ impl CompareOperator {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Number {
     Int(String),
     Float(String),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum BinaryOperator {
     Add,
     Sub,

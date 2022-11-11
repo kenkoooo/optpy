@@ -32,6 +32,7 @@ impl StatementResolve for Statement {
                 body: body.resolve(),
             },
             Statement::Break => Statement::Break,
+            statement => unreachable!("{:?}", statement),
         }
     }
 }
