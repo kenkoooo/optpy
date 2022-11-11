@@ -28,6 +28,8 @@ jobs:
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: release-${{ matrix.target }}
 
       - name: Build executables
         run: cargo build --release --target ${{ matrix.target }}
