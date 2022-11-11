@@ -5,12 +5,12 @@ pub mod value {
         rc::Rc,
     };
 
-    #[derive(Debug, PartialEq, Clone)]
+    #[derive(Debug, PartialEq, Clone, PartialOrd, Eq, Ord)]
     pub struct Value {
         pub inner: Rc<RefCell<Inner>>,
     }
 
-    #[derive(Debug, PartialEq, Clone)]
+    #[derive(Debug, PartialEq, Clone, PartialOrd)]
     pub enum Inner {
         List(Vec<Value>),
         String(Rc<String>),
@@ -19,6 +19,12 @@ pub mod value {
         Boolean(bool),
         None,
     }
+    impl Ord for Inner {
+        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            self.partial_cmp(other).unwrap()
+        }
+    }
+    impl Eq for Inner {}
 
     impl Into<Value> for Inner {
         fn into(self) -> Value {
@@ -302,6 +308,16 @@ pub mod builtin {
             }
             _ => todo!(),
         }
+    }
+
+    pub fn sorted(value: Value) -> Value {
+        match &mut *value.inner.borrow_mut() {
+            Inner::List(list) => {
+                list.sort();
+            }
+            _ => todo!(),
+        }
+        value
     }
 
     pub fn len(value: Value) -> Value {
