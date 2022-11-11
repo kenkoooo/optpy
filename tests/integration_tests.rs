@@ -184,3 +184,27 @@ print(x[0])
 "#,
 ("", "0\n")
 }
+
+optpy_integration_test! {
+test_assign_in_loop,
+r#"
+for i in [0, 1, 2]:
+    x = i
+print(x)
+"#,
+("", "2\n")
+}
+
+optpy_integration_test! {
+test_mutate_argument,
+r#"
+def f(arr):
+    arr[0] = 200
+arr = [0]
+f(arr)
+print(arr[0])
+"#,
+("", "200\n")
+}
+
+

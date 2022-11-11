@@ -46,7 +46,7 @@ fn format_statement(
             let target = format_expr(target);
             let value = format_expr(value);
             quote! {
-                #target.assign(#value);
+                #target.assign(#value.shallow_copy());
             }
         }
         Statement::Expression(expr) => {
@@ -82,6 +82,7 @@ fn format_statement(
             let name = format_ident!("{}", name);
             quote! {
                 fn #name( #(#args: Value),*  ) -> Value {
+                    #(let mut #args = #args.shallow_copy();),*
                     #body
                     return Value::none();
                 }
