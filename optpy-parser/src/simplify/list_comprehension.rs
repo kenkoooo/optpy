@@ -191,5 +191,15 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<Statement>) {
                 }],
             )
         }
+        Expr::UnaryOperation { value, op } => {
+            let (value, s) = eval_expr(*value);
+            (
+                Expr::UnaryOperation {
+                    value: Box::new(value),
+                    op,
+                },
+                s,
+            )
+        }
     }
 }

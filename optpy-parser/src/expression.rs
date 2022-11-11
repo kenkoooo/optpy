@@ -1,4 +1,4 @@
-use rustpython_parser::ast::{Boolop, Cmpop, ExprKind};
+use rustpython_parser::ast::{Boolop, Cmpop, ExprKind, Unaryop};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Expr {
@@ -21,6 +21,10 @@ pub enum Expr {
         left: Box<Expr>,
         right: Box<Expr>,
         op: CompareOperator,
+    },
+    UnaryOperation {
+        value: Box<Expr>,
+        op: UnaryOperator,
     },
     BinaryOperation {
         left: Box<Expr>,
@@ -163,6 +167,14 @@ impl Expr {
                     generators,
                 }
             }
+            ExprKind::UnaryOp { op, operand } => {
+                let value = Expr::parse(&operand.node);
+                let op = UnaryOperator::parse(op);
+                Self::UnaryOperation {
+                    value: Box::new(value),
+                    op,
+                }
+            }
             expr => todo!("unsupported expression: {:?}", expr),
         }
     }
@@ -243,4 +255,20 @@ pub struct Comprehension {
     pub target: Box<Expr>,
     pub iter: Box<Expr>,
     pub ifs: Vec<Expr>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+pub enum UnaryOperator {
+    Add,
+    Sub,
+}
+
+impl UnaryOperator {
+    pub fn parse(op: &Unaryop) -> Self {
+        match op {
+            Unaryop::UAdd => Self::Add,
+            Unaryop::USub => Self::Sub,
+            op => todo!("{:?}", op),
+        }
+    }
 }

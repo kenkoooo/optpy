@@ -195,6 +195,13 @@ fn resolve_expr(
         Expr::ConstantString(_) | Expr::ConstantNumber(_) | Expr::ConstantBoolean(_) => {
             expr.clone()
         }
+        Expr::UnaryOperation { value, op } => {
+            let value = resolve_expr(value, variables, functions, ctx);
+            Expr::UnaryOperation {
+                value: Box::new(value),
+                op: *op,
+            }
+        }
         expr => unreachable!("{:?}", expr),
     }
 }

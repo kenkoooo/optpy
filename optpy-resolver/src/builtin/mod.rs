@@ -106,6 +106,10 @@ impl ExprResolve for Expr {
             | Expr::ConstantString(_)
             | Expr::VariableName(_)
             | Expr::ConstantBoolean(_) => self.clone(),
+            Expr::UnaryOperation { value, op } => Expr::UnaryOperation {
+                value: Box::new(value.resolve()),
+                op: *op,
+            },
             expr => unreachable!("{:?}", expr),
         }
     }
