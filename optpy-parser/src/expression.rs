@@ -203,6 +203,7 @@ pub enum CompareOperator {
     Less,
     LessOrEqual,
     Greater,
+    GreaterOrEqual,
     Equal,
     NotEqual,
 }
@@ -210,10 +211,11 @@ pub enum CompareOperator {
 impl CompareOperator {
     pub fn parse(op: &Cmpop) -> Self {
         match op {
-            Cmpop::LtE => Self::LessOrEqual,
             Cmpop::Lt => Self::Less,
-            Cmpop::Eq => Self::Equal,
+            Cmpop::LtE => Self::LessOrEqual,
             Cmpop::Gt => Self::Greater,
+            Cmpop::GtE => Self::GreaterOrEqual,
+            Cmpop::Eq => Self::Equal,
             Cmpop::NotEq => Self::NotEqual,
             op => todo!("{:?}", op),
         }

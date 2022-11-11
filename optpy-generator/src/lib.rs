@@ -231,11 +231,12 @@ fn format_boolean_operation(op: &BoolOperator) -> Ident {
 }
 fn format_compare_ident(op: &CompareOperator) -> Ident {
     match op {
-        CompareOperator::Less => format_ident!("is_lt"),
-        CompareOperator::LessOrEqual => format_ident!("is_le"),
-        CompareOperator::Equal => format_ident!("is_eq"),
-        CompareOperator::Greater => format_ident!("is_gt"),
-        CompareOperator::NotEqual => format_ident!("is_ne"),
+        CompareOperator::Less => format_ident!("__lt"),
+        CompareOperator::LessOrEqual => format_ident!("__le"),
+        CompareOperator::Greater => format_ident!("__gt"),
+        CompareOperator::GreaterOrEqual => format_ident!("__ge"),
+        CompareOperator::Equal => format_ident!("__eq"),
+        CompareOperator::NotEqual => format_ident!("__ne"),
     }
 }
 fn format_binary_ident(op: &BinaryOperator) -> Ident {

@@ -51,12 +51,8 @@ fn collect_variable_names(expr: &Expr, variables: &mut NameStore, ctx: &ContextP
         Expr::VariableName(name) => {
             variables.declare(name, ctx);
         }
-        Expr::Index { value, index } => {
-            collect_variable_names(value, variables, ctx);
-            collect_variable_names(index, variables, ctx);
-        }
-        Expr::ConstantNumber(_) => {}
-        expr => todo!("{:?}", expr),
+        Expr::Index { .. } => {}
+        expr => unreachable!("{:?}", expr),
     }
 }
 
