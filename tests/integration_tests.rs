@@ -184,3 +184,15 @@ print(x)
 "#,
 ("", "2\n")
 }
+
+optpy_integration_test! {
+test_mutate_argument,
+r#"
+def f(arr):
+    arr[0] = 200
+arr = [0]
+f(arr)
+print(arr[0])
+"#,
+("", "200\n")
+}

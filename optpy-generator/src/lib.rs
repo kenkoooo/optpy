@@ -82,6 +82,7 @@ fn format_statement(
             let name = format_ident!("{}", name);
             quote! {
                 fn #name( #(#args: Value),*  ) -> Value {
+                    #(let mut #args = #args.shallow_copy();),*
                     #body
                     return Value::none();
                 }
