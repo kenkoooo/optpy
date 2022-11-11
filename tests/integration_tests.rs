@@ -176,6 +176,16 @@ for a, b in A:
 }
 
 optpy_integration_test! {
+test_assign_in_loop,
+r#"
+for i in [0, 1, 2]:
+    x = i
+print(x)
+"#,
+("", "2\n")
+}
+
+optpy_integration_test! {
 test_mutate_argument,
 r#"
 def f(arr):
