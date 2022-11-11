@@ -238,4 +238,30 @@ while len(__tmp_for_loop_iter_14800386153579835208) > 0:
 ";
         assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
     }
+
+    #[test]
+    fn test_list_comprehension() {
+        let code = r"a = [[i*j for j in range(M)] for i in range(N)]";
+
+        let expected = r"
+def __f2093947204604468815():
+    __result = []
+    __tmp_for_loop_iter_8972402058792239477 = list(range(N))
+    __tmp_for_loop_iter_8972402058792239477.reverse()
+    while len(__tmp_for_loop_iter_8972402058792239477) > 0:
+        i = __tmp_for_loop_iter_8972402058792239477.pop()
+        def __f9396250878134232951():
+            __result = []
+            __tmp_for_loop_iter_13945119744480575688 = list(range(M))
+            __tmp_for_loop_iter_13945119744480575688.reverse()
+            while len(__tmp_for_loop_iter_13945119744480575688) > 0:
+                j = __tmp_for_loop_iter_13945119744480575688.pop()
+                __result.append(i * j)
+            return __result
+        __result.append(__f9396250878134232951())
+    return __result
+a = __f2093947204604468815()
+";
+        assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
+    }
 }
