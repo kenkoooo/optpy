@@ -195,6 +195,7 @@ fn resolve_expr(
         Expr::ConstantString(_) | Expr::ConstantNumber(_) | Expr::ConstantBoolean(_) => {
             expr.clone()
         }
+        expr => unreachable!("{:?}", expr),
     }
 }
 

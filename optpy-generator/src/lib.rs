@@ -205,6 +205,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
                 }
             }
         }
+        expr => unimplemented!("{:?}", expr),
     }
 }
 

@@ -106,6 +106,7 @@ impl ExprResolve for Expr {
             | Expr::ConstantString(_)
             | Expr::VariableName(_)
             | Expr::ConstantBoolean(_) => self.clone(),
+            expr => unreachable!("{:?}", expr),
         }
     }
 }
