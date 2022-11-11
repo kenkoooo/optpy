@@ -46,7 +46,7 @@ fn format_statement(
             let target = format_expr(target);
             let value = format_expr(value);
             quote! {
-                #target.assign(#value);
+                #target.assign(#value.shallow_copy());
             }
         }
         Statement::Expression(expr) => {
