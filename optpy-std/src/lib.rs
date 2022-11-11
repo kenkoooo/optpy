@@ -81,7 +81,8 @@ pub mod value {
         }
 
         pub fn assign(&mut self, value: Value) {
-            self.inner.replace(value.inner.borrow().clone());
+            let value = value.inner.borrow().clone();
+            self.inner.replace(value);
         }
 
         pub fn count(&self, value: Value) -> Value {

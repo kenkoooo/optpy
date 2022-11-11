@@ -174,3 +174,13 @@ for a, b in A:
 "#,
 ("", "B A\nD C\n")
 }
+
+optpy_integration_test! {
+test_assign_self,
+r#"
+x = [0]
+x[0] = x[0]
+print(x[0])
+"#,
+("", "0\n")
+}
