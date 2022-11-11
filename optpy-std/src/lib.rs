@@ -132,11 +132,12 @@ pub mod value {
             }
         }
 
-        impl_value_compare!(is_gt, gt);
-        impl_value_compare!(is_lt, lt);
-        impl_value_compare!(is_le, le);
-        impl_value_compare!(is_eq, eq);
-        impl_value_compare!(is_ne, ne);
+        impl_value_compare!(__gt, gt);
+        impl_value_compare!(__ge, ge);
+        impl_value_compare!(__lt, lt);
+        impl_value_compare!(__le, le);
+        impl_value_compare!(__eq, eq);
+        impl_value_compare!(__ne, ne);
 
         impl_value_binop!(__add, add);
         impl_value_binop!(__sub, sub);
