@@ -223,3 +223,14 @@ else:
 ("0\n", "NO\n"),
 ("1\n", "eval\nYES\n")
 }
+
+optpy_integration_test! {
+test_array_assignment,
+r#"
+a = [0, 1, 2]
+a[0] = a[1]
+a[1] = a[2]
+print(a[0], a[1], a[2])
+"#,
+("", "1 2 2\n")
+}

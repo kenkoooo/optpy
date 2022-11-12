@@ -1,4 +1,9 @@
-pub mod value {
+pub mod cell {
+    use std::{
+        cell::UnsafeCell,
+        ops::{Deref, DerefMut},
+        ptr::NonNull,
+    };
 
     pub struct UnsafeRef<T: ?Sized> {
         value: NonNull<T>,
@@ -8,7 +13,6 @@ pub mod value {
 
         #[inline]
         fn deref(&self) -> &T {
-            // SAFETY: the value is accessible as long as we hold our borrow.
             unsafe { self.value.as_ref() }
         }
     }
@@ -28,18 +32,17 @@ pub mod value {
     impl<T: ?Sized> DerefMut for UnsafeRefMut<T> {
         #[inline]
         fn deref_mut(&mut self) -> &mut T {
-            // SAFETY: the value is accessible as long as we hold our borrow.
             unsafe { self.value.as_mut() }
         }
     }
 
     #[derive(Debug)]
-    pub struct MyRefCell<T> {
+    pub struct UnsafeRefCell<T> {
         cell: UnsafeCell<T>,
     }
 
-    impl<T> MyRefCell<T> {
-        pub fn new(value: T) -> MyRefCell<T> {
+    impl<T> UnsafeRefCell<T> {
+        pub fn new(value: T) -> UnsafeRefCell<T> {
             Self {
                 cell: UnsafeCell::new(value),
             }
@@ -56,37 +59,60 @@ pub mod value {
             std::mem::replace(&mut *self.borrow_mut(), t)
         }
     }
+}
+pub mod value {
+    use std::rc::Rc;
 
-    use std::{
-        cell::UnsafeCell,
-        ops::{Deref, DerefMut},
-        ptr::NonNull,
-        rc::Rc,
-    };
-    type RefCell<T> = MyRefCell<T>;
+    use crate::cell::UnsafeRefCell;
 
     #[derive(Debug, Clone)]
     pub enum Value {
-        List(Rc<RefCell<Vec<Ref>>>),
+        List(Rc<UnsafeRefCell<Vec<Ref>>>),
         Ref(Ref),
         Primitive(Primitive),
     }
 
     #[derive(Debug, Clone)]
-    pub struct Ref(pub Rc<RefCell<Value>>);
+    pub struct Ref(pub Rc<UnsafeRefCell<Value>>);
     impl Ref {
         pub fn new(value: Value) -> Self {
-            Self(Rc::new(RefCell::new(value)))
+            Self(Rc::new(UnsafeRefCell::new(value)))
         }
     }
 
-    #[derive(Debug, PartialEq, Clone, PartialOrd)]
+    #[derive(Debug, Clone, PartialEq)]
     pub enum Primitive {
         String(Rc<String>),
-        Int64(i64),
-        Float(f64),
+        Number(Number),
         Boolean(bool),
         None,
+    }
+
+    #[derive(Debug, Clone, Copy)]
+    pub enum Number {
+        Int64(i64),
+        Float(f64),
+    }
+
+    impl PartialOrd for Number {
+        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            match (self, other) {
+                (Number::Int64(l0), Number::Int64(r0)) => l0.partial_cmp(r0),
+                (Number::Float(l0), Number::Float(r0)) => l0.partial_cmp(r0),
+                (Number::Int64(l0), Number::Float(r0)) => (*l0 as f64).partial_cmp(r0),
+                (Number::Float(l0), Number::Int64(r0)) => l0.partial_cmp(&(*r0 as f64)),
+            }
+        }
+    }
+    impl PartialEq for Number {
+        fn eq(&self, other: &Self) -> bool {
+            match (self, other) {
+                (Number::Int64(l0), Number::Int64(r0)) => l0.eq(r0),
+                (Number::Float(l0), Number::Float(r0)) => l0.eq(r0),
+                (Number::Int64(l0), Number::Float(r0)) => *l0 as f64 == *r0,
+                (Number::Float(l0), Number::Int64(r0)) => *l0 == *r0 as f64,
+            }
+        }
     }
 
     impl Into<Value> for Primitive {
@@ -99,7 +125,7 @@ pub mod value {
         ($name:ident, $op:ident) => {
             pub fn $name(&self, value: &Value) -> Value {
                 match (self.__primitive(), value.__primitive()) {
-                    (Primitive::Int64(lhs), Primitive::Int64(rhs)) => {
+                    (Primitive::Number(lhs), Primitive::Number(rhs)) => {
                         Value::Primitive(Primitive::Boolean(lhs.$op(&rhs)))
                     }
                     _ => todo!(),
@@ -113,18 +139,20 @@ pub mod value {
             pub fn $name(&self, rhs: &Value) -> Value {
                 use std::ops::*;
                 match (self.__primitive(), rhs.__primitive()) {
-                    (Primitive::Int64(lhs), Primitive::Int64(rhs)) => {
-                        Value::Primitive(Primitive::Int64(lhs.$op(rhs)))
-                    }
-                    (Primitive::Float(lhs), Primitive::Float(rhs)) => {
-                        Value::Primitive(Primitive::Float(lhs.$op(rhs)))
-                    }
-                    (Primitive::Int64(lhs), Primitive::Float(rhs)) => {
-                        Value::Primitive(Primitive::Float((lhs as f64).$op(rhs)))
-                    }
-                    (Primitive::Float(lhs), Primitive::Int64(rhs)) => {
-                        Value::Primitive(Primitive::Float(lhs.$op(rhs as f64)))
-                    }
+                    (Primitive::Number(lhs), Primitive::Number(rhs)) => match (lhs, rhs) {
+                        (Number::Int64(l0), Number::Int64(r0)) => {
+                            Value::Primitive(Primitive::Number(Number::Int64(l0.$op(r0))))
+                        }
+                        (Number::Float(l0), Number::Float(r0)) => {
+                            Value::Primitive(Primitive::Number(Number::Float(l0.$op(r0))))
+                        }
+                        (Number::Int64(l0), Number::Float(r0)) => {
+                            Value::Primitive(Primitive::Number(Number::Float((l0 as f64).$op(r0))))
+                        }
+                        (Number::Float(l0), Number::Int64(r0)) => {
+                            Value::Primitive(Primitive::Number(Number::Float(l0.$op(&(r0 as f64)))))
+                        }
+                    },
                     _ => todo!("{:?} {:?}", self, rhs),
                 }
             }
@@ -137,7 +165,7 @@ pub mod value {
         }
 
         pub fn list(list: Vec<Ref>) -> Self {
-            Value::List(Rc::new(RefCell::new(list)))
+            Value::List(Rc::new(UnsafeRefCell::new(list)))
         }
 
         pub fn __primitive(&self) -> Primitive {
@@ -166,7 +194,7 @@ pub mod value {
                         .map(|s| Value::Primitive(Primitive::String(Rc::new(s.to_string()))))
                         .map(|s| Ref::new(s))
                         .collect();
-                    Value::List(Rc::new(RefCell::new(list)))
+                    Value::List(Rc::new(UnsafeRefCell::new(list)))
                 }
                 _ => unreachable!(),
             }
@@ -177,7 +205,7 @@ pub mod value {
                 Value::Ref(r) => r.0.borrow().index(index),
                 Value::List(list) => {
                     let i = match index.__primitive() {
-                        Primitive::Int64(i) => i as usize,
+                        Primitive::Number(Number::Int64(i)) => i as usize,
                         _ => unreachable!(),
                     };
                     let r = list.borrow()[i].clone();
@@ -215,7 +243,7 @@ pub mod value {
                     i += 1;
                 }
             }
-            Value::Primitive(Primitive::Int64(result))
+            Value::Primitive(Primitive::Number(Number::Int64(result)))
         }
 
         pub fn reverse(&mut self) {
@@ -264,20 +292,26 @@ pub mod value {
 
         pub fn __floor_div(&self, rhs: &Value) -> Value {
             match (self.__primitive(), rhs.__primitive()) {
-                (Primitive::Int64(lhs), Primitive::Int64(rhs)) => {
-                    Value::Primitive(Primitive::Int64(lhs / rhs))
+                (Primitive::Number(Number::Int64(lhs)), Primitive::Number(Number::Int64(rhs))) => {
+                    Value::Primitive(Primitive::Number(Number::Int64(lhs / rhs)))
                 }
                 _ => todo!(),
             }
         }
         pub fn __div(&self, rhs: &Value) -> Value {
             match (self.__primitive(), rhs.__primitive()) {
-                (Primitive::Int64(lhs), Primitive::Int64(rhs)) => {
+                (Primitive::Number(Number::Int64(lhs)), Primitive::Number(Number::Int64(rhs))) => {
                     if lhs % rhs == 0 {
-                        Value::Primitive(Primitive::Int64(lhs / rhs))
+                        Value::Primitive(Primitive::Number(Number::Int64(lhs / rhs)))
                     } else {
-                        Value::Primitive(Primitive::Float(lhs as f64 / rhs as f64))
+                        Value::Primitive(Primitive::Number(Number::Float(lhs as f64 / rhs as f64)))
                     }
+                }
+                (Primitive::Number(Number::Int64(lhs)), Primitive::Number(Number::Float(rhs))) => {
+                    Value::Primitive(Primitive::Number(Number::Float(lhs as f64 / rhs)))
+                }
+                (Primitive::Number(Number::Float(lhs)), Primitive::Number(Number::Int64(rhs))) => {
+                    Value::Primitive(Primitive::Number(Number::Float(lhs / rhs as f64)))
                 }
                 _ => todo!(),
             }
@@ -288,14 +322,16 @@ pub mod value {
         }
         pub fn __unary_sub(&self) -> Value {
             match self.__primitive() {
-                Primitive::Int64(i) => Primitive::Int64(-i).into(),
-                Primitive::Float(f) => Primitive::Float(-f).into(),
+                Primitive::Number(Number::Int64(i)) => Primitive::Number(Number::Int64(-i)).into(),
+                Primitive::Number(Number::Float(f)) => Primitive::Number(Number::Float(-f)).into(),
                 _ => todo!(),
             }
         }
         pub fn __len(&self) -> Value {
             match self {
-                Value::List(list) => Primitive::Int64(list.borrow().len() as i64).into(),
+                Value::List(list) => {
+                    Primitive::Number(Number::Int64(list.borrow().len() as i64)).into()
+                }
                 _ => todo!(),
             }
         }
@@ -305,7 +341,12 @@ pub mod value {
                     list.borrow_mut().sort_by(|a, b| {
                         let a = a.0.borrow().__primitive();
                         let b = b.0.borrow().__primitive();
-                        a.partial_cmp(&b).unwrap()
+                        match (a, b) {
+                            (Primitive::Number(a), Primitive::Number(b)) => {
+                                a.partial_cmp(&b).unwrap()
+                            }
+                            _ => todo!(),
+                        }
                     });
                 }
                 _ => todo!(),
@@ -327,18 +368,18 @@ pub mod value {
     }
     impl From<i64> for Value {
         fn from(v: i64) -> Self {
-            Primitive::Int64(v).into()
+            Primitive::Number(Number::Int64(v)).into()
         }
     }
     impl From<f64> for Value {
         fn from(v: f64) -> Self {
-            Primitive::Float(v).into()
+            Primitive::Number(Number::Float(v)).into()
         }
     }
     impl From<Vec<Value>> for Value {
         fn from(list: Vec<Value>) -> Self {
             let list = list.into_iter().map(Ref::new).collect();
-            Value::List(Rc::new(RefCell::new(list)))
+            Value::List(Rc::new(UnsafeRefCell::new(list)))
         }
     }
     impl From<bool> for Value {
@@ -362,8 +403,8 @@ pub mod value {
                 Value::Ref(r) => r.0.borrow().to_string(),
                 Value::Primitive(value) => match value {
                     Primitive::String(s) => s.to_string(),
-                    Primitive::Int64(i) => i.to_string(),
-                    Primitive::Float(f) => f.to_string(),
+                    Primitive::Number(Number::Int64(i)) => i.to_string(),
+                    Primitive::Number(Number::Float(f)) => f.to_string(),
                     _ => todo!(),
                 },
             }
@@ -374,7 +415,7 @@ pub mod value {
 pub mod builtin {
     use std::io::stdin;
 
-    use crate::{value::Value, Primitive, Ref};
+    use crate::{value::Value, Number, Primitive, Ref};
 
     pub fn input() -> Value {
         let mut buf = String::new();
@@ -401,12 +442,12 @@ pub mod builtin {
         match value.__primitive() {
             Primitive::String(s) => {
                 if let Ok(i) = s.parse::<i64>() {
-                    Primitive::Int64(i).into()
+                    Primitive::Number(Number::Int64(i)).into()
                 } else {
                     todo!()
                 }
             }
-            Primitive::Int64(_) => value.clone(),
+            Primitive::Number(Number::Int64(_)) => value.clone(),
             _ => panic!("invalid"),
         }
     }
@@ -423,9 +464,9 @@ pub mod builtin {
 
     pub fn range1(value: &Value) -> Value {
         match value.__primitive() {
-            Primitive::Int64(i) => {
+            Primitive::Number(Number::Int64(i)) => {
                 let list = (0..i)
-                    .map(|i| Ref::new(Primitive::Int64(i).into()))
+                    .map(|i| Ref::new(Primitive::Number(Number::Int64(i)).into()))
                     .collect::<Vec<_>>();
                 Value::list(list)
             }
