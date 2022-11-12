@@ -1,14 +1,14 @@
 pub mod value {
     use std::{cell::RefCell, rc::Rc};
 
-    #[derive(Debug, PartialEq, Clone, PartialOrd)]
+    #[derive(Debug, Clone)]
     pub enum Value {
         List(Rc<RefCell<Vec<Ref>>>),
         Ref(Ref),
         Primitive(Primitive),
     }
 
-    #[derive(Debug, PartialEq, Clone, PartialOrd, Eq, Ord)]
+    #[derive(Debug, Clone)]
     pub struct Ref(pub Rc<RefCell<Value>>);
     impl Ref {
         pub fn new(value: Value) -> Self {
@@ -30,13 +30,6 @@ pub mod value {
             Value::Primitive(self)
         }
     }
-
-    impl Ord for Value {
-        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-            self.partial_cmp(other).unwrap()
-        }
-    }
-    impl Eq for Value {}
 
     macro_rules! impl_value_compare {
         ($name:ident, $op:ident) => {
@@ -357,7 +350,11 @@ pub mod builtin {
     pub fn sorted(value: &Value) -> Value {
         match value {
             Value::List(list) => {
-                list.borrow_mut().sort();
+                list.borrow_mut().sort_by(|a, b| {
+                    let a = a.0.borrow().__primitive();
+                    let b = b.0.borrow().__primitive();
+                    a.partial_cmp(&b).unwrap()
+                });
             }
             _ => todo!(),
         }

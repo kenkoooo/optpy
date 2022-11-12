@@ -5,8 +5,12 @@ fn test_split() {
     let value = Value::from("abc efg\n");
     let list = value.split();
     assert_eq!(
-        list,
-        Value::from(vec![Value::from("abc"), Value::from("efg")])
+        list.index(&Value::from(0)).__primitive(),
+        Value::from("abc").__primitive()
+    );
+    assert_eq!(
+        list.index(&Value::from(1)).__primitive(),
+        Value::from("efg").__primitive()
     );
 }
 
@@ -24,7 +28,7 @@ fn test_list_assign() {
 fn test_add() {
     let x = Value::from(vec![Value::from(1)]);
     let y = x.index(&Value::from(0)).__add(&Value::from(1));
-    assert_eq!(y, Value::from(2));
+    assert_eq!(y.__primitive(), Value::from(2).__primitive());
 }
 
 #[test]
