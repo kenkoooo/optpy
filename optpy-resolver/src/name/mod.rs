@@ -43,11 +43,6 @@ fn collect_declarations(
 
 fn collect_variable_names(expr: &Expr, variables: &mut NameStore, ctx: &ContextPath) {
     match expr {
-        Expr::Tuple(tuple) => {
-            for variable in tuple {
-                collect_variable_names(variable, variables, ctx);
-            }
-        }
         Expr::VariableName(name) => {
             variables.declare(name, ctx);
         }
