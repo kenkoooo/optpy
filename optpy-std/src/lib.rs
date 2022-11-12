@@ -81,6 +81,15 @@ pub mod value {
                 _ => unreachable!(),
             }
         }
+        pub fn __shallow_copy(&self) -> Value {
+            self.clone()
+        }
+        pub fn __inner(&self) -> Value {
+            match self {
+                Value::Ref(r) => r.0.borrow().__inner(),
+                _ => self.clone(),
+            }
+        }
 
         pub fn split(&self) -> Self {
             let value = self.__primitive();
@@ -105,24 +114,21 @@ pub mod value {
                         Primitive::Int64(i) => i as usize,
                         _ => unreachable!(),
                     };
-                    let r = &list.borrow()[i];
-                    Value::Ref(r.clone())
+                    let r = list.borrow()[i].clone();
+                    Value::Ref(r)
                 }
                 _ => unreachable!(),
             }
         }
 
         pub fn assign(&mut self, value: &Value) {
-            match (&self, value) {
-                (_, Value::Ref(r)) => {
-                    self.assign(&r.0.borrow());
-                }
-                (Value::Ref(r), _) => {
-                    let value = value.clone();
+            let value = value.__inner();
+            match self {
+                Value::Ref(r) => {
                     r.0.replace(value);
                 }
                 _ => {
-                    *self = value.clone();
+                    *self = value;
                 }
             }
         }
