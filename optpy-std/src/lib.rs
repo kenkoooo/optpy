@@ -1,40 +1,50 @@
 pub mod value {
     use std::{cell::RefCell, rc::Rc};
 
+    #[derive(Debug, PartialEq, Clone, PartialOrd)]
+    pub enum Value {
+        List(Rc<RefCell<Vec<Ref>>>),
+        Ref(Ref),
+        Primitive(Primitive),
+    }
+
     #[derive(Debug, PartialEq, Clone, PartialOrd, Eq, Ord)]
-    pub struct Value {
-        pub inner: Rc<RefCell<Inner>>,
+    pub struct Ref(pub Rc<RefCell<Value>>);
+    impl Ref {
+        pub fn new(value: Value) -> Self {
+            Self(Rc::new(RefCell::new(value)))
+        }
     }
 
     #[derive(Debug, PartialEq, Clone, PartialOrd)]
-    pub enum Inner {
-        List(Vec<Value>),
+    pub enum Primitive {
         String(Rc<String>),
         Int64(i64),
         Float(f64),
         Boolean(bool),
         None,
     }
-    impl Ord for Inner {
+
+    impl Into<Value> for Primitive {
+        fn into(self) -> Value {
+            Value::Primitive(self)
+        }
+    }
+
+    impl Ord for Value {
         fn cmp(&self, other: &Self) -> std::cmp::Ordering {
             self.partial_cmp(other).unwrap()
         }
     }
-    impl Eq for Inner {}
-
-    impl Into<Value> for Inner {
-        fn into(self) -> Value {
-            Value {
-                inner: Rc::new(RefCell::new(self)),
-            }
-        }
-    }
+    impl Eq for Value {}
 
     macro_rules! impl_value_compare {
         ($name:ident, $op:ident) => {
             pub fn $name(&self, value: &Value) -> Value {
-                match (&*self.inner.borrow(), &*value.inner.borrow()) {
-                    (Inner::Int64(lhs), Inner::Int64(rhs)) => Inner::Boolean(lhs.$op(rhs)).into(),
+                match (self.__primitive(), value.__primitive()) {
+                    (Primitive::Int64(lhs), Primitive::Int64(rhs)) => {
+                        Value::Primitive(Primitive::Boolean(lhs.$op(&rhs)))
+                    }
                     _ => todo!(),
                 }
             }
@@ -45,14 +55,18 @@ pub mod value {
         ($name:ident, $op:ident) => {
             pub fn $name(&self, rhs: &Value) -> Value {
                 use std::ops::*;
-                match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
-                    (Inner::Int64(lhs), Inner::Int64(rhs)) => Inner::Int64(lhs.$op(rhs)).into(),
-                    (Inner::Float(lhs), Inner::Float(rhs)) => Inner::Float(lhs.$op(rhs)).into(),
-                    (Inner::Int64(lhs), Inner::Float(rhs)) => {
-                        Inner::Float((*lhs as f64).$op(rhs)).into()
+                match (self.__primitive(), rhs.__primitive()) {
+                    (Primitive::Int64(lhs), Primitive::Int64(rhs)) => {
+                        Value::Primitive(Primitive::Int64(lhs.$op(rhs)))
                     }
-                    (Inner::Float(lhs), Inner::Int64(rhs)) => {
-                        Inner::Float(lhs.$op(*rhs as f64)).into()
+                    (Primitive::Float(lhs), Primitive::Float(rhs)) => {
+                        Value::Primitive(Primitive::Float(lhs.$op(rhs)))
+                    }
+                    (Primitive::Int64(lhs), Primitive::Float(rhs)) => {
+                        Value::Primitive(Primitive::Float((lhs as f64).$op(rhs)))
+                    }
+                    (Primitive::Float(lhs), Primitive::Int64(rhs)) => {
+                        Value::Primitive(Primitive::Float(lhs.$op(rhs as f64)))
                     }
                     _ => todo!("{:?} {:?}", self, rhs),
                 }
@@ -62,82 +76,116 @@ pub mod value {
 
     impl Value {
         pub fn none() -> Self {
-            Inner::None.into()
+            Self::Primitive(Primitive::None)
         }
-        pub fn split(&self) -> Self {
-            match &*self.inner.borrow() {
-                Inner::String(s) => {
-                    let list = s
-                        .split_whitespace()
-                        .map(|s| Inner::String(Rc::new(s.to_string())).into())
-                        .collect();
-                    Inner::List(list).into()
-                }
-                _ => panic!("undefined method"),
+
+        pub fn __primitive(&self) -> Primitive {
+            match self {
+                Value::Ref(r) => r.0.borrow().__primitive(),
+                Value::Primitive(p) => p.clone(),
+                _ => unreachable!(),
+            }
+        }
+        pub fn __shallow_copy(&self) -> Value {
+            self.clone()
+        }
+        pub fn __inner(&self) -> Value {
+            match self {
+                Value::Ref(r) => r.0.borrow().__inner(),
+                _ => self.clone(),
             }
         }
 
-        pub fn shallow_copy(&self) -> Self {
-            let rc = Rc::clone(&self.inner);
-            Self { inner: rc }
+        pub fn split(&self) -> Self {
+            let value = self.__primitive();
+            match value {
+                Primitive::String(s) => {
+                    let list = s
+                        .split_whitespace()
+                        .map(|s| Value::Primitive(Primitive::String(Rc::new(s.to_string()))))
+                        .map(|s| Ref::new(s))
+                        .collect();
+                    Value::List(Rc::new(RefCell::new(list)))
+                }
+                _ => unreachable!(),
+            }
         }
 
         pub fn index(&self, index: &Value) -> Self {
-            match (&*self.inner.borrow(), &*index.inner.borrow()) {
-                (Inner::List(list), Inner::Int64(i)) => list[*i as usize].shallow_copy(),
-                _ => todo!(),
+            match self {
+                Value::Ref(r) => r.0.borrow().index(index),
+                Value::List(list) => {
+                    let i = match index.__primitive() {
+                        Primitive::Int64(i) => i as usize,
+                        _ => unreachable!(),
+                    };
+                    let r = list.borrow()[i].clone();
+                    Value::Ref(r)
+                }
+                _ => unreachable!(),
             }
         }
 
         pub fn assign(&mut self, value: &Value) {
-            let value = value.inner.borrow().clone();
-            self.inner.replace(value);
-        }
-
-        pub fn count(&self, value: &Value) -> Value {
-            match (&*self.inner.borrow(), &*value.inner.borrow()) {
-                (Inner::String(lhs), Inner::String(rhs)) => {
-                    let mut i = 0;
-                    let mut result = 0;
-                    while i < lhs.len() {
-                        if lhs[i..].starts_with(rhs.as_ref()) {
-                            i += rhs.len();
-                            result += 1;
-                        } else {
-                            i += 1;
-                        }
-                    }
-                    Inner::Int64(result).into()
+            let value = value.__inner();
+            match self {
+                Value::Ref(r) => {
+                    r.0.replace(value);
                 }
-                _ => todo!(),
+                _ => {
+                    *self = value;
+                }
             }
         }
 
+        pub fn count(&self, value: &Value) -> Value {
+            let (lhs, rhs) = match (self.__primitive(), value.__primitive()) {
+                (Primitive::String(lhs), Primitive::String(rhs)) => (lhs, rhs),
+                _ => unreachable!(),
+            };
+
+            let mut i = 0;
+            let mut result = 0;
+            while i < lhs.len() {
+                if lhs[i..].starts_with(rhs.as_ref()) {
+                    i += rhs.len();
+                    result += 1;
+                } else {
+                    i += 1;
+                }
+            }
+            Value::Primitive(Primitive::Int64(result))
+        }
+
         pub fn reverse(&mut self) {
-            match &mut *self.inner.borrow_mut() {
-                Inner::List(list) => list.reverse(),
+            match self {
+                Value::Ref(r) => r.0.borrow_mut().reverse(),
+                Value::List(list) => {
+                    list.borrow_mut().reverse();
+                }
                 _ => todo!(),
             }
         }
 
         pub fn pop(&mut self) -> Value {
-            match &mut *self.inner.borrow_mut() {
-                Inner::List(list) => {
-                    let last = list.pop();
-                    match last {
-                        Some(element) => element,
-                        None => Inner::None.into(),
+            match self {
+                Value::List(list) => match list.borrow_mut().pop() {
+                    Some(last) => Value::Ref(last),
+                    None => {
+                        panic!("empty");
                     }
-                }
+                },
+                Value::Ref(r) => r.0.borrow_mut().pop(),
                 _ => todo!(),
             }
         }
         pub fn append(&mut self, value: &Value) {
-            match &mut *self.inner.borrow_mut() {
-                Inner::List(list) => {
-                    list.push(value.shallow_copy());
+            match self {
+                Value::List(list) => {
+                    list.borrow_mut().push(Ref::new(value.clone()));
                 }
-                _ => todo!(),
+                Value::Ref(r) => r.0.borrow_mut().append(value),
+                _ => unreachable!(),
             }
         }
 
@@ -154,18 +202,20 @@ pub mod value {
         impl_value_binop!(__mod, rem);
 
         pub fn __floor_div(&self, rhs: &Value) -> Value {
-            match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
-                (Inner::Int64(lhs), Inner::Int64(rhs)) => Inner::Int64(lhs / rhs).into(),
+            match (self.__primitive(), rhs.__primitive()) {
+                (Primitive::Int64(lhs), Primitive::Int64(rhs)) => {
+                    Value::Primitive(Primitive::Int64(lhs / rhs))
+                }
                 _ => todo!(),
             }
         }
         pub fn __div(&self, rhs: &Value) -> Value {
-            match (&*self.inner.borrow(), &*rhs.inner.borrow()) {
-                (Inner::Int64(lhs), Inner::Int64(rhs)) => {
+            match (self.__primitive(), rhs.__primitive()) {
+                (Primitive::Int64(lhs), Primitive::Int64(rhs)) => {
                     if lhs % rhs == 0 {
-                        Inner::Int64(lhs / rhs).into()
+                        Value::Primitive(Primitive::Int64(lhs / rhs))
                     } else {
-                        Inner::Float(*lhs as f64 / *rhs as f64).into()
+                        Value::Primitive(Primitive::Float(lhs as f64 / rhs as f64))
                     }
                 }
                 _ => todo!(),
@@ -173,19 +223,19 @@ pub mod value {
         }
 
         pub fn __unary_add(&self) -> Value {
-            self.shallow_copy()
+            self.clone()
         }
         pub fn __unary_sub(&self) -> Value {
-            match &*self.inner.borrow() {
-                Inner::Int64(i) => Inner::Int64(-i).into(),
-                Inner::Float(f) => Inner::Float(-f).into(),
+            match self.__primitive() {
+                Primitive::Int64(i) => Primitive::Int64(-i).into(),
+                Primitive::Float(f) => Primitive::Float(-f).into(),
                 _ => todo!(),
             }
         }
 
         pub fn test(&self) -> bool {
-            match &*self.inner.borrow() {
-                Inner::Boolean(x) => *x,
+            match self.__primitive() {
+                Primitive::Boolean(x) => x,
                 _ => todo!(),
             }
         }
@@ -193,45 +243,59 @@ pub mod value {
 
     impl From<&str> for Value {
         fn from(s: &str) -> Self {
-            Inner::String(Rc::new(s.to_string())).into()
+            Primitive::String(Rc::new(s.to_string())).into()
         }
     }
     impl From<i64> for Value {
         fn from(v: i64) -> Self {
-            Inner::Int64(v).into()
+            Primitive::Int64(v).into()
         }
     }
     impl From<f64> for Value {
         fn from(v: f64) -> Self {
-            Inner::Float(v).into()
+            Primitive::Float(v).into()
         }
     }
     impl From<Vec<Value>> for Value {
         fn from(list: Vec<Value>) -> Self {
-            Inner::List(list).into()
+            let list = list.into_iter().map(Ref::new).collect();
+            Value::List(Rc::new(RefCell::new(list)))
         }
     }
     impl From<bool> for Value {
         fn from(b: bool) -> Self {
-            Inner::Boolean(b).into()
+            Primitive::Boolean(b).into()
         }
     }
     impl ToString for Value {
         fn to_string(&self) -> String {
-            match &*self.inner.borrow() {
-                Inner::String(s) => s.to_string(),
-                Inner::Int64(i) => i.to_string(),
-                Inner::Float(f) => f.to_string(),
-                _ => todo!(),
+            match self {
+                Value::List(list) => {
+                    format!(
+                        "[{}]",
+                        list.borrow()
+                            .iter()
+                            .map(|v| v.0.borrow().to_string())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
+                }
+                Value::Ref(r) => r.0.borrow().to_string(),
+                Value::Primitive(value) => match value {
+                    Primitive::String(s) => s.to_string(),
+                    Primitive::Int64(i) => i.to_string(),
+                    Primitive::Float(f) => f.to_string(),
+                    _ => todo!(),
+                },
             }
         }
     }
 }
 
 pub mod builtin {
-    use std::io::stdin;
+    use std::{cell::RefCell, io::stdin, rc::Rc};
 
-    use crate::value::{Inner, Value};
+    use crate::{value::Value, Primitive, Ref};
 
     pub fn input() -> Value {
         let mut buf = String::new();
@@ -240,58 +304,69 @@ pub mod builtin {
     }
 
     pub fn map_int(value: &Value) -> Value {
-        match &*value.inner.borrow() {
-            Inner::List(list) => {
-                let list = list.iter().map(|v| int(v)).collect();
-                Inner::List(list).into()
+        match value {
+            Value::List(list) => {
+                let list = list
+                    .borrow()
+                    .iter()
+                    .map(|v| int(&v.0.borrow()))
+                    .map(Ref::new)
+                    .collect();
+                Value::List(Rc::new(RefCell::new(list)))
             }
+            Value::Ref(r) => map_int(&r.0.borrow()),
             _ => todo!(),
         }
     }
     pub fn int(value: &Value) -> Value {
-        match &*value.inner.borrow() {
-            Inner::String(s) => {
+        match value.__primitive() {
+            Primitive::String(s) => {
                 if let Ok(i) = s.parse::<i64>() {
-                    Inner::Int64(i).into()
+                    Primitive::Int64(i).into()
                 } else {
                     todo!()
                 }
             }
-            Inner::Int64(_) => value.clone(),
+            Primitive::Int64(_) => value.clone(),
             _ => panic!("invalid"),
         }
     }
 
     pub fn list(value: &Value) -> Value {
-        match &*value.inner.borrow() {
-            Inner::List(list) => Inner::List(list.clone()).into(),
+        match value {
+            Value::List(list) => {
+                let list = list.borrow().clone();
+                Value::List(Rc::new(RefCell::new(list)))
+            }
             _ => todo!(),
         }
     }
 
     pub fn range1(value: &Value) -> Value {
-        match &*value.inner.borrow() {
-            Inner::Int64(i) => {
-                let list = (0..(*i)).map(|i| Inner::Int64(i).into()).collect();
-                Inner::List(list).into()
+        match value.__primitive() {
+            Primitive::Int64(i) => {
+                let list = (0..i)
+                    .map(|i| Ref::new(Primitive::Int64(i).into()))
+                    .collect();
+                Value::List(Rc::new(RefCell::new(list)))
             }
             _ => todo!(),
         }
     }
 
     pub fn sorted(value: &Value) -> Value {
-        match &mut *value.inner.borrow_mut() {
-            Inner::List(list) => {
-                list.sort();
+        match value {
+            Value::List(list) => {
+                list.borrow_mut().sort();
             }
             _ => todo!(),
         }
-        value.shallow_copy()
+        value.clone()
     }
 
     pub fn len(value: &Value) -> Value {
-        match &*value.inner.borrow() {
-            Inner::List(list) => Inner::Int64(list.len() as i64).into(),
+        match value {
+            Value::List(list) => Primitive::Int64(list.borrow().len() as i64).into(),
             _ => todo!(),
         }
     }
