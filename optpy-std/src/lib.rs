@@ -1,5 +1,69 @@
 pub mod value {
-    use std::{cell::RefCell, rc::Rc};
+
+    pub struct UnsafeRef<T: ?Sized> {
+        value: NonNull<T>,
+    }
+    impl<T: ?Sized> Deref for UnsafeRef<T> {
+        type Target = T;
+
+        #[inline]
+        fn deref(&self) -> &T {
+            // SAFETY: the value is accessible as long as we hold our borrow.
+            unsafe { self.value.as_ref() }
+        }
+    }
+    pub struct UnsafeRefMut<T: ?Sized> {
+        value: NonNull<T>,
+    }
+
+    impl<T: ?Sized> Deref for UnsafeRefMut<T> {
+        type Target = T;
+
+        #[inline]
+        fn deref(&self) -> &T {
+            unsafe { self.value.as_ref() }
+        }
+    }
+
+    impl<T: ?Sized> DerefMut for UnsafeRefMut<T> {
+        #[inline]
+        fn deref_mut(&mut self) -> &mut T {
+            // SAFETY: the value is accessible as long as we hold our borrow.
+            unsafe { self.value.as_mut() }
+        }
+    }
+
+    #[derive(Debug)]
+    pub struct MyRefCell<T> {
+        cell: UnsafeCell<T>,
+    }
+
+    impl<T> MyRefCell<T> {
+        pub fn new(value: T) -> MyRefCell<T> {
+            Self {
+                cell: UnsafeCell::new(value),
+            }
+        }
+        pub fn borrow(&self) -> UnsafeRef<T> {
+            let value = unsafe { NonNull::new_unchecked(self.cell.get()) };
+            UnsafeRef { value }
+        }
+        pub fn borrow_mut(&self) -> UnsafeRefMut<T> {
+            let value = unsafe { NonNull::new_unchecked(self.cell.get()) };
+            UnsafeRefMut { value }
+        }
+        pub fn replace(&self, t: T) -> T {
+            std::mem::replace(&mut *self.borrow_mut(), t)
+        }
+    }
+
+    use std::{
+        cell::UnsafeCell,
+        ops::{Deref, DerefMut},
+        ptr::NonNull,
+        rc::Rc,
+    };
+    type RefCell<T> = MyRefCell<T>;
 
     #[derive(Debug, Clone)]
     pub enum Value {
@@ -70,6 +134,10 @@ pub mod value {
     impl Value {
         pub fn none() -> Self {
             Self::Primitive(Primitive::None)
+        }
+
+        pub fn list(list: Vec<Ref>) -> Self {
+            Value::List(Rc::new(RefCell::new(list)))
         }
 
         pub fn __primitive(&self) -> Primitive {
@@ -225,6 +293,24 @@ pub mod value {
                 _ => todo!(),
             }
         }
+        pub fn __len(&self) -> Value {
+            match self {
+                Value::List(list) => Primitive::Int64(list.borrow().len() as i64).into(),
+                _ => todo!(),
+            }
+        }
+        pub fn sort(&self) {
+            match self {
+                Value::List(list) => {
+                    list.borrow_mut().sort_by(|a, b| {
+                        let a = a.0.borrow().__primitive();
+                        let b = b.0.borrow().__primitive();
+                        a.partial_cmp(&b).unwrap()
+                    });
+                }
+                _ => todo!(),
+            }
+        }
 
         pub fn test(&self) -> bool {
             match self.__primitive() {
@@ -286,7 +372,7 @@ pub mod value {
 }
 
 pub mod builtin {
-    use std::{cell::RefCell, io::stdin, rc::Rc};
+    use std::io::stdin;
 
     use crate::{value::Value, Primitive, Ref};
 
@@ -304,8 +390,8 @@ pub mod builtin {
                     .iter()
                     .map(|v| int(&v.0.borrow()))
                     .map(Ref::new)
-                    .collect();
-                Value::List(Rc::new(RefCell::new(list)))
+                    .collect::<Vec<_>>();
+                Value::list(list)
             }
             Value::Ref(r) => map_int(&r.0.borrow()),
             _ => todo!(),
@@ -329,7 +415,7 @@ pub mod builtin {
         match value {
             Value::List(list) => {
                 let list = list.borrow().clone();
-                Value::List(Rc::new(RefCell::new(list)))
+                Value::list(list)
             }
             _ => todo!(),
         }
@@ -340,32 +426,20 @@ pub mod builtin {
             Primitive::Int64(i) => {
                 let list = (0..i)
                     .map(|i| Ref::new(Primitive::Int64(i).into()))
-                    .collect();
-                Value::List(Rc::new(RefCell::new(list)))
+                    .collect::<Vec<_>>();
+                Value::list(list)
             }
             _ => todo!(),
         }
     }
 
     pub fn sorted(value: &Value) -> Value {
-        match value {
-            Value::List(list) => {
-                list.borrow_mut().sort_by(|a, b| {
-                    let a = a.0.borrow().__primitive();
-                    let b = b.0.borrow().__primitive();
-                    a.partial_cmp(&b).unwrap()
-                });
-            }
-            _ => todo!(),
-        }
+        value.sort();
         value.clone()
     }
 
     pub fn len(value: &Value) -> Value {
-        match value {
-            Value::List(list) => Primitive::Int64(list.borrow().len() as i64).into(),
-            _ => todo!(),
-        }
+        value.__len()
     }
 }
 
