@@ -41,7 +41,12 @@ pub mod value {
     macro_rules! impl_value_compare {
         ($name:ident, $op:ident) => {
             pub fn $name(&self, value: &Value) -> Value {
-                Value::Primitive(Primitive::Boolean(self.$op(value)))
+                match (self.__primitive(), value.__primitive()) {
+                    (Primitive::Int64(lhs), Primitive::Int64(rhs)) => {
+                        Value::Primitive(Primitive::Boolean(lhs.$op(&rhs)))
+                    }
+                    _ => todo!(),
+                }
             }
         };
     }
@@ -264,11 +269,24 @@ pub mod value {
     }
     impl ToString for Value {
         fn to_string(&self) -> String {
-            match self.__primitive() {
-                Primitive::String(s) => s.to_string(),
-                Primitive::Int64(i) => i.to_string(),
-                Primitive::Float(f) => f.to_string(),
-                _ => todo!(),
+            match self {
+                Value::List(list) => {
+                    format!(
+                        "[{}]",
+                        list.borrow()
+                            .iter()
+                            .map(|v| v.0.borrow().to_string())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
+                }
+                Value::Ref(r) => r.0.borrow().to_string(),
+                Value::Primitive(value) => match value {
+                    Primitive::String(s) => s.to_string(),
+                    Primitive::Int64(i) => i.to_string(),
+                    Primitive::Float(f) => f.to_string(),
+                    _ => todo!(),
+                },
             }
         }
     }
