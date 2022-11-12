@@ -1,3 +1,4 @@
+#[cfg(feature = "unsafecell")]
 pub mod cell {
     use std::{
         cell::UnsafeCell,
@@ -63,20 +64,23 @@ pub mod cell {
 pub mod value {
     use std::rc::Rc;
 
-    use crate::cell::UnsafeRefCell;
+    #[cfg(not(feature = "unsafecell"))]
+    type RefCell<T> = std::cell::RefCell<T>;
+    #[cfg(feature = "unsafecell")]
+    type RefCell<T> = crate::cell::UnsafeRefCell<T>;
 
     #[derive(Debug, Clone)]
     pub enum Value {
-        List(Rc<UnsafeRefCell<Vec<Ref>>>),
+        List(Rc<RefCell<Vec<Ref>>>),
         Ref(Ref),
         Primitive(Primitive),
     }
 
     #[derive(Debug, Clone)]
-    pub struct Ref(pub Rc<UnsafeRefCell<Value>>);
+    pub struct Ref(pub Rc<RefCell<Value>>);
     impl Ref {
         pub fn new(value: Value) -> Self {
-            Self(Rc::new(UnsafeRefCell::new(value)))
+            Self(Rc::new(RefCell::new(value)))
         }
     }
 
@@ -165,7 +169,7 @@ pub mod value {
         }
 
         pub fn list(list: Vec<Ref>) -> Self {
-            Value::List(Rc::new(UnsafeRefCell::new(list)))
+            Value::List(Rc::new(RefCell::new(list)))
         }
 
         pub fn __primitive(&self) -> Primitive {
@@ -194,7 +198,7 @@ pub mod value {
                         .map(|s| Value::Primitive(Primitive::String(Rc::new(s.to_string()))))
                         .map(|s| Ref::new(s))
                         .collect();
-                    Value::List(Rc::new(UnsafeRefCell::new(list)))
+                    Value::List(Rc::new(RefCell::new(list)))
                 }
                 _ => unreachable!(),
             }
@@ -379,7 +383,7 @@ pub mod value {
     impl From<Vec<Value>> for Value {
         fn from(list: Vec<Value>) -> Self {
             let list = list.into_iter().map(Ref::new).collect();
-            Value::List(Rc::new(UnsafeRefCell::new(list)))
+            Value::List(Rc::new(RefCell::new(list)))
         }
     }
     impl From<bool> for Value {
