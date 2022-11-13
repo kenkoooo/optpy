@@ -248,7 +248,7 @@ fn format_binary_ident(op: &BinaryOperator) -> Ident {
         BinaryOperator::Sub => format_ident!("__sub"),
         BinaryOperator::Mul => format_ident!("__mul"),
         BinaryOperator::Div => format_ident!("__div"),
-        BinaryOperator::Mod => format_ident!("__mod"),
+        BinaryOperator::Mod => format_ident!("__rem"),
         BinaryOperator::FloorDiv => format_ident!("__floor_div"),
     }
 }

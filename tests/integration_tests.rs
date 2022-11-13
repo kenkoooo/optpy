@@ -55,16 +55,6 @@ else:
 }
 
 optpy_integration_test! {
-test_count,
-r#"
-s = input()
-print(s.count('1'))
-"#,
-("101\n", "2\n"),
-("000\n", "0\n")
-}
-
-optpy_integration_test! {
 test_list_add_assign,
 r"
 A = list(map(int, input().split()))
