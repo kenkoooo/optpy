@@ -4,31 +4,22 @@ use optpy_std::{print, sorted, value::Value};
 fn test_split() {
     let value = Value::from("abc efg\n");
     let list = value.split();
-    assert_eq!(
-        list.index(&Value::from(0)).__primitive(),
-        Value::from("abc").__primitive()
-    );
-    assert_eq!(
-        list.index(&Value::from(1)).__primitive(),
-        Value::from("efg").__primitive()
-    );
+    assert_eq!(list.index(&Value::from(0)), Value::from("abc"));
+    assert_eq!(list.index(&Value::from(1)), Value::from("efg"));
 }
 
 #[test]
 fn test_list_assign() {
     let x = Value::from(vec![Value::from(1)]);
     x.index(&Value::from(0)).assign(&Value::from(2));
-    assert_eq!(
-        x.index(&Value::from(0)).__primitive(),
-        Value::from(2).__primitive()
-    );
+    assert_eq!(x.index(&Value::from(0)), Value::from(2));
 }
 
 #[test]
 fn test_add() {
     let x = Value::from(vec![Value::from(1)]);
     let y = x.index(&Value::from(0)).__add(&Value::from(1));
-    assert_eq!(y.__primitive(), Value::from(2).__primitive());
+    assert_eq!(y, Value::from(2));
 }
 
 #[test]
@@ -37,14 +28,8 @@ fn test_sorted() {
     x.assign(&Value::from(vec![Value::from(2), Value::from(1)]));
     sorted(&x);
 
-    assert_eq!(
-        x.index(&Value::from(0)).__primitive(),
-        Value::from(1).__primitive()
-    );
-    assert_eq!(
-        x.index(&Value::from(1)).__primitive(),
-        Value::from(2).__primitive()
-    );
+    assert_eq!(x.index(&Value::from(0)), Value::from(1));
+    assert_eq!(x.index(&Value::from(1)), Value::from(2));
 }
 
 #[test]
