@@ -18,10 +18,11 @@ https://user-images.githubusercontent.com/9150073/200675788-267792f1-a14c-4746-a
 ./optpy <Input Python file> [Output Rust file]
 ```
 
-# Features
+# TODO
 - [x] Functions
 - [x] `for` & `while` loops
 - [x] List comprehension
+- [ ] Bigint
 - [ ] Classes
 - [ ] Modules
-- [ ] And so many things
+- [ ] and so many things ...
