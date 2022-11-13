@@ -1,4 +1,3 @@
-#[cfg(feature = "unsafecell")]
 pub mod cell {
     use std::{
         cell::UnsafeCell,
@@ -64,9 +63,8 @@ pub mod cell {
 pub mod value {
     use std::rc::Rc;
 
-    #[cfg(not(feature = "unsafecell"))]
-    type RefCell<T> = std::cell::RefCell<T>;
-    #[cfg(feature = "unsafecell")]
+    use crate::cell::UnsafeRefMut;
+
     type RefCell<T> = crate::cell::UnsafeRefCell<T>;
 
     #[derive(Debug, Clone)]
@@ -174,8 +172,8 @@ pub mod value {
 
         pub fn __primitive(&self) -> Primitive {
             match self {
-                Value::Ref(r) => r.0.borrow().__primitive(),
                 Value::Primitive(p) => p.clone(),
+                Value::Ref(r) => r.0.borrow().__primitive(),
                 _ => unreachable!(),
             }
         }
@@ -204,7 +202,7 @@ pub mod value {
             }
         }
 
-        pub fn index(&self, index: &Value) -> Self {
+        pub fn index(&self, index: &Value) -> UnsafeRefMut<Value> {
             match self {
                 Value::Ref(r) => r.0.borrow().index(index),
                 Value::List(list) => {
@@ -212,8 +210,9 @@ pub mod value {
                         Primitive::Number(Number::Int64(i)) => i as usize,
                         _ => unreachable!(),
                     };
-                    let r = list.borrow()[i].clone();
-                    Value::Ref(r)
+                    let r = list.borrow();
+                    let r = r[i].0.borrow_mut();
+                    r
                 }
                 _ => unreachable!(),
             }
