@@ -84,7 +84,7 @@ fn format_statement(
             let name = format_ident!("{}", name);
             quote! {
                 fn #name( #(#args: &Value),*  ) -> Value {
-                    #(let mut #args = #args.__shallow_copy();),*
+                    #(let mut #args = #args.__shallow_copy();)*
                     #body
                     return Value::none();
                 }
@@ -94,7 +94,7 @@ fn format_statement(
             Some(value) => {
                 let value = format_expr(value);
                 quote! {
-                    return #value;
+                    return Value::from(#value);
                 }
             }
             None => {
@@ -192,7 +192,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
         Expr::List(list) => {
             let list = format_exprs(list);
             quote! {
-                Value::from(vec![#(#list),*])
+                Value::from(vec![#(Value::from(&#list)),*])
             }
         }
         Expr::ConstantString(value) => {

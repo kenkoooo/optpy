@@ -196,7 +196,12 @@ pub mod value {
                 (Self::String(l0), Self::String(r0)) => l0 == r0,
                 (Self::Number(l0), Self::Number(r0)) => l0 == r0,
                 (Self::Boolean(l0), Self::Boolean(r0)) => l0 == r0,
-                _ => todo!(),
+                (Self::List(l0), Self::List(r0)) => l0
+                    .borrow()
+                    .iter()
+                    .zip(r0.borrow().iter())
+                    .all(|(l, r)| l.borrow().eq(&r.borrow())),
+                _ => false,
             }
         }
     }
@@ -360,6 +365,21 @@ pub mod value {
         fn from(list: Vec<Value>) -> Self {
             let list = list.into_iter().map(|v| Rc::new(RefCell::new(v))).collect();
             Value::List(Rc::new(RefCell::new(list)))
+        }
+    }
+    impl From<&Value> for Value {
+        fn from(r: &Value) -> Self {
+            r.__shallow_copy()
+        }
+    }
+    impl From<UnsafeRefMut<Value>> for Value {
+        fn from(r: UnsafeRefMut<Value>) -> Self {
+            r.__shallow_copy()
+        }
+    }
+    impl From<&UnsafeRefMut<Value>> for Value {
+        fn from(r: &UnsafeRefMut<Value>) -> Self {
+            r.__shallow_copy()
         }
     }
     impl From<bool> for Value {
