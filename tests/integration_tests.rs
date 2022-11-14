@@ -1,5 +1,5 @@
 use optpy_std::Value;
-use optpy_test_macro::test_python;
+use optpy_test_macro::python_function;
 
 mod test_env;
 
@@ -216,38 +216,32 @@ print(a[0], a[1], a[2])
 
 #[test]
 fn test_ops() {
-    let result = test_python!(
+    python_function! {
         r"
-a = 1
-b = 2
-return a+b"
+def test_ops(N, M):
+    return [N + M, N * M, N - M, N / M, N // M]"
+    };
+    let result = test_ops(&Value::from(4), &Value::from(2));
+    assert_eq!(
+        result,
+        Value::from(vec![
+            Value::from(6),
+            Value::from(8),
+            Value::from(2),
+            Value::from(2),
+            Value::from(2),
+        ])
     );
-    assert_eq!(result, Value::from(3));
 
-    let result = test_python!(
-        r"
-a=2
-b=4
-return a*b
-"
+    let result = test_ops(&Value::from(1), &Value::from(2));
+    assert_eq!(
+        result,
+        Value::from(vec![
+            Value::from(3),
+            Value::from(2),
+            Value::from(-1),
+            Value::from(0.5),
+            Value::from(0),
+        ])
     );
-    assert_eq!(result, Value::from(8));
-
-    let result = test_python!(
-        r"
-a=2
-b=4
-return a-b
-"
-    );
-    assert_eq!(result, Value::from(-2));
-
-    let result = test_python!(
-        r"
-a=2
-b=4
-return a/b
-"
-    );
-    assert_eq!(result, Value::from(0.5));
 }

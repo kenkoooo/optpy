@@ -196,6 +196,11 @@ pub mod value {
                 (Self::String(l0), Self::String(r0)) => l0 == r0,
                 (Self::Number(l0), Self::Number(r0)) => l0 == r0,
                 (Self::Boolean(l0), Self::Boolean(r0)) => l0 == r0,
+                (Self::List(l0), Self::List(r0)) => l0
+                    .borrow()
+                    .iter()
+                    .zip(r0.borrow().iter())
+                    .all(|(l, r)| l.borrow().eq(&r.borrow())),
                 _ => todo!(),
             }
         }
