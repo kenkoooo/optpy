@@ -94,7 +94,7 @@ fn format_statement(
             Some(value) => {
                 let value = format_expr(value);
                 quote! {
-                    return #value;
+                    return Value::from(#value);
                 }
             }
             None => {
@@ -190,9 +190,15 @@ fn format_expr(expr: &Expr) -> TokenStream {
             }
         }
         Expr::List(list) => {
-            let list = format_exprs(list);
-            quote! {
-                Value::from(vec![#(#list),*])
+            if list.is_empty() {
+                quote! {
+                    Value::from(Vec::<bool>::new())
+                }
+            } else {
+                let list = format_exprs(list);
+                quote! {
+                    Value::from(vec![#(#list),*])
+                }
             }
         }
         Expr::ConstantString(value) => {

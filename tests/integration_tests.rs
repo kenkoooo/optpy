@@ -186,32 +186,56 @@ print(arr[0])
 ("", "200\n")
 }
 
-optpy_integration_test! {
-test_short_circuit_evaluation,
-r#"
-def a():
-    print("eval")
-    return True
+#[test]
+fn test_short_circuit_evaluation() {
+    python_function! {r#"
+def test_short_circuit_evaluation(N):
+    eval = []
+    def a():
+        eval.append(1)
+        return True
+    if N == 1 and a():
+        return eval
+    else:
+        return eval
+    "#};
+    let result = test_short_circuit_evaluation(&Value::from(0));
+    assert_eq!(result, Value::from(vec![Value::from(1)]));
 
-N = int(input())
-if N == 1 and a():
-    print("YES")
-else:
-    print("NO")
-"#,
-("0\n", "NO\n"),
-("1\n", "eval\nYES\n")
+    let result = test_short_circuit_evaluation(&Value::from(1));
+    assert_eq!(result, Value::from(Vec::<bool>::new()));
 }
 
-optpy_integration_test! {
-test_array_assignment,
-r#"
-a = [0, 1, 2]
-a[0] = a[1]
-a[1] = a[2]
-print(a[0], a[1], a[2])
-"#,
-("", "1 2 2\n")
+#[test]
+fn test_array_assignment() {
+    python_function! {
+        r"
+def test_array_assignment():
+    a = [0, 1, 2]
+    a[0] = a[1]
+    a[1] = a[2]
+    return [a[0], a[1], a[2]]
+    "
+    };
+    let result = test_array_assignment();
+    assert_eq!(
+        result,
+        Value::from(vec![Value::from(1), Value::from(2), Value::from(2)])
+    );
+}
+#[test]
+fn test_return_list_ref() {
+    python_function! {
+        r"
+def test_return_list_ref():
+    def f():
+        a = [0, 1, 2]
+        return a[1]
+    return f() + 1
+    "
+    };
+    let result = test_return_list_ref();
+    assert_eq!(result, Value::from(2));
 }
 
 #[test]

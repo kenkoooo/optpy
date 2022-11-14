@@ -33,7 +33,7 @@ pub fn python_function(tokens: TokenStream) -> TokenStream {
         .collect::<Vec<_>>();
     let resolved_name = format_ident!("{}", name);
 
-    quote! {
+    let result = quote! {
         #[allow(unreachable_code)]
         fn #function_name(#(#args: &optpy_std::Value),*) -> optpy_std::Value {
             use optpy_std::*;
@@ -41,8 +41,9 @@ pub fn python_function(tokens: TokenStream) -> TokenStream {
 
             #resolved_name( #(#args),* )
         }
-    }
-    .into()
+    };
+
+    result.into()
 }
 
 struct PythonTestInput {

@@ -201,7 +201,7 @@ pub mod value {
                     .iter()
                     .zip(r0.borrow().iter())
                     .all(|(l, r)| l.borrow().eq(&r.borrow())),
-                _ => todo!(),
+                _ => false,
             }
         }
     }
@@ -361,10 +361,21 @@ pub mod value {
             Value::Number(Number::Float(v))
         }
     }
-    impl From<Vec<Value>> for Value {
-        fn from(list: Vec<Value>) -> Self {
-            let list = list.into_iter().map(|v| Rc::new(RefCell::new(v))).collect();
+    impl<T> From<Vec<T>> for Value
+    where
+        Value: From<T>,
+    {
+        fn from(list: Vec<T>) -> Self {
+            let list = list
+                .into_iter()
+                .map(|t| Rc::new(RefCell::new(Value::from(t))))
+                .collect();
             Value::List(Rc::new(RefCell::new(list)))
+        }
+    }
+    impl From<UnsafeRefMut<Value>> for Value {
+        fn from(r: UnsafeRefMut<Value>) -> Self {
+            r.clone()
         }
     }
     impl From<bool> for Value {
