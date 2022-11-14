@@ -1,6 +1,3 @@
-#[cfg(test)]
-pub mod test_env;
-
 use anyhow::Result;
 use optpy_generator::generate_code;
 use optpy_parser::parse;
