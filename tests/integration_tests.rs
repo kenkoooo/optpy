@@ -1,3 +1,6 @@
+use optpy_std::Value;
+use optpy_test_macro::test_python;
+
 mod test_env;
 
 macro_rules! optpy_integration_test {
@@ -99,20 +102,6 @@ print(ans)
 "#,
 ("5\n", "10\n"),
 ("10\n", "45\n")
-}
-
-optpy_integration_test! {
-test_ops,
-r#"
-N, M = map(int, input().split())
-print(N + M)
-print(N * M)
-print(N - M)
-print(N / M)
-print(N // M)
-"#,
-("4 2\n", "6\n8\n2\n2\n2\n"),
-("1 2\n", "3\n2\n-1\n0.5\n0\n")
 }
 
 optpy_integration_test! {
@@ -223,4 +212,42 @@ a[1] = a[2]
 print(a[0], a[1], a[2])
 "#,
 ("", "1 2 2\n")
+}
+
+#[test]
+fn test_ops() {
+    let result = test_python!(
+        r"
+a = 1
+b = 2
+return a+b"
+    );
+    assert_eq!(result, Value::from(3));
+
+    let result = test_python!(
+        r"
+a=2
+b=4
+return a*b
+"
+    );
+    assert_eq!(result, Value::from(8));
+
+    let result = test_python!(
+        r"
+a=2
+b=4
+return a-b
+"
+    );
+    assert_eq!(result, Value::from(-2));
+
+    let result = test_python!(
+        r"
+a=2
+b=4
+return a/b
+"
+    );
+    assert_eq!(result, Value::from(0.5));
 }

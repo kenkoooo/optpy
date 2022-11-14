@@ -485,6 +485,8 @@ dependencies = [
  "optpy-generator",
  "optpy-parser",
  "optpy-resolver",
+ "optpy-std",
+ "optpy-test-macro",
  "tempfile",
 ]
 
@@ -515,6 +517,18 @@ dependencies = [
 [[package]]
 name = "optpy-std"
 version = "0.1.0"
+
+[[package]]
+name = "optpy-test-macro"
+version = "0.1.0"
+dependencies = [
+ "optpy-generator",
+ "optpy-parser",
+ "optpy-resolver",
+ "optpy-std",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "os_str_bytes"

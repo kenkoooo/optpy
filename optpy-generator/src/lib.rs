@@ -18,7 +18,7 @@ pub fn generate_code(
     }
 }
 
-fn generate_function_body(
+pub fn generate_function_body(
     body: &[Statement],
     function_name: &str,
     definitions: &BTreeMap<String, BTreeSet<String>>,
