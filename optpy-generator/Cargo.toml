@@ -5,9 +5,10 @@ edition = "2021"
 publish = false
 
 [dependencies]
-quote = "1.0.21"
+quote = "1.0"
+proc-macro2 = "1.0"
+
 optpy-parser = { path = "../optpy-parser" }
-proc-macro2 = "1.0.47"
 
 [dev-dependencies]
 optpy-resolver = { path = "../optpy-resolver" }
