@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use optpy_parser::{Assign, Expr, Statement};
+use optpy_parser::{Assign, Expr, If, Statement};
 
 pub(super) fn resolve_function_calls(
     statements: &[Statement],
@@ -33,11 +33,11 @@ fn resolve_statement(
             Statement::Assign(Assign { target, value })
         }
         Statement::Expression(expr) => Statement::Expression(resolve_expr(expr, extensions)),
-        Statement::If { test, body, orelse } => {
+        Statement::If(If { test, body, orelse }) => {
             let test = resolve_expr(test, extensions);
             let body = resolve_statements(body, extensions);
             let orelse = resolve_statements(orelse, extensions);
-            Statement::If { test, body, orelse }
+            Statement::If(If { test, body, orelse })
         }
         Statement::Func { name, args, body } => {
             let variables = extensions.get(name).expect("invalid");
@@ -191,7 +191,7 @@ fn list_variable_contexts(
                     list_from_expr(expr, function_name, store);
                 }
             }
-            Statement::If { test, body, orelse } => {
+            Statement::If(If { test, body, orelse }) => {
                 list_from_expr(test, function_name, store);
                 list_variable_contexts(body, function_name, store);
                 list_variable_contexts(orelse, function_name, store);

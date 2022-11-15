@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{
-    Assign, BinaryOperator, BoolOperator, CompareOperator, Expr, Number, Statement, UnaryOperator,
+    Assign, BinaryOperator, BoolOperator, CompareOperator, Expr, If, Number, Statement,
+    UnaryOperator,
 };
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
@@ -57,7 +58,7 @@ fn format_statement(
                 #value;
             }
         }
-        Statement::If { test, body, orelse } => {
+        Statement::If(If { test, body, orelse }) => {
             let test = format_expr(test);
             let body = body
                 .iter()

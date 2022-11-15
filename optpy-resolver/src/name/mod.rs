@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use optpy_parser::{Assign, Expr, Statement};
+use optpy_parser::{Assign, Expr, If, Statement};
 
 pub(super) fn resolve_names(statements: &[Statement]) -> Vec<Statement> {
     let mut variables = NameStore::new("__v");
@@ -22,7 +22,7 @@ fn collect_declarations(
             Statement::Assign(Assign { target, .. }) => {
                 collect_variable_names(target, variables, ctx)
             }
-            Statement::If { body, orelse, .. } => {
+            Statement::If(If { body, orelse, .. }) => {
                 collect_declarations(body, variables, functions, ctx);
                 collect_declarations(orelse, variables, functions, ctx);
             }
@@ -70,11 +70,11 @@ fn resolve_statements(
             Statement::Expression(expr) => {
                 Statement::Expression(resolve_expr(expr, variables, functions, ctx))
             }
-            Statement::If { test, body, orelse } => {
+            Statement::If(If { test, body, orelse }) => {
                 let test = resolve_expr(test, variables, functions, ctx);
                 let body = resolve_statements(body, variables, functions, ctx);
                 let orelse = resolve_statements(orelse, variables, functions, ctx);
-                Statement::If { test, body, orelse }
+                Statement::If(If { test, body, orelse })
             }
             Statement::Func { name, args, body } => {
                 let resolved_name = functions.resolve(name, ctx).expect("invalid");

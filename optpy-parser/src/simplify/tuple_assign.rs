@@ -1,4 +1,4 @@
-use crate::{statement::Assign, Expr, Number, Statement};
+use crate::{statement::Assign, Expr, If, Number, Statement};
 
 pub(crate) fn simplify_tuple_assignments(stmts: Vec<Statement>) -> Vec<Statement> {
     stmts.into_iter().flat_map(simplify_stmt).collect()
@@ -27,10 +27,10 @@ fn simplify_stmt(stmt: Statement) -> Vec<Statement> {
                 vec![Statement::Assign(Assign { target, value })]
             }
         }
-        Statement::If { test, body, orelse } => {
+        Statement::If(If { test, body, orelse }) => {
             let body = simplify_tuple_assignments(body);
             let orelse = simplify_tuple_assignments(orelse);
-            vec![Statement::If { test, body, orelse }]
+            vec![Statement::If(If { test, body, orelse })]
         }
         Statement::Func { name, args, body } => {
             let body = simplify_tuple_assignments(body);

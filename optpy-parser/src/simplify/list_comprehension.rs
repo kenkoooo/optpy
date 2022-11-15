@@ -3,7 +3,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use crate::{statement::Assign, BoolOperator, Expr, Statement};
+use crate::{statement::Assign, BoolOperator, Expr, If, Statement};
 
 pub(crate) fn simplify_list_comprehensions(stmts: Vec<Statement>) -> Vec<Statement> {
     stmts.into_iter().flat_map(stmt).collect()
@@ -23,11 +23,11 @@ fn stmt(stmt: Statement) -> Vec<Statement> {
             s.push(Statement::Expression(e));
             s
         }
-        Statement::If { test, body, orelse } => {
+        Statement::If(If { test, body, orelse }) => {
             let (test, mut s) = eval_expr(test);
             let body = simplify_list_comprehensions(body);
             let orelse = simplify_list_comprehensions(orelse);
-            s.push(Statement::If { test, body, orelse });
+            s.push(Statement::If(If { test, body, orelse }));
             s
         }
         Statement::Func { name, args, body } => {
@@ -148,16 +148,16 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<Statement>) {
             for generator in generators {
                 let ifs = generator.ifs;
                 if !ifs.is_empty() {
-                    generation_body = vec![Statement::If {
+                    generation_body = vec![Statement::If(If {
                         test: Expr::BoolOperation {
                             op: BoolOperator::And,
                             conditions: ifs,
                         },
                         body: generation_body,
                         orelse: vec![],
-                    }];
+                    })];
                 }
-                let (iter, mut new_generation_body) = eval_expr(*generator.iter); // TODO eval
+                let (iter, mut new_generation_body) = eval_expr(*generator.iter);
                 let target = generator.target;
                 new_generation_body.push(Statement::For {
                     target: *target,

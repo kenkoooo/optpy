@@ -1,4 +1,4 @@
-use optpy_parser::{Assign, Expr, Statement};
+use optpy_parser::{Assign, Expr, If, Statement};
 
 pub fn resolve_builtin_functions(statements: &[Statement]) -> Vec<Statement> {
     statements.resolve()
@@ -16,11 +16,11 @@ impl StatementResolve for Statement {
                 value: value.resolve(),
             }),
             Statement::Expression(e) => Statement::Expression(e.resolve()),
-            Statement::If { test, body, orelse } => Statement::If {
+            Statement::If(If { test, body, orelse }) => Statement::If(If {
                 test: test.resolve(),
                 body: body.resolve(),
                 orelse: orelse.resolve(),
-            },
+            }),
             Statement::Func { name, args, body } => Statement::Func {
                 name: name.clone(),
                 args: args.clone(),

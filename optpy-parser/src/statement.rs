@@ -6,11 +6,7 @@ use crate::{expression::Expr, BinaryOperator};
 pub enum Statement {
     Assign(Assign),
     Expression(Expr),
-    If {
-        test: Expr,
-        body: Vec<Statement>,
-        orelse: Vec<Statement>,
-    },
+    If(If),
     Func {
         name: String,
         args: Vec<String>,
@@ -34,6 +30,13 @@ pub struct Assign {
     pub target: Expr,
     pub value: Expr,
 }
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+
+pub struct If {
+    pub test: Expr,
+    pub body: Vec<Statement>,
+    pub orelse: Vec<Statement>,
+}
 
 impl Statement {
     pub fn parse(statement: &StmtKind) -> Self {
@@ -53,7 +56,7 @@ impl Statement {
                 let test = Expr::parse(&test.node);
                 let body = parse_statements(body);
                 let orelse = parse_statements(orelse);
-                Self::If { test, body, orelse }
+                Self::If(If { test, body, orelse })
             }
             StmtKind::FunctionDef {
                 decorator_list: _,
