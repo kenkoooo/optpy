@@ -196,7 +196,6 @@ fn resolve_expr(
                 op: *op,
             })
         }
-        expr => unreachable!("{:?}", expr),
     }
 }
 

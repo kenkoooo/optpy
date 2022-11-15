@@ -1,6 +1,9 @@
 use rustpython_parser::ast::{Stmt, StmtKind};
 
-use crate::{expression::Expr, BinaryOperation, BinaryOperator};
+use crate::{
+    expression::{Expr, RawExpr},
+    BinaryOperation, BinaryOperator,
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Statement {
@@ -46,7 +49,7 @@ pub struct For<S, E> {
     pub(crate) body: Vec<S>,
 }
 
-impl RawStatement {
+impl RawStmt<RawExpr> {
     pub fn parse(statement: &StmtKind) -> Self {
         match statement {
             StmtKind::Assign {
@@ -55,13 +58,13 @@ impl RawStatement {
                 type_comment: _,
             } => {
                 assert_eq!(targets.len(), 1);
-                let target = Expr::parse(&targets[0].node);
-                let value = Expr::parse(&value.node);
+                let target = RawExpr::parse(&targets[0].node);
+                let value = RawExpr::parse(&value.node);
                 Self::Assign(Assign { target, value })
             }
-            StmtKind::Expr { value } => Self::Expression(Expr::parse(&value.node)),
+            StmtKind::Expr { value } => Self::Expression(RawExpr::parse(&value.node)),
             StmtKind::If { test, body, orelse } => {
-                let test = Expr::parse(&test.node);
+                let test = RawExpr::parse(&test.node);
                 let body = parse_statements(body);
                 let orelse = parse_statements(orelse);
                 Self::If(If { test, body, orelse })
@@ -80,7 +83,7 @@ impl RawStatement {
                 Self::Func(Func { name, args, body })
             }
             StmtKind::Return { value } => {
-                let value = value.as_ref().map(|value| Expr::parse(&value.node));
+                let value = value.as_ref().map(|value| RawExpr::parse(&value.node));
                 Self::Return(value)
             }
             StmtKind::While {
@@ -88,7 +91,7 @@ impl RawStatement {
                 body,
                 orelse: _,
             } => {
-                let test = Expr::parse(&test.node);
+                let test = RawExpr::parse(&test.node);
                 let body = parse_statements(body);
                 Self::While(While { test, body })
             }
@@ -99,18 +102,18 @@ impl RawStatement {
                 orelse: _,
                 type_comment: _,
             } => {
-                let target = Expr::parse(&target.node);
-                let iter = Expr::parse(&iter.node);
+                let target = RawExpr::parse(&target.node);
+                let iter = RawExpr::parse(&iter.node);
                 let body = parse_statements(body);
                 Self::For(For { target, iter, body })
             }
             StmtKind::Break => Self::Break,
             StmtKind::AugAssign { target, op, value } => {
-                let target = Expr::parse(&target.node);
-                let value = Expr::parse(&value.node);
+                let target = RawExpr::parse(&target.node);
+                let value = RawExpr::parse(&value.node);
                 Self::Assign(Assign {
                     target: target.clone(),
-                    value: Expr::BinaryOperation(BinaryOperation {
+                    value: RawExpr::BinaryOperation(BinaryOperation {
                         left: Box::new(target),
                         right: Box::new(value),
                         op: BinaryOperator::parse(op),
@@ -122,21 +125,18 @@ impl RawStatement {
     }
 }
 
-fn parse_statements(statements: &[Stmt]) -> Vec<RawStatement> {
-    statements
-        .iter()
-        .map(|s| RawStatement::parse(&s.node))
-        .collect()
+fn parse_statements(statements: &[Stmt]) -> Vec<RawStmt<RawExpr>> {
+    statements.iter().map(|s| RawStmt::parse(&s.node)).collect()
 }
 
 #[derive(Hash)]
-pub(crate) enum RawStatement {
-    Assign(Assign<Expr>),
-    Expression(Expr),
-    If(If<RawStatement, Expr>),
-    Func(Func<RawStatement>),
-    Return(Option<Expr>),
-    While(While<RawStatement, Expr>),
+pub(crate) enum RawStmt<E> {
+    Assign(Assign<E>),
+    Expression(E),
+    If(If<RawStmt<E>, E>),
+    Func(Func<RawStmt<E>>),
+    Return(Option<E>),
+    While(While<RawStmt<E>, E>),
     Break,
-    For(For<RawStatement, Expr>),
+    For(For<RawStmt<E>, E>),
 }

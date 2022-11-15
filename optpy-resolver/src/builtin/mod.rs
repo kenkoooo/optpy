@@ -118,7 +118,6 @@ impl ExprResolve for Expr {
                     op: *op,
                 })
             }
-            expr => unreachable!("{:?}", expr),
         }
     }
 }

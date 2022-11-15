@@ -254,7 +254,6 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
         Expr::UnaryOperation(UnaryOperation { value, op: _ }) => {
             list_from_expr(value, function_name, store);
         }
-        expr => unreachable!("{:?}", expr),
     }
 }
 fn list_from_exprs(exprs: &[Expr], function_name: &str, store: &mut ReferenceStore) {
