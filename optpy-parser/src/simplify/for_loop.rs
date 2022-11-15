@@ -4,37 +4,37 @@ use std::{
 };
 
 use crate::{
-    statement::{Assign, RawStatement},
+    statement::{Assign, RawStmt},
     CallFunction, CallMethod, Compare, CompareOperator, Expr, For, Func, If, Number, Statement,
     While,
 };
 
-pub(crate) fn simplify_for_loops(stmts: Vec<RawStatement>) -> Vec<Statement> {
+pub(crate) fn simplify_for_loops(stmts: Vec<RawStmt<Expr>>) -> Vec<Statement> {
     stmts.into_iter().flat_map(simplify_statement).collect()
 }
 
-fn simplify_statement(stmt: RawStatement) -> Vec<Statement> {
+fn simplify_statement(stmt: RawStmt<Expr>) -> Vec<Statement> {
     match stmt {
-        RawStatement::Assign(Assign { target, value }) => {
+        RawStmt::Assign(Assign { target, value }) => {
             vec![Statement::Assign(Assign { target, value })]
         }
-        RawStatement::Expression(e) => vec![Statement::Expression(e)],
-        RawStatement::If(If { test, body, orelse }) => {
+        RawStmt::Expression(e) => vec![Statement::Expression(e)],
+        RawStmt::If(If { test, body, orelse }) => {
             let body = simplify_for_loops(body);
             let orelse = simplify_for_loops(orelse);
             vec![Statement::If(If { test, body, orelse })]
         }
-        RawStatement::Func(Func { name, args, body }) => {
+        RawStmt::Func(Func { name, args, body }) => {
             let body = simplify_for_loops(body);
             vec![Statement::Func(Func { name, args, body })]
         }
-        RawStatement::Return(e) => vec![Statement::Return(e)],
-        RawStatement::While(While { test, body }) => {
+        RawStmt::Return(e) => vec![Statement::Return(e)],
+        RawStmt::While(While { test, body }) => {
             let body = simplify_for_loops(body);
             vec![Statement::While(While { test, body })]
         }
-        RawStatement::Break => vec![Statement::Break],
-        RawStatement::For(For { target, iter, body }) => {
+        RawStmt::Break => vec![Statement::Break],
+        RawStmt::For(For { target, iter, body }) => {
             let mut hasher = DefaultHasher::new();
             body.hash(&mut hasher);
             let hash = hasher.finish();

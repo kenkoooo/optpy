@@ -46,7 +46,7 @@ pub struct For<S, E> {
     pub(crate) body: Vec<S>,
 }
 
-impl RawStatement {
+impl RawStmt<Expr> {
     pub fn parse(statement: &StmtKind) -> Self {
         match statement {
             StmtKind::Assign {
@@ -122,21 +122,18 @@ impl RawStatement {
     }
 }
 
-fn parse_statements(statements: &[Stmt]) -> Vec<RawStatement> {
-    statements
-        .iter()
-        .map(|s| RawStatement::parse(&s.node))
-        .collect()
+fn parse_statements(statements: &[Stmt]) -> Vec<RawStmt<Expr>> {
+    statements.iter().map(|s| RawStmt::parse(&s.node)).collect()
 }
 
 #[derive(Hash)]
-pub(crate) enum RawStatement {
-    Assign(Assign<Expr>),
-    Expression(Expr),
-    If(If<RawStatement, Expr>),
-    Func(Func<RawStatement>),
-    Return(Option<Expr>),
-    While(While<RawStatement, Expr>),
+pub(crate) enum RawStmt<E> {
+    Assign(Assign<E>),
+    Expression(E),
+    If(If<RawStmt<E>, E>),
+    Func(Func<RawStmt<E>>),
+    Return(Option<E>),
+    While(While<RawStmt<E>, E>),
     Break,
-    For(For<RawStatement, Expr>),
+    For(For<RawStmt<E>, E>),
 }

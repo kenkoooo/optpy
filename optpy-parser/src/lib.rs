@@ -7,7 +7,7 @@ pub use expression::{
 
 mod statement;
 pub(crate) use statement::For;
-use statement::RawStatement;
+use statement::RawStmt;
 pub use statement::{Assign, Func, If, Statement, While};
 
 use rustpython_parser::error::ParseError;
@@ -16,7 +16,7 @@ mod simplify;
 
 pub fn parse<S: AsRef<str>>(code: S) -> Result<Vec<Statement>, ParseError> {
     let ast = rustpython_parser::parser::parse_program(code.as_ref(), "<embedded>")?;
-    let statements = ast.iter().map(|s| RawStatement::parse(&s.node)).collect();
+    let statements = ast.iter().map(|s| RawStmt::parse(&s.node)).collect();
     let statements = simplify::simplify_list_comprehensions(statements);
     let statements = simplify::simplify_for_loops(statements);
     let statements = simplify::simplify_tuple_assignments(statements);
