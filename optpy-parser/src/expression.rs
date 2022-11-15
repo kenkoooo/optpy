@@ -2,63 +2,63 @@ use rustpython_parser::ast::{Boolop, Cmpop, ExprKind, Unaryop};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Expr {
-    CallFunction(CallFunction),
-    CallMethod(CallMethod),
+    CallFunction(CallFunction<Expr>),
+    CallMethod(CallMethod<Expr>),
     Tuple(Vec<Expr>),
     VariableName(String),
-    BoolOperation(BoolOperation),
-    Compare(Compare),
-    UnaryOperation(UnaryOperation),
-    BinaryOperation(BinaryOperation),
-    Index(Index),
+    BoolOperation(BoolOperation<Expr>),
+    Compare(Compare<Expr>),
+    UnaryOperation(UnaryOperation<Expr>),
+    BinaryOperation(BinaryOperation<Expr>),
+    Index(Index<Expr>),
     ConstantNumber(Number),
     ConstantString(String),
     ConstantBoolean(bool),
     List(Vec<Expr>),
-    ListComprehension(ListComprehension),
+    ListComprehension(ListComprehension<Expr>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct CallFunction {
+pub struct CallFunction<E> {
     pub name: String,
-    pub args: Vec<Expr>,
+    pub args: Vec<E>,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct CallMethod {
-    pub value: Box<Expr>,
+pub struct CallMethod<E> {
+    pub value: Box<E>,
     pub name: String,
-    pub args: Vec<Expr>,
+    pub args: Vec<E>,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct BoolOperation {
+pub struct BoolOperation<E> {
     pub op: BoolOperator,
-    pub conditions: Vec<Expr>,
+    pub conditions: Vec<E>,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct Compare {
-    pub left: Box<Expr>,
-    pub right: Box<Expr>,
+pub struct Compare<E> {
+    pub left: Box<E>,
+    pub right: Box<E>,
     pub op: CompareOperator,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct UnaryOperation {
-    pub value: Box<Expr>,
+pub struct UnaryOperation<E> {
+    pub value: Box<E>,
     pub op: UnaryOperator,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct BinaryOperation {
-    pub left: Box<Expr>,
-    pub right: Box<Expr>,
+pub struct BinaryOperation<E> {
+    pub left: Box<E>,
+    pub right: Box<E>,
     pub op: BinaryOperator,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct Index {
-    pub value: Box<Expr>,
-    pub index: Box<Expr>,
+pub struct Index<E> {
+    pub value: Box<E>,
+    pub index: Box<E>,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct ListComprehension {
-    pub value: Box<Expr>,
+pub struct ListComprehension<E> {
+    pub value: Box<E>,
     pub generators: Vec<Comprehension>,
 }
 
