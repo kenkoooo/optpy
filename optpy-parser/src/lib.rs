@@ -1,5 +1,9 @@
 mod expression;
-pub use expression::{BinaryOperator, BoolOperator, CompareOperator, Expr, Number, UnaryOperator};
+pub use expression::{
+    BinaryOperation, BinaryOperator, BoolOperation, BoolOperator, CallFunction, CallMethod,
+    Compare, CompareOperator, Expr, Index, ListComprehension, Number, UnaryOperation,
+    UnaryOperator,
+};
 
 mod statement;
 pub(crate) use statement::For;

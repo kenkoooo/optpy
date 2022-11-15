@@ -1,6 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use optpy_parser::{Assign, Expr, Func, If, Statement, While};
+use optpy_parser::{
+    Assign, BinaryOperation, BoolOperation, CallFunction, CallMethod, Compare, Expr, Func, If,
+    Index, Statement, UnaryOperation, While,
+};
 
 pub(super) fn resolve_function_calls(
     statements: &[Statement],
@@ -74,14 +77,14 @@ fn resolve_statements(
 
 fn resolve_expr(expr: &Expr, extensions: &BTreeMap<String, BTreeSet<String>>) -> Expr {
     match expr {
-        Expr::CallFunction { name, args } => {
+        Expr::CallFunction(CallFunction { name, args }) => {
             let variables = match extensions.get(name) {
                 Some(v) => v,
                 None => {
-                    return Expr::CallFunction {
+                    return Expr::CallFunction(CallFunction {
                         name: name.to_string(),
                         args: resolve_exprs(args, extensions),
-                    }
+                    })
                 }
             };
             let mut args = resolve_exprs(args, extensions);
@@ -90,45 +93,45 @@ fn resolve_expr(expr: &Expr, extensions: &BTreeMap<String, BTreeSet<String>>) ->
                     .iter()
                     .map(|name| Expr::VariableName(name.to_string())),
             );
-            Expr::CallFunction {
+            Expr::CallFunction(CallFunction {
                 name: name.to_string(),
                 args,
-            }
+            })
         }
-        Expr::CallMethod { value, name, args } => {
+        Expr::CallMethod(CallMethod { value, name, args }) => {
             let value = resolve_expr(value, extensions);
             let args = resolve_exprs(args, extensions);
-            Expr::CallMethod {
+            Expr::CallMethod(CallMethod {
                 value: Box::new(value),
                 name: name.to_string(),
                 args,
-            }
+            })
         }
         Expr::Tuple(exprs) => Expr::Tuple(resolve_exprs(exprs, extensions)),
-        Expr::BoolOperation { op, conditions } => {
+        Expr::BoolOperation(BoolOperation { op, conditions }) => {
             let conditions = resolve_exprs(conditions, extensions);
-            Expr::BoolOperation {
+            Expr::BoolOperation(BoolOperation {
                 op: *op,
                 conditions,
-            }
+            })
         }
-        Expr::Compare { left, right, op } => {
+        Expr::Compare(Compare { left, right, op }) => {
             let left = resolve_expr(left, extensions);
             let right = resolve_expr(right, extensions);
-            Expr::Compare {
+            Expr::Compare(Compare {
                 left: Box::new(left),
                 right: Box::new(right),
                 op: *op,
-            }
+            })
         }
-        Expr::BinaryOperation { left, right, op } => {
+        Expr::BinaryOperation(BinaryOperation { left, right, op }) => {
             let left = resolve_expr(left, extensions);
             let right = resolve_expr(right, extensions);
-            Expr::BinaryOperation {
+            Expr::BinaryOperation(BinaryOperation {
                 left: Box::new(left),
                 right: Box::new(right),
                 op: *op,
-            }
+            })
         }
         expr => expr.clone(),
     }
@@ -212,14 +215,14 @@ fn list_variable_contexts(
 
 fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) {
     match expr {
-        Expr::CallFunction { name: _, args } => {
+        Expr::CallFunction(CallFunction { name: _, args }) => {
             list_from_exprs(args, function_name, store);
         }
-        Expr::CallMethod {
+        Expr::CallMethod(CallMethod {
             value,
             name: _,
             args,
-        } => {
+        }) => {
             list_from_expr(value, function_name, store);
             list_from_exprs(args, function_name, store);
         }
@@ -229,18 +232,18 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
         Expr::VariableName(name) => {
             store.record(name, function_name);
         }
-        Expr::BoolOperation { op: _, conditions } => {
+        Expr::BoolOperation(BoolOperation { op: _, conditions }) => {
             list_from_exprs(conditions, function_name, store);
         }
-        Expr::Compare { left, right, op: _ } => {
+        Expr::Compare(Compare { left, right, op: _ }) => {
             list_from_expr(left, function_name, store);
             list_from_expr(right, function_name, store);
         }
-        Expr::BinaryOperation { left, right, op: _ } => {
+        Expr::BinaryOperation(BinaryOperation { left, right, op: _ }) => {
             list_from_expr(left, function_name, store);
             list_from_expr(right, function_name, store);
         }
-        Expr::Index { value, index } => {
+        Expr::Index(Index { value, index }) => {
             list_from_expr(value, function_name, store);
             list_from_expr(index, function_name, store);
         }
@@ -248,7 +251,7 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
             list_from_exprs(list, function_name, store);
         }
         Expr::ConstantNumber(_) | Expr::ConstantString(_) | Expr::ConstantBoolean(_) => {}
-        Expr::UnaryOperation { value, op: _ } => {
+        Expr::UnaryOperation(UnaryOperation { value, op: _ }) => {
             list_from_expr(value, function_name, store);
         }
         expr => unreachable!("{:?}", expr),
@@ -309,7 +312,7 @@ impl ReferenceStore {
 
 #[cfg(test)]
 mod tests {
-    use optpy_parser::{parse, Number};
+    use optpy_parser::{parse, CallFunction, Number};
 
     use crate::{resolve, util::StripMargin};
 
@@ -375,6 +378,7 @@ mod tests {
 
         let ast = parse(code).unwrap();
         let (statements, definitions) = resolve(&ast);
+
         assert_eq!(
             statements,
             [
@@ -385,15 +389,16 @@ mod tests {
                         "1".into()
                     ))))]
                 }),
-                Statement::Expression(Expr::CallFunction {
+                Statement::Expression(Expr::CallFunction(CallFunction {
                     name: "print__macro__".into(),
-                    args: vec![Expr::CallFunction {
+                    args: vec![Expr::CallFunction(CallFunction {
                         name: "__f0".into(),
                         args: vec![]
-                    }]
-                })
+                    })]
+                }))
             ]
         );
+
         assert_eq!(
             definitions,
             BTreeMap::from([

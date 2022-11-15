@@ -1,6 +1,6 @@
 use rustpython_parser::ast::{Stmt, StmtKind};
 
-use crate::{expression::Expr, BinaryOperator};
+use crate::{expression::Expr, BinaryOperation, BinaryOperator};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Statement {
@@ -110,11 +110,11 @@ impl RawStatement {
                 let value = Expr::parse(&value.node);
                 Self::Assign(Assign {
                     target: target.clone(),
-                    value: Expr::BinaryOperation {
+                    value: Expr::BinaryOperation(BinaryOperation {
                         left: Box::new(target),
                         right: Box::new(value),
                         op: BinaryOperator::parse(op),
-                    },
+                    }),
                 })
             }
             statement => todo!("{:?}", statement),
