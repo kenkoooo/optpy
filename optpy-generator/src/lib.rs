@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{
     Assign, BinaryOperator, BoolOperator, CompareOperator, Expr, If, Number, Statement,
-    UnaryOperator,
+    UnaryOperator, While,
 };
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
@@ -104,7 +104,7 @@ fn format_statement(
                 }
             }
         },
-        Statement::While { test, body } => {
+        Statement::While(While { test, body }) => {
             let test = format_expr(test);
             let body = body
                 .iter()

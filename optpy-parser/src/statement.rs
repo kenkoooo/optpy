@@ -13,16 +13,9 @@ pub enum Statement {
         body: Vec<Statement>,
     },
     Return(Option<Expr>),
-    While {
-        test: Expr,
-        body: Vec<Statement>,
-    },
+    While(While),
     Break,
-    For {
-        target: Expr,
-        iter: Expr,
-        body: Vec<Statement>,
-    },
+    For(For),
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 
@@ -36,6 +29,26 @@ pub struct If {
     pub test: Expr,
     pub body: Vec<Statement>,
     pub orelse: Vec<Statement>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct Func {
+    pub name: String,
+    pub args: Vec<String>,
+    pub body: Vec<Statement>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct While {
+    pub test: Expr,
+    pub body: Vec<Statement>,
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+
+pub struct For {
+    pub(crate) target: Expr,
+    pub(crate) iter: Expr,
+    pub(crate) body: Vec<Statement>,
 }
 
 impl Statement {
@@ -82,7 +95,7 @@ impl Statement {
             } => {
                 let test = Expr::parse(&test.node);
                 let body = parse_statements(body);
-                Self::While { test, body }
+                Self::While(While { test, body })
             }
             StmtKind::For {
                 target,
@@ -94,7 +107,7 @@ impl Statement {
                 let target = Expr::parse(&target.node);
                 let iter = Expr::parse(&iter.node);
                 let body = parse_statements(body);
-                Self::For { target, iter, body }
+                Self::For(For { target, iter, body })
             }
             StmtKind::Break => Statement::Break,
             StmtKind::AugAssign { target, op, value } => {

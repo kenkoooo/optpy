@@ -3,7 +3,7 @@ pub use expression::{BinaryOperator, BoolOperator, CompareOperator, Expr, Number
 
 mod statement;
 use rustpython_parser::error::ParseError;
-pub use statement::{Assign, If, Statement};
+pub use statement::{Assign, For, Func, If, Statement, While};
 
 mod simplify;
 

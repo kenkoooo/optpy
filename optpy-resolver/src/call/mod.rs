@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use optpy_parser::{Assign, Expr, If, Statement};
+use optpy_parser::{Assign, Expr, If, Statement, While};
 
 pub(super) fn resolve_function_calls(
     statements: &[Statement],
@@ -53,10 +53,10 @@ fn resolve_statement(
         Statement::Return(expr) => {
             Statement::Return(expr.as_ref().map(|e| resolve_expr(e, extensions)))
         }
-        Statement::While { test, body } => {
+        Statement::While(While { test, body }) => {
             let test = resolve_expr(test, extensions);
             let body = resolve_statements(body, extensions);
-            Statement::While { test, body }
+            Statement::While(While { test, body })
         }
         Statement::Break => Statement::Break,
         statement => unreachable!("{:?}", statement),
@@ -202,7 +202,7 @@ fn list_variable_contexts(
                     store.record(arg, name);
                 }
             }
-            Statement::While { test, body } => {
+            Statement::While(While { test, body }) => {
                 list_from_expr(test, function_name, store);
                 list_variable_contexts(body, function_name, store);
             }

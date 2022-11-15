@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use optpy_parser::{Assign, Expr, If, Statement};
+use optpy_parser::{Assign, Expr, If, Statement, While};
 
 pub(super) fn resolve_names(statements: &[Statement]) -> Vec<Statement> {
     let mut variables = NameStore::new("__v");
@@ -34,7 +34,7 @@ fn collect_declarations(
                 }
                 collect_declarations(body, variables, functions, &ctx);
             }
-            Statement::While { body, .. } => {
+            Statement::While(While { body, .. }) => {
                 collect_declarations(body, variables, functions, ctx);
             }
             Statement::Return(_) | Statement::Expression(_) | Statement::Break => continue,
@@ -96,10 +96,10 @@ fn resolve_statements(
                 }
                 None => Statement::Return(None),
             },
-            Statement::While { test, body } => {
+            Statement::While(While { test, body }) => {
                 let test = resolve_expr(test, variables, functions, ctx);
                 let body = resolve_statements(body, variables, functions, ctx);
-                Statement::While { test, body }
+                Statement::While(While { test, body })
             }
             Statement::Break => Statement::Break,
             statement => unreachable!("{:?}", statement),

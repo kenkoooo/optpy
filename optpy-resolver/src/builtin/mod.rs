@@ -1,4 +1,4 @@
-use optpy_parser::{Assign, Expr, If, Statement};
+use optpy_parser::{Assign, Expr, If, Statement, While};
 
 pub fn resolve_builtin_functions(statements: &[Statement]) -> Vec<Statement> {
     statements.resolve()
@@ -27,10 +27,10 @@ impl StatementResolve for Statement {
                 body: body.resolve(),
             },
             Statement::Return(v) => Statement::Return(v.as_ref().map(|e| e.resolve())),
-            Statement::While { test, body } => Statement::While {
+            Statement::While(While { test, body }) => Statement::While(While {
                 test: test.resolve(),
                 body: body.resolve(),
-            },
+            }),
             Statement::Break => Statement::Break,
             statement => unreachable!("{:?}", statement),
         }

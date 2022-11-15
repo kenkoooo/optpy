@@ -3,7 +3,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use crate::{statement::Assign, CompareOperator, Expr, If, Number, Statement};
+use crate::{statement::Assign, CompareOperator, Expr, For, If, Number, Statement, While};
 
 pub(crate) fn simplify_for_loops(stmts: Vec<Statement>) -> Vec<Statement> {
     stmts.into_iter().flat_map(simplify_statement).collect()
@@ -25,12 +25,12 @@ fn simplify_statement(stmt: Statement) -> Vec<Statement> {
             vec![Statement::Func { name, args, body }]
         }
         Statement::Return(e) => vec![Statement::Return(e)],
-        Statement::While { test, body } => {
+        Statement::While(While { test, body }) => {
             let body = simplify_for_loops(body);
-            vec![Statement::While { test, body }]
+            vec![Statement::While(While { test, body })]
         }
         Statement::Break => vec![Statement::Break],
-        Statement::For { target, iter, body } => {
+        Statement::For(For { target, iter, body }) => {
             let mut hasher = DefaultHasher::new();
             body.hash(&mut hasher);
             let hash = hasher.finish();
@@ -59,7 +59,7 @@ fn simplify_statement(stmt: Statement) -> Vec<Statement> {
                     name: "reverse".into(),
                     args: vec![],
                 }),
-                Statement::While {
+                Statement::While(While {
                     test: Expr::Compare {
                         left: Box::new(Expr::CallFunction {
                             name: "len".into(),
@@ -69,7 +69,7 @@ fn simplify_statement(stmt: Statement) -> Vec<Statement> {
                         right: Box::new(Expr::ConstantNumber(Number::Int("0".into()))),
                     },
                     body: while_body,
-                },
+                }),
             ]
         }
     }
