@@ -16,7 +16,10 @@ mod simplify;
 
 pub fn parse<S: AsRef<str>>(code: S) -> Result<Vec<Statement>, ParseError> {
     let ast = rustpython_parser::parser::parse_program(code.as_ref(), "<embedded>")?;
-    let statements = ast.iter().map(|s| RawStmt::parse(&s.node)).collect();
+    let statements = ast
+        .iter()
+        .map(|s| RawStmt::parse(&s.node))
+        .collect::<Vec<_>>();
     let statements = simplify::simplify_list_comprehensions(statements);
     let statements = simplify::simplify_for_loops(statements);
     let statements = simplify::simplify_tuple_assignments(statements);

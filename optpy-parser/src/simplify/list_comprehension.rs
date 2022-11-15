@@ -4,16 +4,17 @@ use std::{
 };
 
 use crate::{
+    expression::RawExpr,
     statement::{Assign, RawStmt},
     BinaryOperation, BoolOperation, BoolOperator, CallFunction, CallMethod, Compare, Expr, For,
     Func, If, Index, ListComprehension, UnaryOperation, While,
 };
 
-pub(crate) fn simplify_list_comprehensions(stmts: Vec<RawStmt<Expr>>) -> Vec<RawStmt<Expr>> {
+pub(crate) fn simplify_list_comprehensions(stmts: Vec<RawStmt<RawExpr>>) -> Vec<RawStmt<Expr>> {
     stmts.into_iter().flat_map(stmt).collect()
 }
 
-fn stmt(stmt: RawStmt<Expr>) -> Vec<RawStmt<Expr>> {
+fn stmt(stmt: RawStmt<RawExpr>) -> Vec<RawStmt<Expr>> {
     match stmt {
         RawStmt::Assign(Assign { target, value }) => {
             let (target, mut s1) = eval_expr(target);
@@ -54,6 +55,8 @@ fn stmt(stmt: RawStmt<Expr>) -> Vec<RawStmt<Expr>> {
         }
         RawStmt::Break => vec![RawStmt::Break],
         RawStmt::For(For { target, iter, body }) => {
+            let (target, s) = eval_expr(target);
+            assert!(s.is_empty(), "target contains list comprehension");
             let (iter, mut s) = eval_expr(iter);
             let body = simplify_list_comprehensions(body);
             s.push(RawStmt::For(For { target, iter, body }));
@@ -62,18 +65,18 @@ fn stmt(stmt: RawStmt<Expr>) -> Vec<RawStmt<Expr>> {
     }
 }
 
-fn exprs(exprs: Vec<Expr>) -> (Vec<Expr>, Vec<RawStmt<Expr>>) {
+fn exprs(exprs: Vec<RawExpr>) -> (Vec<Expr>, Vec<RawStmt<Expr>>) {
     let (exprs, stmts): (Vec<_>, Vec<_>) = exprs.into_iter().map(eval_expr).unzip();
     (exprs, stmts.into_iter().flatten().collect())
 }
 
-fn eval_expr(expr: Expr) -> (Expr, Vec<RawStmt<Expr>>) {
+fn eval_expr(expr: RawExpr) -> (Expr, Vec<RawStmt<Expr>>) {
     match expr {
-        Expr::CallFunction(CallFunction { name, args }) => {
+        RawExpr::CallFunction(CallFunction { name, args }) => {
             let (args, s) = exprs(args);
             (Expr::CallFunction(CallFunction { name, args }), s)
         }
-        Expr::CallMethod(CallMethod { value, name, args }) => {
+        RawExpr::CallMethod(CallMethod { value, name, args }) => {
             let (value, mut s1) = eval_expr(*value);
             let (args, s2) = exprs(args);
             s1.extend(s2);
@@ -86,19 +89,19 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<RawStmt<Expr>>) {
                 s1,
             )
         }
-        Expr::Tuple(tuple) => {
+        RawExpr::Tuple(tuple) => {
             let (tuple, s) = exprs(tuple);
             (Expr::Tuple(tuple), s)
         }
-        Expr::VariableName(_)
-        | Expr::ConstantNumber(_)
-        | Expr::ConstantString(_)
-        | Expr::ConstantBoolean(_) => (expr, vec![]),
-        Expr::BoolOperation(BoolOperation { op, conditions }) => {
+        RawExpr::VariableName(v) => (Expr::VariableName(v), vec![]),
+        RawExpr::ConstantNumber(v) => (Expr::ConstantNumber(v), vec![]),
+        RawExpr::ConstantString(v) => (Expr::ConstantString(v), vec![]),
+        RawExpr::ConstantBoolean(v) => (Expr::ConstantBoolean(v), vec![]),
+        RawExpr::BoolOperation(BoolOperation { op, conditions }) => {
             let (conditions, s) = exprs(conditions);
             (Expr::BoolOperation(BoolOperation { op, conditions }), s)
         }
-        Expr::Compare(Compare { left, right, op }) => {
+        RawExpr::Compare(Compare { left, right, op }) => {
             let (left, mut s1) = eval_expr(*left);
             let (right, s2) = eval_expr(*right);
             s1.extend(s2);
@@ -111,7 +114,7 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<RawStmt<Expr>>) {
                 s1,
             )
         }
-        Expr::BinaryOperation(BinaryOperation { left, right, op }) => {
+        RawExpr::BinaryOperation(BinaryOperation { left, right, op }) => {
             let (left, mut s1) = eval_expr(*left);
             let (right, s2) = eval_expr(*right);
             s1.extend(s2);
@@ -124,7 +127,7 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<RawStmt<Expr>>) {
                 s1,
             )
         }
-        Expr::Index(Index { value, index }) => {
+        RawExpr::Index(Index { value, index }) => {
             let (value, mut s1) = eval_expr(*value);
             let (index, s2) = eval_expr(*index);
             s1.extend(s2);
@@ -136,11 +139,11 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<RawStmt<Expr>>) {
                 s1,
             )
         }
-        Expr::List(list) => {
+        RawExpr::List(list) => {
             let (list, s) = exprs(list);
             (Expr::List(list), s)
         }
-        Expr::ListComprehension(ListComprehension { value, generators }) => {
+        RawExpr::ListComprehension(ListComprehension { value, generators }) => {
             let tmp_list = Expr::VariableName("__result".into());
             let (value, mut generation_body) = eval_expr(*value);
             generation_body.push(RawStmt::Expression(Expr::CallMethod(CallMethod {
@@ -150,7 +153,11 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<RawStmt<Expr>>) {
             })));
 
             for generator in generators {
-                let ifs = generator.ifs;
+                let (ifs, s) = exprs(generator.ifs);
+                assert!(
+                    s.is_empty(),
+                    "filter statement in a list comprehension also contains list comprehension"
+                );
                 if !ifs.is_empty() {
                     generation_body = vec![RawStmt::If(If {
                         test: Expr::BoolOperation(BoolOperation {
@@ -162,10 +169,14 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<RawStmt<Expr>>) {
                     })];
                 }
                 let (iter, mut new_generation_body) = eval_expr(*generator.iter);
-                let target = generator.target;
+                let (target, s) = eval_expr(*generator.target);
+                assert!(
+                    s.is_empty(),
+                    "list generator target contains list comprehension"
+                );
                 new_generation_body.push(RawStmt::For(For {
-                    target: *target,
-                    iter: iter,
+                    target,
+                    iter,
                     body: generation_body,
                 }));
                 generation_body = new_generation_body;
@@ -195,7 +206,7 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<RawStmt<Expr>>) {
                 })],
             )
         }
-        Expr::UnaryOperation(UnaryOperation { value, op }) => {
+        RawExpr::UnaryOperation(UnaryOperation { value, op }) => {
             let (value, s) = eval_expr(*value);
             (
                 Expr::UnaryOperation(UnaryOperation {

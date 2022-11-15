@@ -25,14 +25,32 @@ pub enum Expr {
     ListComprehension(ListComprehension<Expr>),
 }
 
-impl Expr {
+#[derive(Clone)]
+pub(crate) enum RawExpr {
+    CallFunction(CallFunction<RawExpr>),
+    CallMethod(CallMethod<RawExpr>),
+    Tuple(Vec<RawExpr>),
+    VariableName(String),
+    BoolOperation(BoolOperation<RawExpr>),
+    Compare(Compare<RawExpr>),
+    UnaryOperation(UnaryOperation<RawExpr>),
+    BinaryOperation(BinaryOperation<RawExpr>),
+    Index(Index<RawExpr>),
+    ConstantNumber(Number),
+    ConstantString(String),
+    ConstantBoolean(bool),
+    List(Vec<RawExpr>),
+    ListComprehension(ListComprehension<RawExpr>),
+}
+
+impl RawExpr {
     pub fn parse(expr: &ExprKind) -> Self {
         match expr {
             ExprKind::Tuple { elts, ctx: _ } => {
                 let elements = parse_expressions(elts);
-                Expr::Tuple(elements)
+                RawExpr::Tuple(elements)
             }
-            ExprKind::Name { id, ctx: _ } => Expr::VariableName(id.into()),
+            ExprKind::Name { id, ctx: _ } => RawExpr::VariableName(id.into()),
             ExprKind::Call {
                 args,
                 keywords,
@@ -46,14 +64,14 @@ impl Expr {
                         attr,
                         ctx: _,
                     } => {
-                        let value = Expr::parse(&value.node);
-                        Expr::CallMethod(CallMethod {
+                        let value = RawExpr::parse(&value.node);
+                        RawExpr::CallMethod(CallMethod {
                             value: Box::new(value),
                             name: attr.into(),
                             args,
                         })
                     }
-                    ExprKind::Name { id, ctx: _ } => Expr::CallFunction(CallFunction {
+                    ExprKind::Name { id, ctx: _ } => RawExpr::CallFunction(CallFunction {
                         name: id.into(),
                         args,
                     }),
@@ -63,7 +81,7 @@ impl Expr {
             ExprKind::BoolOp { op, values } => {
                 let conditions = parse_expressions(values);
                 let op = BoolOperator::parse(op);
-                Expr::BoolOperation(BoolOperation { op, conditions })
+                RawExpr::BoolOperation(BoolOperation { op, conditions })
             }
             ExprKind::Compare {
                 left,
@@ -71,11 +89,11 @@ impl Expr {
                 comparators,
             } => {
                 let mut conditions = vec![];
-                let mut left = Expr::parse(&left.node);
+                let mut left = RawExpr::parse(&left.node);
                 for (op, right) in ops.iter().zip(comparators) {
                     let op = CompareOperator::parse(op);
-                    let right = Expr::parse(&right.node);
-                    conditions.push(Expr::Compare(Compare {
+                    let right = RawExpr::parse(&right.node);
+                    conditions.push(RawExpr::Compare(Compare {
                         left: Box::new(left),
                         right: Box::new(right.clone()),
                         op,
@@ -87,15 +105,15 @@ impl Expr {
                     let condition = conditions.pop().expect("no condition");
                     condition
                 } else {
-                    Expr::BoolOperation(BoolOperation {
+                    RawExpr::BoolOperation(BoolOperation {
                         op: BoolOperator::And,
                         conditions,
                     })
                 }
             }
             ExprKind::BinOp { op, left, right } => {
-                let left = Expr::parse(&left.node);
-                let right = Expr::parse(&right.node);
+                let left = RawExpr::parse(&left.node);
+                let right = RawExpr::parse(&right.node);
                 Self::BinaryOperation(BinaryOperation {
                     left: Box::new(left),
                     right: Box::new(right),
@@ -107,21 +125,21 @@ impl Expr {
                 slice,
                 ctx: _,
             } => {
-                let value = Expr::parse(&value.node);
-                let index = Expr::parse(&slice.node);
+                let value = RawExpr::parse(&value.node);
+                let index = RawExpr::parse(&slice.node);
                 Self::Index(Index {
                     value: Box::new(value),
                     index: Box::new(index),
                 })
             }
             ExprKind::Constant { value, kind: _ } => match value {
-                rustpython_parser::ast::Constant::Bool(b) => Expr::ConstantBoolean(*b),
-                rustpython_parser::ast::Constant::Str(s) => Expr::ConstantString(s.clone()),
+                rustpython_parser::ast::Constant::Bool(b) => RawExpr::ConstantBoolean(*b),
+                rustpython_parser::ast::Constant::Str(s) => RawExpr::ConstantString(s.clone()),
                 rustpython_parser::ast::Constant::Int(i) => {
-                    Expr::ConstantNumber(Number::Int(i.to_string()))
+                    RawExpr::ConstantNumber(Number::Int(i.to_string()))
                 }
                 rustpython_parser::ast::Constant::Float(f) => {
-                    Expr::ConstantNumber(Number::Float(f.to_string()))
+                    RawExpr::ConstantNumber(Number::Float(f.to_string()))
                 }
                 value => todo!("{:?}", value),
             },
@@ -130,15 +148,15 @@ impl Expr {
                 Self::List(list)
             }
             ExprKind::ListComp { elt, generators } => {
-                let value = Expr::parse(&elt.node);
+                let value = RawExpr::parse(&elt.node);
                 let generators = generators
                     .iter()
                     .map(
                         |rustpython_parser::ast::Comprehension {
                              target, iter, ifs, ..
                          }| {
-                            let target = Expr::parse(&target.node);
-                            let iter = Expr::parse(&iter.node);
+                            let target = RawExpr::parse(&target.node);
+                            let iter = RawExpr::parse(&iter.node);
                             let ifs = parse_expressions(ifs);
                             Comprehension {
                                 target: Box::new(target),
@@ -154,7 +172,7 @@ impl Expr {
                 })
             }
             ExprKind::UnaryOp { op, operand } => {
-                let value = Expr::parse(&operand.node);
+                let value = RawExpr::parse(&operand.node);
                 let op = UnaryOperator::parse(op);
                 Self::UnaryOperation(UnaryOperation {
                     value: Box::new(value),
@@ -166,6 +184,9 @@ impl Expr {
     }
 }
 
-fn parse_expressions(expressions: &[rustpython_parser::ast::Expr]) -> Vec<Expr> {
-    expressions.iter().map(|e| Expr::parse(&e.node)).collect()
+fn parse_expressions(expressions: &[rustpython_parser::ast::Expr]) -> Vec<RawExpr> {
+    expressions
+        .iter()
+        .map(|e| RawExpr::parse(&e.node))
+        .collect()
 }
