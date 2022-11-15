@@ -33,13 +33,13 @@ jobs:
 
       - name: Build executables
         run: cargo build --release --target ${{ matrix.target }}
-      
+
       - name: Set version
         id: version
         run: |
           VERSION=$(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")
-          echo ::set-output name=version::$VERSION
-        
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Compress the executable
         if: startsWith(github.ref, 'refs/tags/')
         run: |
