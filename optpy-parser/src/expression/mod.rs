@@ -1,8 +1,8 @@
 mod types;
+pub(crate) use types::ListComprehension;
 pub use types::{
     BinaryOperation, BinaryOperator, BoolOperation, BoolOperator, CallFunction, CallMethod,
-    Compare, CompareOperator, Comprehension, Index, ListComprehension, Number, UnaryOperation,
-    UnaryOperator,
+    Compare, CompareOperator, Comprehension, Index, Number, UnaryOperation, UnaryOperator,
 };
 
 use rustpython_parser::ast::ExprKind;

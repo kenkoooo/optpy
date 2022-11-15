@@ -4,10 +4,10 @@ use std::{
 };
 
 use crate::{
-    expression::RawExpr,
+    expression::{ListComprehension, RawExpr},
     statement::{Assign, RawStmt},
     BinaryOperation, BoolOperation, BoolOperator, CallFunction, CallMethod, Compare, Expr, For,
-    Func, If, Index, ListComprehension, UnaryOperation, While,
+    Func, If, Index, UnaryOperation, While,
 };
 
 pub(crate) fn simplify_list_comprehensions(stmts: Vec<RawStmt<RawExpr>>) -> Vec<RawStmt<Expr>> {

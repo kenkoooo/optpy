@@ -39,9 +39,9 @@ pub struct Index<E> {
     pub index: Box<E>,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct ListComprehension<E> {
-    pub value: Box<E>,
-    pub generators: Vec<Comprehension<E>>,
+pub(crate) struct ListComprehension<E> {
+    pub(crate) value: Box<E>,
+    pub(crate) generators: Vec<Comprehension<E>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
