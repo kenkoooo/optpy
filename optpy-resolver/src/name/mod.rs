@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use optpy_parser::{Assign, Expr, If, Statement, While};
+use optpy_parser::{Assign, Expr, Func, If, Statement, While};
 
 pub(super) fn resolve_names(statements: &[Statement]) -> Vec<Statement> {
     let mut variables = NameStore::new("__v");
@@ -26,7 +26,7 @@ fn collect_declarations(
                 collect_declarations(body, variables, functions, ctx);
                 collect_declarations(orelse, variables, functions, ctx);
             }
-            Statement::Func { name, args, body } => {
+            Statement::Func(Func { name, args, body }) => {
                 functions.declare(name, ctx);
                 let ctx = ctx.join(name);
                 for arg in args {
@@ -38,7 +38,6 @@ fn collect_declarations(
                 collect_declarations(body, variables, functions, ctx);
             }
             Statement::Return(_) | Statement::Expression(_) | Statement::Break => continue,
-            statement => unreachable!("{:?}", statement),
         }
     }
 }
@@ -76,7 +75,7 @@ fn resolve_statements(
                 let orelse = resolve_statements(orelse, variables, functions, ctx);
                 Statement::If(If { test, body, orelse })
             }
-            Statement::Func { name, args, body } => {
+            Statement::Func(Func { name, args, body }) => {
                 let resolved_name = functions.resolve(name, ctx).expect("invalid");
                 let ctx = ctx.join(name);
                 let args = args
@@ -84,11 +83,11 @@ fn resolve_statements(
                     .map(|arg| variables.resolve(arg, &ctx).expect("invalid"))
                     .collect::<Vec<_>>();
                 let body = resolve_statements(body, variables, functions, &ctx);
-                Statement::Func {
+                Statement::Func(Func {
                     name: resolved_name,
                     args,
                     body,
-                }
+                })
             }
             Statement::Return(expr) => match expr {
                 Some(expr) => {
@@ -102,7 +101,6 @@ fn resolve_statements(
                 Statement::While(While { test, body })
             }
             Statement::Break => Statement::Break,
-            statement => unreachable!("{:?}", statement),
         })
         .collect()
 }

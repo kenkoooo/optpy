@@ -3,67 +3,70 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use crate::{statement::Assign, BoolOperator, Expr, For, If, Statement, While};
+use crate::{
+    statement::{Assign, RawStatement},
+    BoolOperator, Expr, For, Func, If, While,
+};
 
-pub(crate) fn simplify_list_comprehensions(stmts: Vec<Statement>) -> Vec<Statement> {
+pub(crate) fn simplify_list_comprehensions(stmts: Vec<RawStatement>) -> Vec<RawStatement> {
     stmts.into_iter().flat_map(stmt).collect()
 }
 
-fn stmt(stmt: Statement) -> Vec<Statement> {
+fn stmt(stmt: RawStatement) -> Vec<RawStatement> {
     match stmt {
-        Statement::Assign(Assign { target, value }) => {
+        RawStatement::Assign(Assign { target, value }) => {
             let (target, mut s1) = eval_expr(target);
             let (value, s2) = eval_expr(value);
             s1.extend(s2);
-            s1.push(Statement::Assign(Assign { target, value }));
+            s1.push(RawStatement::Assign(Assign { target, value }));
             s1
         }
-        Statement::Expression(e) => {
+        RawStatement::Expression(e) => {
             let (e, mut s) = eval_expr(e);
-            s.push(Statement::Expression(e));
+            s.push(RawStatement::Expression(e));
             s
         }
-        Statement::If(If { test, body, orelse }) => {
+        RawStatement::If(If { test, body, orelse }) => {
             let (test, mut s) = eval_expr(test);
             let body = simplify_list_comprehensions(body);
             let orelse = simplify_list_comprehensions(orelse);
-            s.push(Statement::If(If { test, body, orelse }));
+            s.push(RawStatement::If(If { test, body, orelse }));
             s
         }
-        Statement::Func { name, args, body } => {
+        RawStatement::Func(Func { name, args, body }) => {
             let body = simplify_list_comprehensions(body);
-            vec![Statement::Func { name, args, body }]
+            vec![RawStatement::Func(Func { name, args, body })]
         }
-        Statement::Return(None) => {
-            vec![Statement::Return(None)]
+        RawStatement::Return(None) => {
+            vec![RawStatement::Return(None)]
         }
-        Statement::Return(Some(r)) => {
+        RawStatement::Return(Some(r)) => {
             let (r, mut s) = eval_expr(r);
-            s.push(Statement::Return(Some(r)));
+            s.push(RawStatement::Return(Some(r)));
             s
         }
-        Statement::While(While { test, body }) => {
+        RawStatement::While(While { test, body }) => {
             let (test, mut s) = eval_expr(test);
             let body = simplify_list_comprehensions(body);
-            s.push(Statement::While(While { test, body }));
+            s.push(RawStatement::While(While { test, body }));
             s
         }
-        Statement::Break => vec![Statement::Break],
-        Statement::For(For { target, iter, body }) => {
+        RawStatement::Break => vec![RawStatement::Break],
+        RawStatement::For(For { target, iter, body }) => {
             let (iter, mut s) = eval_expr(iter);
             let body = simplify_list_comprehensions(body);
-            s.push(Statement::For(For { target, iter, body }));
+            s.push(RawStatement::For(For { target, iter, body }));
             s
         }
     }
 }
 
-fn exprs(exprs: Vec<Expr>) -> (Vec<Expr>, Vec<Statement>) {
+fn exprs(exprs: Vec<Expr>) -> (Vec<Expr>, Vec<RawStatement>) {
     let (exprs, stmts): (Vec<_>, Vec<_>) = exprs.into_iter().map(eval_expr).unzip();
     (exprs, stmts.into_iter().flatten().collect())
 }
 
-fn eval_expr(expr: Expr) -> (Expr, Vec<Statement>) {
+fn eval_expr(expr: Expr) -> (Expr, Vec<RawStatement>) {
     match expr {
         Expr::CallFunction { name, args } => {
             let (args, s) = exprs(args);
@@ -139,7 +142,7 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<Statement>) {
         Expr::ListComprehension { value, generators } => {
             let tmp_list = Expr::VariableName("__result".into());
             let (value, mut generation_body) = eval_expr(*value);
-            generation_body.push(Statement::Expression(Expr::CallMethod {
+            generation_body.push(RawStatement::Expression(Expr::CallMethod {
                 value: Box::new(tmp_list.clone()),
                 name: "append".into(),
                 args: vec![value],
@@ -148,7 +151,7 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<Statement>) {
             for generator in generators {
                 let ifs = generator.ifs;
                 if !ifs.is_empty() {
-                    generation_body = vec![Statement::If(If {
+                    generation_body = vec![RawStatement::If(If {
                         test: Expr::BoolOperation {
                             op: BoolOperator::And,
                             conditions: ifs,
@@ -159,7 +162,7 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<Statement>) {
                 }
                 let (iter, mut new_generation_body) = eval_expr(*generator.iter);
                 let target = generator.target;
-                new_generation_body.push(Statement::For(For {
+                new_generation_body.push(RawStatement::For(For {
                     target: *target,
                     iter: iter,
                     body: generation_body,
@@ -167,12 +170,12 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<Statement>) {
                 generation_body = new_generation_body;
             }
 
-            let mut function_body = vec![Statement::Assign(Assign {
+            let mut function_body = vec![RawStatement::Assign(Assign {
                 target: tmp_list.clone(),
                 value: Expr::List(vec![]),
             })];
             function_body.extend(generation_body);
-            function_body.push(Statement::Return(Some(tmp_list)));
+            function_body.push(RawStatement::Return(Some(tmp_list)));
 
             let mut hasher = DefaultHasher::new();
             function_body.hash(&mut hasher);
@@ -184,11 +187,11 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<Statement>) {
                     name: function_name.clone(),
                     args: vec![],
                 },
-                vec![Statement::Func {
+                vec![RawStatement::Func(Func {
                     name: function_name,
                     args: vec![],
                     body: function_body,
-                }],
+                })],
             )
         }
         Expr::UnaryOperation { value, op } => {

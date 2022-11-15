@@ -6,16 +6,11 @@ use crate::{expression::Expr, BinaryOperator};
 pub enum Statement {
     Assign(Assign),
     Expression(Expr),
-    If(If),
-    Func {
-        name: String,
-        args: Vec<String>,
-        body: Vec<Statement>,
-    },
+    If(If<Statement>),
+    Func(Func<Statement>),
     Return(Option<Expr>),
-    While(While),
+    While(While<Statement>),
     Break,
-    For(For),
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 
@@ -25,33 +20,33 @@ pub struct Assign {
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 
-pub struct If {
+pub struct If<S> {
     pub test: Expr,
-    pub body: Vec<Statement>,
-    pub orelse: Vec<Statement>,
+    pub body: Vec<S>,
+    pub orelse: Vec<S>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct Func {
+pub struct Func<S> {
     pub name: String,
     pub args: Vec<String>,
-    pub body: Vec<Statement>,
+    pub body: Vec<S>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct While {
+pub struct While<S> {
     pub test: Expr,
-    pub body: Vec<Statement>,
+    pub body: Vec<S>,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 
-pub struct For {
+pub struct For<S> {
     pub(crate) target: Expr,
     pub(crate) iter: Expr,
-    pub(crate) body: Vec<Statement>,
+    pub(crate) body: Vec<S>,
 }
 
-impl Statement {
+impl RawStatement {
     pub fn parse(statement: &StmtKind) -> Self {
         match statement {
             StmtKind::Assign {
@@ -82,7 +77,7 @@ impl Statement {
                 let name = name.to_string();
                 let args = args.args.iter().map(|arg| arg.node.arg.clone()).collect();
                 let body = parse_statements(body);
-                Self::Func { name, args, body }
+                Self::Func(Func { name, args, body })
             }
             StmtKind::Return { value } => {
                 let value = value.as_ref().map(|value| Expr::parse(&value.node));
@@ -109,11 +104,11 @@ impl Statement {
                 let body = parse_statements(body);
                 Self::For(For { target, iter, body })
             }
-            StmtKind::Break => Statement::Break,
+            StmtKind::Break => Self::Break,
             StmtKind::AugAssign { target, op, value } => {
                 let target = Expr::parse(&target.node);
                 let value = Expr::parse(&value.node);
-                Statement::Assign(Assign {
+                Self::Assign(Assign {
                     target: target.clone(),
                     value: Expr::BinaryOperation {
                         left: Box::new(target),
@@ -127,9 +122,21 @@ impl Statement {
     }
 }
 
-fn parse_statements(statements: &[Stmt]) -> Vec<Statement> {
+fn parse_statements(statements: &[Stmt]) -> Vec<RawStatement> {
     statements
         .iter()
-        .map(|s| Statement::parse(&s.node))
+        .map(|s| RawStatement::parse(&s.node))
         .collect()
+}
+
+#[derive(Hash)]
+pub(crate) enum RawStatement {
+    Assign(Assign),
+    Expression(Expr),
+    If(If<RawStatement>),
+    Func(Func<RawStatement>),
+    Return(Option<Expr>),
+    While(While<RawStatement>),
+    Break,
+    For(For<RawStatement>),
 }

@@ -1,5 +1,5 @@
 use optpy_generator::generate_function_body;
-use optpy_parser::parse;
+use optpy_parser::{parse, Func};
 use optpy_resolver::resolve;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
@@ -16,12 +16,12 @@ pub fn python_function(tokens: TokenStream) -> TokenStream {
     let ast = parse(code).unwrap();
     assert_eq!(ast.len(), 1);
     let function_name = match &ast[0] {
-        optpy_parser::Statement::Func { name, .. } => name.clone(),
+        optpy_parser::Statement::Func(Func { name, .. }) => name.clone(),
         _ => panic!(),
     };
     let (ast, definitions) = resolve(&ast);
     let (name, args) = match &ast[0] {
-        optpy_parser::Statement::Func { name, args, .. } => (name.clone(), args.clone()),
+        optpy_parser::Statement::Func(Func { name, args, .. }) => (name.clone(), args.clone()),
         _ => panic!(),
     };
 
