@@ -22,7 +22,6 @@ pub enum Expr {
     ConstantString(String),
     ConstantBoolean(bool),
     List(Vec<Expr>),
-    ListComprehension(ListComprehension<Expr>),
 }
 
 #[derive(Clone)]
