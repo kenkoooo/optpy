@@ -45,3 +45,30 @@ def test_ops(N, M):
         ])
     );
 }
+
+#[test]
+fn test_unary_ops() {
+    python_function! {r"
+def test(a):
+    return [+a, -a]"
+    }
+
+    assert_eq!(
+        test(&Value::from(4)),
+        Value::from(vec![Value::from(4), Value::from(-4)])
+    )
+}
+
+#[test]
+fn test_len() {
+    python_function! {r"
+def test(a):
+    return len(a)"
+    }
+
+    assert_eq!(test(&Value::from("abcdef")), Value::from(6));
+    assert_eq!(
+        test(&Value::from(vec![Value::from(1), Value::from(2)])),
+        Value::from(2)
+    );
+}
