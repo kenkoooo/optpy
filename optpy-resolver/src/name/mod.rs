@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use optpy_parser::{Expr, Statement};
+use optpy_parser::{Assign, Expr, Statement};
 
 pub(super) fn resolve_names(statements: &[Statement]) -> Vec<Statement> {
     let mut variables = NameStore::new("__v");
@@ -19,7 +19,9 @@ fn collect_declarations(
 ) {
     for statement in statements {
         match statement {
-            Statement::Assign { target, .. } => collect_variable_names(target, variables, ctx),
+            Statement::Assign(Assign { target, .. }) => {
+                collect_variable_names(target, variables, ctx)
+            }
             Statement::If { body, orelse, .. } => {
                 collect_declarations(body, variables, functions, ctx);
                 collect_declarations(orelse, variables, functions, ctx);
@@ -60,10 +62,10 @@ fn resolve_statements(
     statements
         .iter()
         .map(|s| match s {
-            Statement::Assign { target, value } => {
+            Statement::Assign(Assign { target, value }) => {
                 let target = resolve_expr(target, variables, functions, ctx);
                 let value = resolve_expr(value, variables, functions, ctx);
-                Statement::Assign { target, value }
+                Statement::Assign(Assign { target, value })
             }
             Statement::Expression(expr) => {
                 Statement::Expression(resolve_expr(expr, variables, functions, ctx))

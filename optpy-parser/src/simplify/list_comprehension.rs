@@ -3,7 +3,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use crate::{BoolOperator, Expr, Statement};
+use crate::{statement::Assign, BoolOperator, Expr, Statement};
 
 pub(crate) fn simplify_list_comprehensions(stmts: Vec<Statement>) -> Vec<Statement> {
     stmts.into_iter().flat_map(stmt).collect()
@@ -11,11 +11,11 @@ pub(crate) fn simplify_list_comprehensions(stmts: Vec<Statement>) -> Vec<Stateme
 
 fn stmt(stmt: Statement) -> Vec<Statement> {
     match stmt {
-        Statement::Assign { target, value } => {
+        Statement::Assign(Assign { target, value }) => {
             let (target, mut s1) = eval_expr(target);
             let (value, s2) = eval_expr(value);
             s1.extend(s2);
-            s1.push(Statement::Assign { target, value });
+            s1.push(Statement::Assign(Assign { target, value }));
             s1
         }
         Statement::Expression(e) => {
@@ -167,10 +167,10 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<Statement>) {
                 generation_body = new_generation_body;
             }
 
-            let mut function_body = vec![Statement::Assign {
+            let mut function_body = vec![Statement::Assign(Assign {
                 target: tmp_list.clone(),
                 value: Expr::List(vec![]),
-            }];
+            })];
             function_body.extend(generation_body);
             function_body.push(Statement::Return(Some(tmp_list)));
 

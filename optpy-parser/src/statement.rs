@@ -4,10 +4,7 @@ use crate::{expression::Expr, BinaryOperator};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Statement {
-    Assign {
-        target: Expr,
-        value: Expr,
-    },
+    Assign(Assign),
     Expression(Expr),
     If {
         test: Expr,
@@ -31,6 +28,12 @@ pub enum Statement {
         body: Vec<Statement>,
     },
 }
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+
+pub struct Assign {
+    pub target: Expr,
+    pub value: Expr,
+}
 
 impl Statement {
     pub fn parse(statement: &StmtKind) -> Self {
@@ -43,7 +46,7 @@ impl Statement {
                 assert_eq!(targets.len(), 1);
                 let target = Expr::parse(&targets[0].node);
                 let value = Expr::parse(&value.node);
-                Self::Assign { target, value }
+                Self::Assign(Assign { target, value })
             }
             StmtKind::Expr { value } => Self::Expression(Expr::parse(&value.node)),
             StmtKind::If { test, body, orelse } => {
@@ -94,14 +97,14 @@ impl Statement {
             StmtKind::AugAssign { target, op, value } => {
                 let target = Expr::parse(&target.node);
                 let value = Expr::parse(&value.node);
-                Statement::Assign {
+                Statement::Assign(Assign {
                     target: target.clone(),
                     value: Expr::BinaryOperation {
                         left: Box::new(target),
                         right: Box::new(value),
                         op: BinaryOperator::parse(op),
                     },
-                }
+                })
             }
             statement => todo!("{:?}", statement),
         }

@@ -102,9 +102,15 @@ impl Expr {
                     });
                     left = right;
                 }
-                Expr::BoolOperation {
-                    op: BoolOperator::And,
-                    conditions,
+                assert!(conditions.len() > 0);
+                if conditions.len() == 1 {
+                    let condition = conditions.pop().expect("no condition");
+                    condition
+                } else {
+                    Expr::BoolOperation {
+                        op: BoolOperator::And,
+                        conditions,
+                    }
                 }
             }
             ExprKind::BinOp { op, left, right } => {

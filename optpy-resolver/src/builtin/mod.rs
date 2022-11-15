@@ -1,4 +1,4 @@
-use optpy_parser::{Expr, Statement};
+use optpy_parser::{Assign, Expr, Statement};
 
 pub fn resolve_builtin_functions(statements: &[Statement]) -> Vec<Statement> {
     statements.resolve()
@@ -11,10 +11,10 @@ trait StatementResolve {
 impl StatementResolve for Statement {
     fn resolve(&self) -> Statement {
         match self {
-            Statement::Assign { target, value } => Statement::Assign {
+            Statement::Assign(Assign { target, value }) => Statement::Assign(Assign {
                 target: target.resolve(),
                 value: value.resolve(),
-            },
+            }),
             Statement::Expression(e) => Statement::Expression(e.resolve()),
             Statement::If { test, body, orelse } => Statement::If {
                 test: test.resolve(),
