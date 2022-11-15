@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use optpy_parser::{Assign, Expr, Func, If, Statement, While};
+use optpy_parser::{
+    Assign, BinaryOperation, BoolOperation, CallFunction, CallMethod, Compare, Expr, Func, If,
+    Index, Statement, UnaryOperation, While,
+};
 
 pub(super) fn resolve_names(statements: &[Statement]) -> Vec<Statement> {
     let mut variables = NameStore::new("__v");
@@ -47,7 +50,7 @@ fn collect_variable_names(expr: &Expr, variables: &mut NameStore, ctx: &ContextP
         Expr::VariableName(name) => {
             variables.declare(name, ctx);
         }
-        Expr::Index { .. } => {}
+        Expr::Index(Index { .. }) => {}
         expr => unreachable!("{:?}", expr),
     }
 }
@@ -112,7 +115,7 @@ fn resolve_expr(
     ctx: &ContextPath,
 ) -> Expr {
     match expr {
-        Expr::CallFunction { name, args } => {
+        Expr::CallFunction(CallFunction { name, args }) => {
             let name = match functions.resolve(name, ctx) {
                 Some(name) => name,
                 None => {
@@ -121,16 +124,16 @@ fn resolve_expr(
                 }
             };
             let args = resolve_exprs(args, variables, functions, ctx);
-            Expr::CallFunction { name, args }
+            Expr::CallFunction(CallFunction { name, args })
         }
-        Expr::CallMethod { value, name, args } => {
+        Expr::CallMethod(CallMethod { value, name, args }) => {
             let value = resolve_expr(value, variables, functions, ctx);
             let args = resolve_exprs(args, variables, functions, ctx);
-            Expr::CallMethod {
+            Expr::CallMethod(CallMethod {
                 value: Box::new(value),
                 name: name.clone(),
                 args,
-            }
+            })
         }
         Expr::Tuple(exprs) => {
             let exprs = resolve_exprs(exprs, variables, functions, ctx);
@@ -146,38 +149,38 @@ fn resolve_expr(
             };
             Expr::VariableName(name)
         }
-        Expr::BoolOperation { op, conditions } => {
+        Expr::BoolOperation(BoolOperation { op, conditions }) => {
             let conditions = resolve_exprs(conditions, variables, functions, ctx);
-            Expr::BoolOperation {
+            Expr::BoolOperation(BoolOperation {
                 op: *op,
                 conditions,
-            }
+            })
         }
-        Expr::Compare { left, right, op } => {
+        Expr::Compare(Compare { left, right, op }) => {
             let left = resolve_expr(left, variables, functions, ctx);
             let right = resolve_expr(right, variables, functions, ctx);
-            Expr::Compare {
+            Expr::Compare(Compare {
                 left: Box::new(left),
                 right: Box::new(right),
                 op: *op,
-            }
+            })
         }
-        Expr::BinaryOperation { left, right, op } => {
+        Expr::BinaryOperation(BinaryOperation { left, right, op }) => {
             let left = resolve_expr(left, variables, functions, ctx);
             let right = resolve_expr(right, variables, functions, ctx);
-            Expr::BinaryOperation {
+            Expr::BinaryOperation(BinaryOperation {
                 left: Box::new(left),
                 right: Box::new(right),
                 op: *op,
-            }
+            })
         }
-        Expr::Index { value, index } => {
+        Expr::Index(Index { value, index }) => {
             let value = resolve_expr(value, variables, functions, ctx);
             let index = resolve_expr(index, variables, functions, ctx);
-            Expr::Index {
+            Expr::Index(Index {
                 value: Box::new(value),
                 index: Box::new(index),
-            }
+            })
         }
         Expr::List(list) => {
             let list = resolve_exprs(list, variables, functions, ctx);
@@ -186,12 +189,12 @@ fn resolve_expr(
         Expr::ConstantString(_) | Expr::ConstantNumber(_) | Expr::ConstantBoolean(_) => {
             expr.clone()
         }
-        Expr::UnaryOperation { value, op } => {
+        Expr::UnaryOperation(UnaryOperation { value, op }) => {
             let value = resolve_expr(value, variables, functions, ctx);
-            Expr::UnaryOperation {
+            Expr::UnaryOperation(UnaryOperation {
                 value: Box::new(value),
                 op: *op,
-            }
+            })
         }
         expr => unreachable!("{:?}", expr),
     }

@@ -2,47 +2,64 @@ use rustpython_parser::ast::{Boolop, Cmpop, ExprKind, Unaryop};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Expr {
-    CallFunction {
-        name: String,
-        args: Vec<Expr>,
-    },
-    CallMethod {
-        value: Box<Expr>,
-        name: String,
-        args: Vec<Expr>,
-    },
+    CallFunction(CallFunction),
+    CallMethod(CallMethod),
     Tuple(Vec<Expr>),
     VariableName(String),
-    BoolOperation {
-        op: BoolOperator,
-        conditions: Vec<Expr>,
-    },
-    Compare {
-        left: Box<Expr>,
-        right: Box<Expr>,
-        op: CompareOperator,
-    },
-    UnaryOperation {
-        value: Box<Expr>,
-        op: UnaryOperator,
-    },
-    BinaryOperation {
-        left: Box<Expr>,
-        right: Box<Expr>,
-        op: BinaryOperator,
-    },
-    Index {
-        value: Box<Expr>,
-        index: Box<Expr>,
-    },
+    BoolOperation(BoolOperation),
+    Compare(Compare),
+    UnaryOperation(UnaryOperation),
+    BinaryOperation(BinaryOperation),
+    Index(Index),
     ConstantNumber(Number),
     ConstantString(String),
     ConstantBoolean(bool),
     List(Vec<Expr>),
-    ListComprehension {
-        value: Box<Expr>,
-        generators: Vec<Comprehension>,
-    },
+    ListComprehension(ListComprehension),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct CallFunction {
+    pub name: String,
+    pub args: Vec<Expr>,
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct CallMethod {
+    pub value: Box<Expr>,
+    pub name: String,
+    pub args: Vec<Expr>,
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct BoolOperation {
+    pub op: BoolOperator,
+    pub conditions: Vec<Expr>,
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct Compare {
+    pub left: Box<Expr>,
+    pub right: Box<Expr>,
+    pub op: CompareOperator,
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct UnaryOperation {
+    pub value: Box<Expr>,
+    pub op: UnaryOperator,
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct BinaryOperation {
+    pub left: Box<Expr>,
+    pub right: Box<Expr>,
+    pub op: BinaryOperator,
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct Index {
+    pub value: Box<Expr>,
+    pub index: Box<Expr>,
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct ListComprehension {
+    pub value: Box<Expr>,
+    pub generators: Vec<Comprehension>,
 }
 
 impl Expr {
@@ -67,23 +84,23 @@ impl Expr {
                         ctx: _,
                     } => {
                         let value = Expr::parse(&value.node);
-                        Expr::CallMethod {
+                        Expr::CallMethod(CallMethod {
                             value: Box::new(value),
                             name: attr.into(),
                             args,
-                        }
+                        })
                     }
-                    ExprKind::Name { id, ctx: _ } => Expr::CallFunction {
+                    ExprKind::Name { id, ctx: _ } => Expr::CallFunction(CallFunction {
                         name: id.into(),
                         args,
-                    },
+                    }),
                     function => todo!("{:#?}", function),
                 }
             }
             ExprKind::BoolOp { op, values } => {
                 let conditions = parse_expressions(values);
                 let op = BoolOperator::parse(op);
-                Expr::BoolOperation { op, conditions }
+                Expr::BoolOperation(BoolOperation { op, conditions })
             }
             ExprKind::Compare {
                 left,
@@ -95,11 +112,11 @@ impl Expr {
                 for (op, right) in ops.iter().zip(comparators) {
                     let op = CompareOperator::parse(op);
                     let right = Expr::parse(&right.node);
-                    conditions.push(Expr::Compare {
+                    conditions.push(Expr::Compare(Compare {
                         left: Box::new(left),
                         right: Box::new(right.clone()),
                         op,
-                    });
+                    }));
                     left = right;
                 }
                 assert!(conditions.len() > 0);
@@ -107,20 +124,20 @@ impl Expr {
                     let condition = conditions.pop().expect("no condition");
                     condition
                 } else {
-                    Expr::BoolOperation {
+                    Expr::BoolOperation(BoolOperation {
                         op: BoolOperator::And,
                         conditions,
-                    }
+                    })
                 }
             }
             ExprKind::BinOp { op, left, right } => {
                 let left = Expr::parse(&left.node);
                 let right = Expr::parse(&right.node);
-                Self::BinaryOperation {
+                Self::BinaryOperation(BinaryOperation {
                     left: Box::new(left),
                     right: Box::new(right),
                     op: BinaryOperator::parse(op),
-                }
+                })
             }
             ExprKind::Subscript {
                 value,
@@ -129,10 +146,10 @@ impl Expr {
             } => {
                 let value = Expr::parse(&value.node);
                 let index = Expr::parse(&slice.node);
-                Self::Index {
+                Self::Index(Index {
                     value: Box::new(value),
                     index: Box::new(index),
-                }
+                })
             }
             ExprKind::Constant { value, kind: _ } => match value {
                 rustpython_parser::ast::Constant::Bool(b) => Expr::ConstantBoolean(*b),
@@ -168,18 +185,18 @@ impl Expr {
                         },
                     )
                     .collect();
-                Self::ListComprehension {
+                Self::ListComprehension(ListComprehension {
                     value: Box::new(value),
                     generators,
-                }
+                })
             }
             ExprKind::UnaryOp { op, operand } => {
                 let value = Expr::parse(&operand.node);
                 let op = UnaryOperator::parse(op);
-                Self::UnaryOperation {
+                Self::UnaryOperation(UnaryOperation {
                     value: Box::new(value),
                     op,
-                }
+                })
             }
             expr => todo!("unsupported expression: {:?}", expr),
         }

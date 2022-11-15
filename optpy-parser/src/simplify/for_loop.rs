@@ -5,7 +5,8 @@ use std::{
 
 use crate::{
     statement::{Assign, RawStatement},
-    CompareOperator, Expr, For, Func, If, Number, Statement, While,
+    CallFunction, CallMethod, Compare, CompareOperator, Expr, For, Func, If, Number, Statement,
+    While,
 };
 
 pub(crate) fn simplify_for_loops(stmts: Vec<RawStatement>) -> Vec<Statement> {
@@ -41,36 +42,36 @@ fn simplify_statement(stmt: RawStatement) -> Vec<Statement> {
 
             let mut while_body = vec![Statement::Assign(Assign {
                 target,
-                value: Expr::CallMethod {
+                value: Expr::CallMethod(CallMethod {
                     value: Box::new(tmp_target.clone()),
                     name: "pop".into(),
                     args: vec![],
-                },
+                }),
             })];
             while_body.extend(simplify_for_loops(body));
 
             vec![
                 Statement::Assign(Assign {
                     target: tmp_target.clone(),
-                    value: Expr::CallFunction {
+                    value: Expr::CallFunction(CallFunction {
                         name: "list".into(),
                         args: vec![iter],
-                    },
+                    }),
                 }),
-                Statement::Expression(Expr::CallMethod {
+                Statement::Expression(Expr::CallMethod(CallMethod {
                     value: Box::new(tmp_target.clone()),
                     name: "reverse".into(),
                     args: vec![],
-                }),
+                })),
                 Statement::While(While {
-                    test: Expr::Compare {
-                        left: Box::new(Expr::CallFunction {
+                    test: Expr::Compare(Compare {
+                        left: Box::new(Expr::CallFunction(CallFunction {
                             name: "len".into(),
                             args: vec![tmp_target.clone()],
-                        }),
+                        })),
                         op: CompareOperator::Greater,
                         right: Box::new(Expr::ConstantNumber(Number::Int("0".into()))),
-                    },
+                    }),
                     body: while_body,
                 }),
             ]

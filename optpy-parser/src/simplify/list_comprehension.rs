@@ -5,7 +5,8 @@ use std::{
 
 use crate::{
     statement::{Assign, RawStatement},
-    BoolOperator, Expr, For, Func, If, While,
+    BinaryOperation, BoolOperation, BoolOperator, CallFunction, CallMethod, Compare, Expr, For,
+    Func, If, Index, ListComprehension, UnaryOperation, While,
 };
 
 pub(crate) fn simplify_list_comprehensions(stmts: Vec<RawStatement>) -> Vec<RawStatement> {
@@ -68,20 +69,20 @@ fn exprs(exprs: Vec<Expr>) -> (Vec<Expr>, Vec<RawStatement>) {
 
 fn eval_expr(expr: Expr) -> (Expr, Vec<RawStatement>) {
     match expr {
-        Expr::CallFunction { name, args } => {
+        Expr::CallFunction(CallFunction { name, args }) => {
             let (args, s) = exprs(args);
-            (Expr::CallFunction { name, args }, s)
+            (Expr::CallFunction(CallFunction { name, args }), s)
         }
-        Expr::CallMethod { value, name, args } => {
+        Expr::CallMethod(CallMethod { value, name, args }) => {
             let (value, mut s1) = eval_expr(*value);
             let (args, s2) = exprs(args);
             s1.extend(s2);
             (
-                Expr::CallMethod {
+                Expr::CallMethod(CallMethod {
                     value: Box::new(value),
                     name,
                     args,
-                },
+                }),
                 s1,
             )
         }
@@ -93,45 +94,45 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<RawStatement>) {
         | Expr::ConstantNumber(_)
         | Expr::ConstantString(_)
         | Expr::ConstantBoolean(_) => (expr, vec![]),
-        Expr::BoolOperation { op, conditions } => {
+        Expr::BoolOperation(BoolOperation { op, conditions }) => {
             let (conditions, s) = exprs(conditions);
-            (Expr::BoolOperation { op, conditions }, s)
+            (Expr::BoolOperation(BoolOperation { op, conditions }), s)
         }
-        Expr::Compare { left, right, op } => {
+        Expr::Compare(Compare { left, right, op }) => {
             let (left, mut s1) = eval_expr(*left);
             let (right, s2) = eval_expr(*right);
             s1.extend(s2);
             (
-                Expr::Compare {
+                Expr::Compare(Compare {
                     left: Box::new(left),
                     right: Box::new(right),
                     op,
-                },
+                }),
                 s1,
             )
         }
-        Expr::BinaryOperation { left, right, op } => {
+        Expr::BinaryOperation(BinaryOperation { left, right, op }) => {
             let (left, mut s1) = eval_expr(*left);
             let (right, s2) = eval_expr(*right);
             s1.extend(s2);
             (
-                Expr::BinaryOperation {
+                Expr::BinaryOperation(BinaryOperation {
                     left: Box::new(left),
                     right: Box::new(right),
                     op,
-                },
+                }),
                 s1,
             )
         }
-        Expr::Index { value, index } => {
+        Expr::Index(Index { value, index }) => {
             let (value, mut s1) = eval_expr(*value);
             let (index, s2) = eval_expr(*index);
             s1.extend(s2);
             (
-                Expr::Index {
+                Expr::Index(Index {
                     value: Box::new(value),
                     index: Box::new(index),
-                },
+                }),
                 s1,
             )
         }
@@ -139,23 +140,23 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<RawStatement>) {
             let (list, s) = exprs(list);
             (Expr::List(list), s)
         }
-        Expr::ListComprehension { value, generators } => {
+        Expr::ListComprehension(ListComprehension { value, generators }) => {
             let tmp_list = Expr::VariableName("__result".into());
             let (value, mut generation_body) = eval_expr(*value);
-            generation_body.push(RawStatement::Expression(Expr::CallMethod {
+            generation_body.push(RawStatement::Expression(Expr::CallMethod(CallMethod {
                 value: Box::new(tmp_list.clone()),
                 name: "append".into(),
                 args: vec![value],
-            }));
+            })));
 
             for generator in generators {
                 let ifs = generator.ifs;
                 if !ifs.is_empty() {
                     generation_body = vec![RawStatement::If(If {
-                        test: Expr::BoolOperation {
+                        test: Expr::BoolOperation(BoolOperation {
                             op: BoolOperator::And,
                             conditions: ifs,
-                        },
+                        }),
                         body: generation_body,
                         orelse: vec![],
                     })];
@@ -183,10 +184,10 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<RawStatement>) {
             let function_name = format!("__f{}", hash);
 
             (
-                Expr::CallFunction {
+                Expr::CallFunction(CallFunction {
                     name: function_name.clone(),
                     args: vec![],
-                },
+                }),
                 vec![RawStatement::Func(Func {
                     name: function_name,
                     args: vec![],
@@ -194,13 +195,13 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<RawStatement>) {
                 })],
             )
         }
-        Expr::UnaryOperation { value, op } => {
+        Expr::UnaryOperation(UnaryOperation { value, op }) => {
             let (value, s) = eval_expr(*value);
             (
-                Expr::UnaryOperation {
+                Expr::UnaryOperation(UnaryOperation {
                     value: Box::new(value),
                     op,
-                },
+                }),
                 s,
             )
         }

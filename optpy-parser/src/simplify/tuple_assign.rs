@@ -1,4 +1,4 @@
-use crate::{statement::Assign, Expr, Func, If, Number, Statement, While};
+use crate::{statement::Assign, Expr, Func, If, Index, Number, Statement, While};
 
 pub(crate) fn simplify_tuple_assignments(stmts: Vec<Statement>) -> Vec<Statement> {
     stmts.into_iter().flat_map(simplify_stmt).collect()
@@ -16,10 +16,10 @@ fn simplify_stmt(stmt: Statement) -> Vec<Statement> {
                 for (i, target) in targets.into_iter().enumerate() {
                     result.push(Statement::Assign(Assign {
                         target,
-                        value: Expr::Index {
+                        value: Expr::Index(Index {
                             value: Box::new(tmp_target.clone()),
                             index: Box::new(Expr::ConstantNumber(Number::Int(i.to_string()))),
-                        },
+                        }),
                     }))
                 }
                 result

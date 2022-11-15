@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{
-    Assign, BinaryOperator, BoolOperator, CompareOperator, Expr, Func, If, Number, Statement,
+    Assign, BinaryOperation, BinaryOperator, BoolOperation, BoolOperator, CallFunction, CallMethod,
+    Compare, CompareOperator, Expr, Func, If, Index, Number, Statement, UnaryOperation,
     UnaryOperator, While,
 };
 use proc_macro2::{Ident, TokenStream};
@@ -122,7 +123,7 @@ fn format_statement(
 
 fn format_expr(expr: &Expr) -> TokenStream {
     match expr {
-        Expr::CallFunction { name, args } => {
+        Expr::CallFunction(CallFunction { name, args }) => {
             let args = format_exprs(args);
             if let Some(macro_name) = name.strip_suffix("__macro__") {
                 let name = format_ident!("{}", macro_name);
@@ -136,7 +137,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
                 }
             }
         }
-        Expr::CallMethod { value, name, args } => {
+        Expr::CallMethod(CallMethod { value, name, args }) => {
             let value = format_expr(value);
             let name = format_ident!("{}", name);
             let args = format_exprs(args);
@@ -156,7 +157,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
                 #name
             }
         }
-        Expr::BoolOperation { op, conditions } => {
+        Expr::BoolOperation(BoolOperation { op, conditions }) => {
             let op = format_boolean_operation(op);
             let conditions = format_exprs(conditions);
 
@@ -169,20 +170,20 @@ fn format_expr(expr: &Expr) -> TokenStream {
             }
             quote! { Value::from(#result) }
         }
-        Expr::Compare { left, right, op } => {
+        Expr::Compare(Compare { left, right, op }) => {
             let left = format_expr(left);
             let right = format_expr(right);
             let op = format_compare_ident(op);
             quote! { #left . #op (&#right) }
         }
-        Expr::BinaryOperation { left, right, op } => {
+        Expr::BinaryOperation(BinaryOperation { left, right, op }) => {
             let left = format_expr(left);
             let right = format_expr(right);
             let op = format_binary_ident(op);
             quote! { #left . #op (&#right) }
         }
         Expr::ConstantNumber(number) => format_number(number),
-        Expr::Index { value, index } => {
+        Expr::Index(Index { value, index }) => {
             let value = format_expr(value);
             let index = format_expr(index);
             quote! {
@@ -211,7 +212,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
                 }
             }
         }
-        Expr::UnaryOperation { value, op } => {
+        Expr::UnaryOperation(UnaryOperation { value, op }) => {
             let value = format_expr(value);
             let op = format_unary_ident(op);
             quote! {

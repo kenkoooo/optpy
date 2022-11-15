@@ -1,4 +1,7 @@
-use optpy_parser::{Assign, Expr, Func, If, Statement, While};
+use optpy_parser::{
+    Assign, BinaryOperation, BoolOperation, CallFunction, CallMethod, Compare, Expr, Func, If,
+    Index, Statement, UnaryOperation, While,
+};
 
 pub fn resolve_builtin_functions(statements: &[Statement]) -> Vec<Statement> {
     statements.resolve()
@@ -52,63 +55,69 @@ trait ExprResolve {
 impl ExprResolve for Expr {
     fn resolve(&self) -> Self {
         match self {
-            Expr::CallFunction { name, args } => {
+            Expr::CallFunction(CallFunction { name, args }) => {
                 if name == "map" && args[0] == Expr::VariableName("int".into()) {
                     let args = args[1..].resolve();
-                    Expr::CallFunction {
+                    Expr::CallFunction(CallFunction {
                         name: "map_int".into(),
                         args,
-                    }
+                    })
                 } else if name == "range" {
-                    Expr::CallFunction {
+                    Expr::CallFunction(CallFunction {
                         name: "range__macro__".to_string(),
                         args: args.resolve(),
-                    }
+                    })
                 } else if name == "print" {
-                    Expr::CallFunction {
+                    Expr::CallFunction(CallFunction {
                         name: "print__macro__".to_string(),
                         args: args.resolve(),
-                    }
+                    })
                 } else {
-                    Expr::CallFunction {
+                    Expr::CallFunction(CallFunction {
                         name: name.to_string(),
                         args: args.resolve(),
-                    }
+                    })
                 }
             }
-            Expr::CallMethod { value, name, args } => Expr::CallMethod {
+            Expr::CallMethod(CallMethod { value, name, args }) => Expr::CallMethod(CallMethod {
                 value: Box::new(value.resolve()),
                 name: name.to_string(),
                 args: args.resolve(),
-            },
+            }),
             Expr::Tuple(tuple) => Expr::Tuple(tuple.resolve()),
-            Expr::BoolOperation { op, conditions } => Expr::BoolOperation {
-                op: *op,
-                conditions: conditions.resolve(),
-            },
-            Expr::Compare { left, right, op } => Expr::Compare {
+            Expr::BoolOperation(BoolOperation { op, conditions }) => {
+                Expr::BoolOperation(BoolOperation {
+                    op: *op,
+                    conditions: conditions.resolve(),
+                })
+            }
+            Expr::Compare(Compare { left, right, op }) => Expr::Compare(Compare {
                 left: Box::new(left.resolve()),
                 right: Box::new(right.resolve()),
                 op: *op,
-            },
-            Expr::BinaryOperation { left, right, op } => Expr::BinaryOperation {
-                left: Box::new(left.resolve()),
-                right: Box::new(right.resolve()),
-                op: *op,
-            },
-            Expr::Index { value, index } => Expr::Index {
+            }),
+            Expr::BinaryOperation(BinaryOperation { left, right, op }) => {
+                Expr::BinaryOperation(BinaryOperation {
+                    left: Box::new(left.resolve()),
+                    right: Box::new(right.resolve()),
+                    op: *op,
+                })
+            }
+            Expr::Index(Index { value, index }) => Expr::Index(Index {
                 value: Box::new(value.resolve()),
                 index: Box::new(index.resolve()),
-            },
+            }),
             Expr::List(list) => Expr::List(list.resolve()),
             Expr::ConstantNumber(_)
             | Expr::ConstantString(_)
             | Expr::VariableName(_)
             | Expr::ConstantBoolean(_) => self.clone(),
-            Expr::UnaryOperation { value, op } => Expr::UnaryOperation {
-                value: Box::new(value.resolve()),
-                op: *op,
-            },
+            Expr::UnaryOperation(UnaryOperation { value, op }) => {
+                Expr::UnaryOperation(UnaryOperation {
+                    value: Box::new(value.resolve()),
+                    op: *op,
+                })
+            }
             expr => unreachable!("{:?}", expr),
         }
     }
