@@ -4,24 +4,24 @@ use crate::{expression::Expr, BinaryOperation, BinaryOperator};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Statement {
-    Assign(Assign),
+    Assign(Assign<Expr>),
     Expression(Expr),
-    If(If<Statement>),
+    If(If<Statement, Expr>),
     Func(Func<Statement>),
     Return(Option<Expr>),
-    While(While<Statement>),
+    While(While<Statement, Expr>),
     Break,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 
-pub struct Assign {
-    pub target: Expr,
-    pub value: Expr,
+pub struct Assign<E> {
+    pub target: E,
+    pub value: E,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 
-pub struct If<S> {
-    pub test: Expr,
+pub struct If<S, E> {
+    pub test: E,
     pub body: Vec<S>,
     pub orelse: Vec<S>,
 }
@@ -34,15 +34,15 @@ pub struct Func<S> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct While<S> {
-    pub test: Expr,
+pub struct While<S, E> {
+    pub test: E,
     pub body: Vec<S>,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 
-pub struct For<S> {
-    pub(crate) target: Expr,
-    pub(crate) iter: Expr,
+pub struct For<S, E> {
+    pub(crate) target: E,
+    pub(crate) iter: E,
     pub(crate) body: Vec<S>,
 }
 
@@ -131,12 +131,12 @@ fn parse_statements(statements: &[Stmt]) -> Vec<RawStatement> {
 
 #[derive(Hash)]
 pub(crate) enum RawStatement {
-    Assign(Assign),
+    Assign(Assign<Expr>),
     Expression(Expr),
-    If(If<RawStatement>),
+    If(If<RawStatement, Expr>),
     Func(Func<RawStatement>),
     Return(Option<Expr>),
-    While(While<RawStatement>),
+    While(While<RawStatement, Expr>),
     Break,
-    For(For<RawStatement>),
+    For(For<RawStatement, Expr>),
 }
