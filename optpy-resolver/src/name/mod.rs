@@ -38,7 +38,6 @@ fn collect_declarations(
                 collect_declarations(body, variables, functions, ctx);
             }
             Statement::Return(_) | Statement::Expression(_) | Statement::Break => continue,
-            statement => unreachable!("{:?}", statement),
         }
     }
 }
@@ -102,7 +101,6 @@ fn resolve_statements(
                 Statement::While(While { test, body })
             }
             Statement::Break => Statement::Break,
-            statement => unreachable!("{:?}", statement),
         })
         .collect()
 }
