@@ -3,7 +3,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use crate::{statement::Assign, CompareOperator, Expr, For, If, Number, Statement, While};
+use crate::{statement::Assign, CompareOperator, Expr, For, Func, If, Number, Statement, While};
 
 pub(crate) fn simplify_for_loops(stmts: Vec<Statement>) -> Vec<Statement> {
     stmts.into_iter().flat_map(simplify_statement).collect()
@@ -20,9 +20,9 @@ fn simplify_statement(stmt: Statement) -> Vec<Statement> {
             let orelse = simplify_for_loops(orelse);
             vec![Statement::If(If { test, body, orelse })]
         }
-        Statement::Func { name, args, body } => {
+        Statement::Func(Func { name, args, body }) => {
             let body = simplify_for_loops(body);
-            vec![Statement::Func { name, args, body }]
+            vec![Statement::Func(Func { name, args, body })]
         }
         Statement::Return(e) => vec![Statement::Return(e)],
         Statement::While(While { test, body }) => {

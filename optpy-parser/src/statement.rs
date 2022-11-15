@@ -7,11 +7,7 @@ pub enum Statement {
     Assign(Assign),
     Expression(Expr),
     If(If),
-    Func {
-        name: String,
-        args: Vec<String>,
-        body: Vec<Statement>,
-    },
+    Func(Func),
     Return(Option<Expr>),
     While(While),
     Break,
@@ -82,7 +78,7 @@ impl Statement {
                 let name = name.to_string();
                 let args = args.args.iter().map(|arg| arg.node.arg.clone()).collect();
                 let body = parse_statements(body);
-                Self::Func { name, args, body }
+                Self::Func(Func { name, args, body })
             }
             StmtKind::Return { value } => {
                 let value = value.as_ref().map(|value| Expr::parse(&value.node));

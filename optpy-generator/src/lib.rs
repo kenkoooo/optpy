@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{
-    Assign, BinaryOperator, BoolOperator, CompareOperator, Expr, If, Number, Statement,
+    Assign, BinaryOperator, BoolOperator, CompareOperator, Expr, Func, If, Number, Statement,
     UnaryOperator, While,
 };
 use proc_macro2::{Ident, TokenStream};
@@ -76,7 +76,7 @@ fn format_statement(
                 }
             }
         }
-        Statement::Func { name, args, body } => {
+        Statement::Func(Func { name, args, body }) => {
             let args = args
                 .iter()
                 .map(|arg| format_ident!("{}", arg))

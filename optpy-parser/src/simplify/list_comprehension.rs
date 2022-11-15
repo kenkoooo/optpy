@@ -3,7 +3,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use crate::{statement::Assign, BoolOperator, Expr, For, If, Statement, While};
+use crate::{statement::Assign, BoolOperator, Expr, For, Func, If, Statement, While};
 
 pub(crate) fn simplify_list_comprehensions(stmts: Vec<Statement>) -> Vec<Statement> {
     stmts.into_iter().flat_map(stmt).collect()
@@ -30,9 +30,9 @@ fn stmt(stmt: Statement) -> Vec<Statement> {
             s.push(Statement::If(If { test, body, orelse }));
             s
         }
-        Statement::Func { name, args, body } => {
+        Statement::Func(Func { name, args, body }) => {
             let body = simplify_list_comprehensions(body);
-            vec![Statement::Func { name, args, body }]
+            vec![Statement::Func(Func { name, args, body })]
         }
         Statement::Return(None) => {
             vec![Statement::Return(None)]
@@ -184,11 +184,11 @@ fn eval_expr(expr: Expr) -> (Expr, Vec<Statement>) {
                     name: function_name.clone(),
                     args: vec![],
                 },
-                vec![Statement::Func {
+                vec![Statement::Func(Func {
                     name: function_name,
                     args: vec![],
                     body: function_body,
-                }],
+                })],
             )
         }
         Expr::UnaryOperation { value, op } => {

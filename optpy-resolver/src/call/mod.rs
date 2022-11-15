@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use optpy_parser::{Assign, Expr, If, Statement, While};
+use optpy_parser::{Assign, Expr, Func, If, Statement, While};
 
 pub(super) fn resolve_function_calls(
     statements: &[Statement],
@@ -39,16 +39,16 @@ fn resolve_statement(
             let orelse = resolve_statements(orelse, extensions);
             Statement::If(If { test, body, orelse })
         }
-        Statement::Func { name, args, body } => {
+        Statement::Func(Func { name, args, body }) => {
             let variables = extensions.get(name).expect("invalid");
             let mut args = args.clone();
             args.extend(variables.clone());
             let body = resolve_statements(body, extensions);
-            Statement::Func {
+            Statement::Func(Func {
                 name: name.to_string(),
                 args,
                 body,
-            }
+            })
         }
         Statement::Return(expr) => {
             Statement::Return(expr.as_ref().map(|e| resolve_expr(e, extensions)))
@@ -147,7 +147,7 @@ fn collect_extension(
 ) {
     for statement in statements {
         match statement {
-            Statement::Func { name, args, body } => {
+            Statement::Func(Func { name, args, body }) => {
                 collect_extension(body, store, definitions, extensions);
                 let mut external = BTreeSet::new();
                 let mut internal = BTreeSet::new();
@@ -196,7 +196,7 @@ fn list_variable_contexts(
                 list_variable_contexts(body, function_name, store);
                 list_variable_contexts(orelse, function_name, store);
             }
-            Statement::Func { name, args, body } => {
+            Statement::Func(Func { name, args, body }) => {
                 list_variable_contexts(body, name, store);
                 for arg in args {
                     store.record(arg, name);
@@ -380,13 +380,13 @@ mod tests {
         assert_eq!(
             statements,
             [
-                Statement::Func {
+                Statement::Func(Func {
                     name: "__f0".into(),
                     args: vec![],
                     body: vec![Statement::Return(Some(Expr::ConstantNumber(Number::Int(
                         "1".into()
                     ))))]
-                },
+                }),
                 Statement::Expression(Expr::CallFunction {
                     name: "print__macro__".into(),
                     args: vec![Expr::CallFunction {
