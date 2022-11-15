@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use optpy_parser::{Expr, Statement};
+use optpy_parser::{Assign, Expr, If, Statement, While};
 
 pub(super) fn resolve_names(statements: &[Statement]) -> Vec<Statement> {
     let mut variables = NameStore::new("__v");
@@ -19,8 +19,10 @@ fn collect_declarations(
 ) {
     for statement in statements {
         match statement {
-            Statement::Assign { target, .. } => collect_variable_names(target, variables, ctx),
-            Statement::If { body, orelse, .. } => {
+            Statement::Assign(Assign { target, .. }) => {
+                collect_variable_names(target, variables, ctx)
+            }
+            Statement::If(If { body, orelse, .. }) => {
                 collect_declarations(body, variables, functions, ctx);
                 collect_declarations(orelse, variables, functions, ctx);
             }
@@ -32,7 +34,7 @@ fn collect_declarations(
                 }
                 collect_declarations(body, variables, functions, &ctx);
             }
-            Statement::While { body, .. } => {
+            Statement::While(While { body, .. }) => {
                 collect_declarations(body, variables, functions, ctx);
             }
             Statement::Return(_) | Statement::Expression(_) | Statement::Break => continue,
@@ -60,19 +62,19 @@ fn resolve_statements(
     statements
         .iter()
         .map(|s| match s {
-            Statement::Assign { target, value } => {
+            Statement::Assign(Assign { target, value }) => {
                 let target = resolve_expr(target, variables, functions, ctx);
                 let value = resolve_expr(value, variables, functions, ctx);
-                Statement::Assign { target, value }
+                Statement::Assign(Assign { target, value })
             }
             Statement::Expression(expr) => {
                 Statement::Expression(resolve_expr(expr, variables, functions, ctx))
             }
-            Statement::If { test, body, orelse } => {
+            Statement::If(If { test, body, orelse }) => {
                 let test = resolve_expr(test, variables, functions, ctx);
                 let body = resolve_statements(body, variables, functions, ctx);
                 let orelse = resolve_statements(orelse, variables, functions, ctx);
-                Statement::If { test, body, orelse }
+                Statement::If(If { test, body, orelse })
             }
             Statement::Func { name, args, body } => {
                 let resolved_name = functions.resolve(name, ctx).expect("invalid");
@@ -94,10 +96,10 @@ fn resolve_statements(
                 }
                 None => Statement::Return(None),
             },
-            Statement::While { test, body } => {
+            Statement::While(While { test, body }) => {
                 let test = resolve_expr(test, variables, functions, ctx);
                 let body = resolve_statements(body, variables, functions, ctx);
-                Statement::While { test, body }
+                Statement::While(While { test, body })
             }
             Statement::Break => Statement::Break,
             statement => unreachable!("{:?}", statement),

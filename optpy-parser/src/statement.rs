@@ -4,32 +4,51 @@ use crate::{expression::Expr, BinaryOperator};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Statement {
-    Assign {
-        target: Expr,
-        value: Expr,
-    },
+    Assign(Assign),
     Expression(Expr),
-    If {
-        test: Expr,
-        body: Vec<Statement>,
-        orelse: Vec<Statement>,
-    },
+    If(If),
     Func {
         name: String,
         args: Vec<String>,
         body: Vec<Statement>,
     },
     Return(Option<Expr>),
-    While {
-        test: Expr,
-        body: Vec<Statement>,
-    },
+    While(While),
     Break,
-    For {
-        target: Expr,
-        iter: Expr,
-        body: Vec<Statement>,
-    },
+    For(For),
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+
+pub struct Assign {
+    pub target: Expr,
+    pub value: Expr,
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+
+pub struct If {
+    pub test: Expr,
+    pub body: Vec<Statement>,
+    pub orelse: Vec<Statement>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct Func {
+    pub name: String,
+    pub args: Vec<String>,
+    pub body: Vec<Statement>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct While {
+    pub test: Expr,
+    pub body: Vec<Statement>,
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+
+pub struct For {
+    pub(crate) target: Expr,
+    pub(crate) iter: Expr,
+    pub(crate) body: Vec<Statement>,
 }
 
 impl Statement {
@@ -43,14 +62,14 @@ impl Statement {
                 assert_eq!(targets.len(), 1);
                 let target = Expr::parse(&targets[0].node);
                 let value = Expr::parse(&value.node);
-                Self::Assign { target, value }
+                Self::Assign(Assign { target, value })
             }
             StmtKind::Expr { value } => Self::Expression(Expr::parse(&value.node)),
             StmtKind::If { test, body, orelse } => {
                 let test = Expr::parse(&test.node);
                 let body = parse_statements(body);
                 let orelse = parse_statements(orelse);
-                Self::If { test, body, orelse }
+                Self::If(If { test, body, orelse })
             }
             StmtKind::FunctionDef {
                 decorator_list: _,
@@ -76,7 +95,7 @@ impl Statement {
             } => {
                 let test = Expr::parse(&test.node);
                 let body = parse_statements(body);
-                Self::While { test, body }
+                Self::While(While { test, body })
             }
             StmtKind::For {
                 target,
@@ -88,20 +107,20 @@ impl Statement {
                 let target = Expr::parse(&target.node);
                 let iter = Expr::parse(&iter.node);
                 let body = parse_statements(body);
-                Self::For { target, iter, body }
+                Self::For(For { target, iter, body })
             }
             StmtKind::Break => Statement::Break,
             StmtKind::AugAssign { target, op, value } => {
                 let target = Expr::parse(&target.node);
                 let value = Expr::parse(&value.node);
-                Statement::Assign {
+                Statement::Assign(Assign {
                     target: target.clone(),
                     value: Expr::BinaryOperation {
                         left: Box::new(target),
                         right: Box::new(value),
                         op: BinaryOperator::parse(op),
                     },
-                }
+                })
             }
             statement => todo!("{:?}", statement),
         }

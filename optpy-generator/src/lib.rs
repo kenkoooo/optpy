@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{
-    BinaryOperator, BoolOperator, CompareOperator, Expr, Number, Statement, UnaryOperator,
+    Assign, BinaryOperator, BoolOperator, CompareOperator, Expr, If, Number, Statement,
+    UnaryOperator, While,
 };
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
@@ -44,7 +45,7 @@ fn format_statement(
     definitions: &BTreeMap<String, BTreeSet<String>>,
 ) -> TokenStream {
     match statement {
-        Statement::Assign { target, value } => {
+        Statement::Assign(Assign { target, value }) => {
             let target = format_expr(target);
             let value = format_expr(value);
             quote! {
@@ -57,7 +58,7 @@ fn format_statement(
                 #value;
             }
         }
-        Statement::If { test, body, orelse } => {
+        Statement::If(If { test, body, orelse }) => {
             let test = format_expr(test);
             let body = body
                 .iter()
@@ -103,7 +104,7 @@ fn format_statement(
                 }
             }
         },
-        Statement::While { test, body } => {
+        Statement::While(While { test, body }) => {
             let test = format_expr(test);
             let body = body
                 .iter()

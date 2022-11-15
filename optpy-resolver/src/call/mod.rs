@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use optpy_parser::{Expr, Statement};
+use optpy_parser::{Assign, Expr, If, Statement, While};
 
 pub(super) fn resolve_function_calls(
     statements: &[Statement],
@@ -27,17 +27,17 @@ fn resolve_statement(
     extensions: &BTreeMap<String, BTreeSet<String>>,
 ) -> Statement {
     match statement {
-        Statement::Assign { target, value } => {
+        Statement::Assign(Assign { target, value }) => {
             let target = resolve_expr(target, extensions);
             let value = resolve_expr(value, extensions);
-            Statement::Assign { target, value }
+            Statement::Assign(Assign { target, value })
         }
         Statement::Expression(expr) => Statement::Expression(resolve_expr(expr, extensions)),
-        Statement::If { test, body, orelse } => {
+        Statement::If(If { test, body, orelse }) => {
             let test = resolve_expr(test, extensions);
             let body = resolve_statements(body, extensions);
             let orelse = resolve_statements(orelse, extensions);
-            Statement::If { test, body, orelse }
+            Statement::If(If { test, body, orelse })
         }
         Statement::Func { name, args, body } => {
             let variables = extensions.get(name).expect("invalid");
@@ -53,10 +53,10 @@ fn resolve_statement(
         Statement::Return(expr) => {
             Statement::Return(expr.as_ref().map(|e| resolve_expr(e, extensions)))
         }
-        Statement::While { test, body } => {
+        Statement::While(While { test, body }) => {
             let test = resolve_expr(test, extensions);
             let body = resolve_statements(body, extensions);
-            Statement::While { test, body }
+            Statement::While(While { test, body })
         }
         Statement::Break => Statement::Break,
         statement => unreachable!("{:?}", statement),
@@ -179,7 +179,7 @@ fn list_variable_contexts(
 ) {
     for statement in statements {
         match statement {
-            Statement::Assign { target, value } => {
+            Statement::Assign(Assign { target, value }) => {
                 list_from_expr(target, function_name, store);
                 list_from_expr(value, function_name, store);
             }
@@ -191,7 +191,7 @@ fn list_variable_contexts(
                     list_from_expr(expr, function_name, store);
                 }
             }
-            Statement::If { test, body, orelse } => {
+            Statement::If(If { test, body, orelse }) => {
                 list_from_expr(test, function_name, store);
                 list_variable_contexts(body, function_name, store);
                 list_variable_contexts(orelse, function_name, store);
@@ -202,7 +202,7 @@ fn list_variable_contexts(
                     store.record(arg, name);
                 }
             }
-            Statement::While { test, body } => {
+            Statement::While(While { test, body }) => {
                 list_from_expr(test, function_name, store);
                 list_variable_contexts(body, function_name, store);
             }

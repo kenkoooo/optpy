@@ -3,7 +3,7 @@ pub use expression::{BinaryOperator, BoolOperator, CompareOperator, Expr, Number
 
 mod statement;
 use rustpython_parser::error::ParseError;
-pub use statement::Statement;
+pub use statement::{Assign, For, Func, If, Statement, While};
 
 mod simplify;
 
@@ -19,11 +19,7 @@ pub fn parse<S: AsRef<str>>(code: S) -> Result<Vec<Statement>, ParseError> {
 #[cfg(test)]
 mod tests {
 
-    use crate::expression::BinaryOperator;
-
     use super::*;
-    use Expr::*;
-    use Statement::*;
 
     #[test]
     fn basic() {
@@ -31,196 +27,33 @@ mod tests {
 a, b, c = input().split()
 print(a)
 ";
-        let statements = parse(code).unwrap();
-        assert_eq!(
-            statements,
-            [
-                Assign {
-                    target: VariableName("__tmp_for_tuple".into()),
-                    value: CallMethod {
-                        value: Box::new(CallFunction {
-                            name: "input".into(),
-                            args: vec![]
-                        }),
-                        name: "split".into(),
-                        args: vec![]
-                    }
-                },
-                Assign {
-                    target: VariableName("a".into()),
-                    value: Index {
-                        value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(ConstantNumber(crate::Number::Int("0".into())))
-                    }
-                },
-                Assign {
-                    target: VariableName("b".into()),
-                    value: Index {
-                        value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(ConstantNumber(crate::Number::Int("1".into())))
-                    }
-                },
-                Assign {
-                    target: VariableName("c".into()),
-                    value: Index {
-                        value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(ConstantNumber(crate::Number::Int("2".into())))
-                    }
-                },
-                Expression(CallFunction {
-                    name: "print".into(),
-                    args: vec![VariableName("a".into())]
-                })
-            ]
-        );
+
+        let expected = r"
+__tmp_for_tuple = input().split()
+a = __tmp_for_tuple[0]
+b = __tmp_for_tuple[1]
+c = __tmp_for_tuple[2]
+print(a)";
+        assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
     }
 
     #[test]
     fn test_if_statement() {
         let code = r"
-a, b, c = input().split()
 if a <= c < b:
     result = 1
 else:
     result = 2
 print(result)
 ";
-        let statements = parse(code).unwrap();
-        assert_eq!(
-            statements,
-            [
-                Assign {
-                    target: VariableName("__tmp_for_tuple".into()),
-                    value: CallMethod {
-                        value: Box::new(CallFunction {
-                            name: "input".into(),
-                            args: vec![]
-                        }),
-                        name: "split".into(),
-                        args: vec![]
-                    }
-                },
-                Assign {
-                    target: VariableName("a".into()),
-                    value: Index {
-                        value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(ConstantNumber(crate::Number::Int("0".into())))
-                    }
-                },
-                Assign {
-                    target: VariableName("b".into()),
-                    value: Index {
-                        value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(ConstantNumber(crate::Number::Int("1".into())))
-                    }
-                },
-                Assign {
-                    target: VariableName("c".into()),
-                    value: Index {
-                        value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(ConstantNumber(crate::Number::Int("2".into())))
-                    }
-                },
-                If {
-                    test: BoolOperation {
-                        op: expression::BoolOperator::And,
-                        conditions: vec![
-                            Compare {
-                                left: Box::new(VariableName("a".into())),
-                                right: Box::new(VariableName("c".into())),
-                                op: expression::CompareOperator::LessOrEqual
-                            },
-                            Compare {
-                                left: Box::new(VariableName("c".into())),
-                                right: Box::new(VariableName("b".into())),
-                                op: expression::CompareOperator::Less
-                            }
-                        ]
-                    },
-                    body: vec![Assign {
-                        target: VariableName("result".into()),
-                        value: ConstantNumber(expression::Number::Int("1".into()))
-                    }],
-                    orelse: vec![Assign {
-                        target: VariableName("result".into()),
-                        value: ConstantNumber(expression::Number::Int("2".into()))
-                    }]
-                },
-                Expression(CallFunction {
-                    name: "print".into(),
-                    args: vec![VariableName("result".into())]
-                }),
-            ]
-        );
-    }
-
-    #[test]
-    fn test_function() {
-        let code = r"
-a, b, c = input().split()
-def f(d):
-    return a + d
-e = f(b)
-print(e)
+        let expected = r"
+if a<=c and c<b:
+    result = 1
+else:
+    result = 2
+print(result)
 ";
-        let statements = parse(code).unwrap();
-        assert_eq!(
-            statements,
-            [
-                Assign {
-                    target: VariableName("__tmp_for_tuple".into()),
-                    value: CallMethod {
-                        value: Box::new(CallFunction {
-                            name: "input".into(),
-                            args: vec![]
-                        }),
-                        name: "split".into(),
-                        args: vec![]
-                    }
-                },
-                Assign {
-                    target: VariableName("a".into()),
-                    value: Index {
-                        value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(ConstantNumber(crate::Number::Int("0".into())))
-                    }
-                },
-                Assign {
-                    target: VariableName("b".into()),
-                    value: Index {
-                        value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(ConstantNumber(crate::Number::Int("1".into())))
-                    }
-                },
-                Assign {
-                    target: VariableName("c".into()),
-                    value: Index {
-                        value: Box::new(VariableName("__tmp_for_tuple".into())),
-                        index: Box::new(ConstantNumber(crate::Number::Int("2".into())))
-                    }
-                },
-                Func {
-                    name: "f".into(),
-                    args: vec!["d".into()],
-                    body: vec![Return(Some(BinaryOperation {
-                        left: Box::new(VariableName("a".into())),
-                        right: Box::new(VariableName("d".into())),
-                        op: BinaryOperator::Add
-                    }))]
-                },
-                Assign {
-                    target: VariableName("e".into()),
-                    value: CallFunction {
-                        name: "f".into(),
-                        args: vec![VariableName("b".into())]
-                    }
-                },
-                Expression(CallFunction {
-                    name: "print".into(),
-                    args: vec![VariableName("e".into())]
-                })
-            ]
-        );
+        assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
     }
 
     #[test]
