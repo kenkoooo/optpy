@@ -1,5 +1,6 @@
 /target
 generated/*.rs
 
-
 a.rs
+/submissions
+run.sh
