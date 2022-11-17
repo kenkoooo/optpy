@@ -25,4 +25,5 @@ members = [
     "optpy-std",
     "optpy-generator",
     "optpy-test-macro",
+    "tools/source-code-downloader",
 ]
