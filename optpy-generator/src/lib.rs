@@ -30,7 +30,7 @@ pub fn generate_function_body(
         for variable in definitions {
             let variable = format_ident!("{}", variable);
             result.append_all(quote! {
-                let mut #variable = Value::none();
+                let mut #variable = Object::none();
             });
         }
     }
@@ -85,10 +85,10 @@ fn format_statement(
             let body = generate_function_body(body, name, definitions);
             let name = format_ident!("{}", name);
             quote! {
-                fn #name( #(#args: &Value),*  ) -> Value {
+                fn #name( #(#args: &Object),*  ) -> Object {
                     #(let mut #args = #args.__shallow_copy();)*
                     #body
-                    return Value::none();
+                    return Object::none();
                 }
             }
         }
@@ -96,12 +96,12 @@ fn format_statement(
             Some(value) => {
                 let value = format_expr(value);
                 quote! {
-                    return Value::from(#value);
+                    return Object::from(#value);
                 }
             }
             None => {
                 quote! {
-                    return Value::none();
+                    return Object::none();
                 }
             }
         },
@@ -149,7 +149,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
         Expr::Tuple(values) => {
             let values = format_exprs(values);
             quote! {
-               Value::from(&[ #(#values),* ])
+               Object::from(&[ #(#values),* ])
             }
         }
         Expr::VariableName(name) => {
@@ -169,7 +169,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
                 }
                 result.append_all(quote! { #condition .test() });
             }
-            quote! { Value::from(#result) }
+            quote! { Object::from(#result) }
         }
         Expr::Compare(Compare { left, right, op }) => {
             let left = format_expr(left);
@@ -194,7 +194,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
         Expr::List(list) => {
             let list = format_exprs(list);
             quote! {
-                Value::from(vec![#(Value::from(&#list)),*])
+                Object::from(vec![#(Object::from(&#list)),*])
             }
         }
         Expr::Dict(Dict { pairs }) => {
@@ -209,22 +209,22 @@ fn format_expr(expr: &Expr) -> TokenStream {
                 })
                 .collect::<Vec<_>>();
             quote! {
-                Value::dict(vec![ #(#pairs),* ])
+                Object::dict(vec![ #(#pairs),* ])
             }
         }
         Expr::ConstantString(value) => {
             quote! {
-                Value::from(#value)
+                Object::from(#value)
             }
         }
         Expr::ConstantBoolean(b) => {
             if *b {
                 quote! {
-                    Value::from(true)
+                    Object::from(true)
                 }
             } else {
                 quote! {
-                    Value::from(false)
+                    Object::from(false)
                 }
             }
         }
@@ -280,7 +280,7 @@ fn format_number(number: &Number) -> TokenStream {
         Number::Int(int) => match int.parse::<i64>() {
             Ok(int) => {
                 quote! {
-                    Value::from(#int)
+                    Object::from(#int)
                 }
             }
             Err(_) => {
@@ -290,7 +290,7 @@ fn format_number(number: &Number) -> TokenStream {
         Number::Float(float) => match float.parse::<f64>() {
             Ok(float) => {
                 quote! {
-                    Value::from(#float)
+                    Object::from(#float)
                 }
             }
             Err(e) => {

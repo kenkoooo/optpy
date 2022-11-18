@@ -1,5 +1,16 @@
-use optpy_std::Value;
+use optpy_std::Object;
 use optpy_test_macro::python_function;
+
+#[test]
+fn test_sorted() {
+    python_function! {r"
+def test():
+    x = [2, 1]
+    x = sorted(x)
+    return x"}
+
+    assert_eq!(test(), Object::from(vec![Object::from(1), Object::from(2)]));
+}
 
 #[test]
 fn test_map_int() {
@@ -10,10 +21,43 @@ def test(s):
 "}
 
     assert_eq!(
-        test(&Value::from("1 2")),
-        Value::from(vec![Value::from(1), Value::from(2)])
+        test(&Object::from("1 2")),
+        Object::from(vec![Object::from(1), Object::from(2)])
     );
 }
+
+#[test]
+fn test_split() {
+    python_function! {r#"
+def test():
+    x = "abc efg"
+    return x.split()"#}
+
+    assert_eq!(
+        test(),
+        Object::from(vec![Object::from("abc"), Object::from("efg")])
+    );
+}
+
+#[test]
+fn test_assign() {
+    python_function! {r"
+def test():
+    x = [0]
+    x[0] = x[0]
+    return x[0]"}
+
+    assert_eq!(test(), Object::from(0));
+
+    python_function! {r"
+def test2():
+    x = [1]
+    x[0] = 2
+    return x"}
+
+    assert_eq!(test2(), Object::from(vec![Object::from(2)]));
+}
+
 #[test]
 fn test_ops() {
     python_function! {
@@ -21,27 +65,27 @@ fn test_ops() {
 def test_ops(N, M):
     return [N + M, N * M, N - M, N / M, N // M]"
     };
-    let result = test_ops(&Value::from(4), &Value::from(2));
+    let result = test_ops(&Object::from(4), &Object::from(2));
     assert_eq!(
         result,
-        Value::from(vec![
-            Value::from(6),
-            Value::from(8),
-            Value::from(2),
-            Value::from(2),
-            Value::from(2),
+        Object::from(vec![
+            Object::from(6),
+            Object::from(8),
+            Object::from(2),
+            Object::from(2),
+            Object::from(2),
         ])
     );
 
-    let result = test_ops(&Value::from(1), &Value::from(2));
+    let result = test_ops(&Object::from(1), &Object::from(2));
     assert_eq!(
         result,
-        Value::from(vec![
-            Value::from(3),
-            Value::from(2),
-            Value::from(-1),
-            Value::from(0.5),
-            Value::from(0),
+        Object::from(vec![
+            Object::from(3),
+            Object::from(2),
+            Object::from(-1),
+            Object::from(0.5),
+            Object::from(0),
         ])
     );
 }
@@ -54,8 +98,8 @@ def test(a):
     }
 
     assert_eq!(
-        test(&Value::from(4)),
-        Value::from(vec![Value::from(4), Value::from(-4)])
+        test(&Object::from(4)),
+        Object::from(vec![Object::from(4), Object::from(-4)])
     )
 }
 
@@ -66,11 +110,11 @@ def test(a):
     return len(a)"
     }
 
-    assert_eq!(test(&Value::from("abcdef")), Value::from(6));
-    assert_eq!(test(&Value::from("あいうえお")), Value::from(5));
+    assert_eq!(test(&Object::from("abcdef")), Object::from(6));
+    assert_eq!(test(&Object::from("あいうえお")), Object::from(5));
     assert_eq!(
-        test(&Value::from(vec![Value::from(1), Value::from(2)])),
-        Value::from(2)
+        test(&Object::from(vec![Object::from(1), Object::from(2)])),
+        Object::from(2)
     );
 }
 
@@ -84,9 +128,9 @@ def test():
 
     assert_eq!(
         test(),
-        Value::dict(vec![
-            (Value::from(1), Value::from(2)),
-            (Value::from("a"), Value::from(3))
+        Object::dict(vec![
+            (Object::from(1), Object::from(2)),
+            (Object::from("a"), Object::from(3))
         ])
     );
 
@@ -94,19 +138,19 @@ def test():
 def test2():
     x = {"a": 2}
     return x["a"]"#}
-    assert_eq!(test2(), Value::from(2));
+    assert_eq!(test2(), Object::from(2));
 
     python_function! {r#"
 def test3():
     x = {"a": 2}
     x["a"] = 1
     return x["a"]"#}
-    assert_eq!(test3(), Value::from(1));
+    assert_eq!(test3(), Object::from(1));
 
     python_function! {r#"
 def test4():
     x = {}
     x["a"] = 3
     return x["a"]"#}
-    assert_eq!(test4(), Value::from(3));
+    assert_eq!(test4(), Object::from(3));
 }

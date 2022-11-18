@@ -1,5 +1,6 @@
-use optpy_std::Value;
 use optpy_test_macro::python_function;
+
+type Value = optpy_std::Object;
 
 #[test]
 fn test_if_statement() {
