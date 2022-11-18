@@ -62,6 +62,7 @@ fn resolve_statement(
             Statement::While(While { test, body })
         }
         Statement::Break => Statement::Break,
+        Statement::Continue => Statement::Continue,
     }
 }
 
@@ -208,7 +209,7 @@ fn list_variable_contexts(
                 list_from_expr(test, function_name, store);
                 list_variable_contexts(body, function_name, store);
             }
-            Statement::Break => continue,
+            Statement::Break | Statement::Continue => {}
         }
     }
 }

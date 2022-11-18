@@ -14,6 +14,7 @@ pub enum Statement {
     Return(Option<Expr>),
     While(While<Statement, Expr>),
     Break,
+    Continue,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 
@@ -108,6 +109,7 @@ impl RawStmt<RawExpr> {
                 Self::For(For { target, iter, body })
             }
             StmtKind::Break => Self::Break,
+            StmtKind::Continue => Self::Continue,
             StmtKind::AugAssign { target, op, value } => {
                 let target = RawExpr::parse(&target.node);
                 let value = RawExpr::parse(&value.node);
@@ -138,5 +140,6 @@ pub(crate) enum RawStmt<E> {
     Return(Option<E>),
     While(While<RawStmt<E>, E>),
     Break,
+    Continue,
     For(For<RawStmt<E>, E>),
 }

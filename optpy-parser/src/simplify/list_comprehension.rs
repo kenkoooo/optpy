@@ -54,6 +54,7 @@ fn stmt(stmt: RawStmt<RawExpr>) -> Vec<RawStmt<Expr>> {
             s
         }
         RawStmt::Break => vec![RawStmt::Break],
+        RawStmt::Continue => vec![RawStmt::Continue],
         RawStmt::For(For { target, iter, body }) => {
             let (target, s) = eval_expr(target);
             assert!(s.is_empty(), "target contains list comprehension");

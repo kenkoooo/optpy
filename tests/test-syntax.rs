@@ -249,3 +249,20 @@ def test_return_list_ref():
     let result = test_return_list_ref();
     assert_eq!(result, Value::from(2));
 }
+
+#[test]
+fn test_continue() {
+    python_function! {r#"
+def test():
+    res = []
+    for i in range(5):
+        if i%2==1:
+            continue
+        res.append(i)
+    return res
+"#}
+    assert_eq!(
+        test(),
+        Value::from(vec![Value::from(0), Value::from(2), Value::from(4)])
+    );
+}

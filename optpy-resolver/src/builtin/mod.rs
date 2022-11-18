@@ -35,6 +35,7 @@ impl StatementResolve for Statement {
                 body: body.resolve(),
             }),
             Statement::Break => Statement::Break,
+            Statement::Continue => Statement::Continue,
         }
     }
 }

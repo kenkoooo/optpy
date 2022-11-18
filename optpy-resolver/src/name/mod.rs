@@ -40,7 +40,10 @@ fn collect_declarations(
             Statement::While(While { body, .. }) => {
                 collect_declarations(body, variables, functions, ctx);
             }
-            Statement::Return(_) | Statement::Expression(_) | Statement::Break => continue,
+            Statement::Return(_)
+            | Statement::Expression(_)
+            | Statement::Break
+            | Statement::Continue => continue,
         }
     }
 }
@@ -104,6 +107,7 @@ fn resolve_statements(
                 Statement::While(While { test, body })
             }
             Statement::Break => Statement::Break,
+            Statement::Continue => Statement::Continue,
         })
         .collect()
 }
