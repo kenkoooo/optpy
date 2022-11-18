@@ -88,4 +88,24 @@ def test():
             (Value::from("a"), Value::from(3))
         ])
     );
+
+    python_function! {r#"
+def test2():
+    x = {"a": 2}
+    return x["a"]"#}
+    assert_eq!(test2(), Value::from(2));
+
+    python_function! {r#"
+def test3():
+    x = {"a": 2}
+    x["a"] = 1
+    return x["a"]"#}
+    assert_eq!(test3(), Value::from(1));
+
+    python_function! {r#"
+def test4():
+    x = {}
+    x["a"] = 3
+    return x["a"]"#}
+    assert_eq!(test4(), Value::from(3));
 }
