@@ -196,7 +196,21 @@ fn format_expr(expr: &Expr) -> TokenStream {
                 Value::from(vec![#(Value::from(&#list)),*])
             }
         }
-        Expr::Dict(Dict { pairs }) => {}
+        Expr::Dict(Dict { pairs }) => {
+            let pairs = pairs
+                .iter()
+                .map(|(key, value)| {
+                    let key = format_expr(key);
+                    let value = format_expr(value);
+                    quote! {
+                        (#key, #value)
+                    }
+                })
+                .collect::<Vec<_>>();
+            quote! {
+                Value::dict(vec![ #(#pairs),* ])
+            }
+        }
         Expr::ConstantString(value) => {
             quote! {
                 Value::from(#value)

@@ -1,6 +1,6 @@
 use optpy_parser::{
-    Assign, BinaryOperation, BoolOperation, CallFunction, CallMethod, Compare, Expr, Func, If,
-    Index, Statement, UnaryOperation, While,
+    Assign, BinaryOperation, BoolOperation, CallFunction, CallMethod, Compare, Dict, Expr, Func,
+    If, Index, Statement, UnaryOperation, While,
 };
 
 pub fn resolve_builtin_functions(statements: &[Statement]) -> Vec<Statement> {
@@ -108,6 +108,13 @@ impl ExprResolve for Expr {
                 index: Box::new(index.resolve()),
             }),
             Expr::List(list) => Expr::List(list.resolve()),
+            Expr::Dict(Dict { pairs }) => {
+                let pairs = pairs
+                    .iter()
+                    .map(|(key, value)| (key.resolve(), value.resolve()))
+                    .collect();
+                Expr::Dict(Dict { pairs })
+            }
             Expr::ConstantNumber(_)
             | Expr::ConstantString(_)
             | Expr::VariableName(_)

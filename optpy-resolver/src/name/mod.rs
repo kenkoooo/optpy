@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use optpy_parser::{
-    Assign, BinaryOperation, BoolOperation, CallFunction, CallMethod, Compare, Expr, Func, If,
-    Index, Statement, UnaryOperation, While,
+    Assign, BinaryOperation, BoolOperation, CallFunction, CallMethod, Compare, Dict, Expr, Func,
+    If, Index, Statement, UnaryOperation, While,
 };
 
 pub(super) fn resolve_names(statements: &[Statement]) -> Vec<Statement> {
@@ -195,6 +195,17 @@ fn resolve_expr(
                 value: Box::new(value),
                 op: *op,
             })
+        }
+        Expr::Dict(Dict { pairs }) => {
+            let pairs = pairs
+                .iter()
+                .map(|(key, value)| {
+                    let key = resolve_expr(key, variables, functions, ctx);
+                    let value = resolve_expr(value, variables, functions, ctx);
+                    (key, value)
+                })
+                .collect();
+            Expr::Dict(Dict { pairs })
         }
     }
 }
