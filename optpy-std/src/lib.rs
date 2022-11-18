@@ -193,6 +193,211 @@ pub mod dict {
         String(String),
     }
 }
+mod object {
+    use std::{fmt::Debug, rc::Rc};
+
+    use crate::{cell::UnsafeRefCell, value::Value};
+
+    pub enum Object {
+        Ref(Rc<UnsafeRefCell<Value>>),
+        Value(Value),
+    }
+
+    impl PartialEq for Object {
+        fn eq(&self, other: &Self) -> bool {
+            match (self, other) {
+                (Object::Ref(l), Object::Ref(r)) => l.borrow().eq(&r.borrow()),
+                (Object::Ref(l), Object::Value(r)) => l.borrow().eq(&r),
+                (Object::Value(l), Object::Ref(r)) => l.eq(&r.borrow()),
+                (Object::Value(l), Object::Value(r)) => l.eq(&r),
+            }
+        }
+    }
+    impl Eq for Object {}
+    impl Debug for Object {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                Object::Ref(r) => r.borrow().fmt(f),
+                Object::Value(v) => v.fmt(f),
+            }
+        }
+    }
+
+    impl Object {
+        pub fn none() -> Object {
+            Object::Value(Value::none())
+        }
+        pub fn dict(pairs: Vec<(Object, Object)>) -> Object {
+            let pairs = pairs
+                .into_iter()
+                .map(|(key, value)| {
+                    fn inner(obj: Object) -> Value {
+                        match obj {
+                            Object::Ref(r) => r.borrow().clone(),
+                            Object::Value(v) => v,
+                        }
+                    }
+                    let key = inner(key);
+                    let value = inner(value);
+                    (key, value)
+                })
+                .collect();
+            Object::Value(Value::dict(pairs))
+        }
+
+        pub fn assign(&mut self, value: &Object) {
+            match (self, value) {
+                (Object::Ref(l), Object::Ref(r)) => l.borrow_mut().assign(&r.borrow()),
+                (Object::Ref(l), Object::Value(r)) => l.borrow_mut().assign(r),
+                (Object::Value(l), Object::Ref(r)) => l.assign(&r.borrow()),
+                (Object::Value(l), Object::Value(r)) => l.assign(r),
+            }
+        }
+
+        pub fn index(&self, index: &Object) -> Object {
+            let r = match (self, index) {
+                (Object::Ref(l), Object::Ref(r)) => l.borrow().index(&r.borrow()),
+                (Object::Ref(l), Object::Value(r)) => l.borrow().index(&r),
+                (Object::Value(l), Object::Ref(r)) => l.index(&r.borrow()),
+                (Object::Value(l), Object::Value(r)) => l.index(&r),
+            };
+            Object::Ref(r)
+        }
+        pub fn append(&self, object: &Object) {
+            match (self, object) {
+                (Object::Ref(l), Object::Ref(r)) => l.borrow().append(&r.borrow()),
+                (Object::Ref(l), Object::Value(r)) => l.borrow().append(&r),
+                (Object::Value(l), Object::Ref(r)) => l.append(&r.borrow()),
+                (Object::Value(l), Object::Value(r)) => l.append(&r),
+            }
+        }
+        pub fn test(&self) -> bool {
+            match self {
+                Object::Ref(r) => r.borrow().test(),
+                Object::Value(v) => v.test(),
+            }
+        }
+    }
+
+    fn method<F: Fn(&Value)>(obj: &Object, f: F) {
+        match obj {
+            Object::Ref(r) => f(&r.borrow()),
+            Object::Value(v) => f(v),
+        }
+    }
+    macro_rules! impl_method {
+        ($name:ident) => {
+            impl Object {
+                pub fn $name(&self) {
+                    method(self, Value::$name);
+                }
+            }
+        };
+    }
+    impl_method!(sort);
+    impl_method!(reverse);
+
+    fn map0<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
+        let value = match obj {
+            Object::Ref(r) => f(&r.borrow()),
+            Object::Value(v) => f(v),
+        };
+        Object::Value(value)
+    }
+
+    macro_rules! impl_map0 {
+        ($name:ident) => {
+            impl Object {
+                pub fn $name(&self) -> Object {
+                    map0(self, Value::$name)
+                }
+            }
+        };
+    }
+    impl_map0!(__shallow_copy);
+    impl_map0!(split);
+    impl_map0!(pop);
+    impl_map0!(__unary_add);
+    impl_map0!(__unary_sub);
+    impl_map0!(__len);
+
+    fn map1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {
+        let value = match (obj1, obj2) {
+            (Object::Ref(l), Object::Ref(r)) => f(&l.borrow(), &r.borrow()),
+            (Object::Ref(l), Object::Value(r)) => f(&l.borrow(), &r),
+            (Object::Value(l), Object::Ref(r)) => f(&l, &r.borrow()),
+            (Object::Value(l), Object::Value(r)) => f(&l, &r),
+        };
+        Object::Value(value)
+    }
+
+    macro_rules! impl_map1 {
+        ($name:ident) => {
+            impl Object {
+                pub fn $name(&self, value: &Object) -> Object {
+                    map1(self, value, Value::$name)
+                }
+            }
+        };
+    }
+
+    impl_map1!(__floor_div);
+    impl_map1!(__add);
+    impl_map1!(__sub);
+    impl_map1!(__mul);
+    impl_map1!(__rem);
+    impl_map1!(__div);
+    impl_map1!(__gt);
+    impl_map1!(__ge);
+    impl_map1!(__lt);
+    impl_map1!(__le);
+    impl_map1!(__eq);
+    impl_map1!(__ne);
+
+    macro_rules! impl_from {
+        ($t:ty) => {
+            impl From<$t> for Object {
+                fn from(v: $t) -> Self {
+                    Object::Value(Value::from(v))
+                }
+            }
+        };
+    }
+    impl_from!(&str);
+    impl_from!(i64);
+    impl_from!(f64);
+    impl_from!(bool);
+
+    impl From<&Object> for Object {
+        fn from(obj: &Object) -> Self {
+            obj.__shallow_copy()
+        }
+    }
+    impl From<Vec<Object>> for Object {
+        fn from(list: Vec<Object>) -> Self {
+            let list = list
+                .into_iter()
+                .map(|obj| {
+                    Rc::new(UnsafeRefCell::new(match obj {
+                        Object::Ref(r) => r.borrow().clone(),
+                        Object::Value(v) => v,
+                    }))
+                })
+                .collect::<Vec<_>>();
+            Object::Value(Value::List(Rc::new(UnsafeRefCell::new(list))))
+        }
+    }
+
+    impl ToString for Object {
+        fn to_string(&self) -> String {
+            match self {
+                Object::Ref(r) => r.borrow().to_string(),
+                Object::Value(v) => v.to_string(),
+            }
+        }
+    }
+}
+
 pub mod value {
     use std::{collections::HashMap, ops::Mul, rc::Rc};
 
@@ -325,24 +530,24 @@ pub mod value {
             }
         }
 
-        pub fn index(&self, index: &Value) -> UnsafeRefMut<Value> {
+        pub fn index(&self, index: &Value) -> Rc<RefCell<Value>> {
             match (self, index) {
                 (Value::List(list), Value::Number(Number::Int64(i))) => {
-                    list.borrow_mut()[*i as usize].borrow_mut()
+                    list.borrow_mut()[*i as usize].clone()
                 }
                 (Value::Dict(dict), Value::Number(x)) => {
                     let key = DictKey::Number(*x);
                     dict.borrow_mut()
                         .entry(key)
                         .or_insert_with(|| Rc::new(RefCell::new(Value::none())))
-                        .borrow_mut()
+                        .clone()
                 }
                 (Value::Dict(dict), Value::String(s)) => {
                     let key = DictKey::String(s.to_string());
                     dict.borrow_mut()
                         .entry(key)
                         .or_insert_with(|| Rc::new(RefCell::new(Value::none())))
-                        .borrow_mut()
+                        .clone()
                 }
                 _ => todo!(),
             }
@@ -474,70 +679,100 @@ pub mod value {
 }
 
 pub mod builtin {
-    use std::io::stdin;
+    use crate::{value::Value, Object};
 
-    use crate::{number::Number, value::Value};
+    mod value {
+        use std::io::stdin;
 
-    pub fn input() -> Value {
-        let mut buf = String::new();
-        stdin().read_line(&mut buf).unwrap();
-        Value::from(buf.trim())
-    }
+        use crate::{number::Number, value::Value};
 
-    pub fn map_int(value: &Value) -> Value {
-        match value {
-            Value::List(list) => {
-                let list = list
-                    .borrow()
-                    .iter()
-                    .map(|v| int(&v.borrow()))
-                    .collect::<Vec<_>>();
-                Value::from(list)
+        pub(super) fn input() -> Value {
+            let mut buf = String::new();
+            stdin().read_line(&mut buf).unwrap();
+            Value::from(buf.trim())
+        }
+
+        pub(super) fn map_int(value: &Value) -> Value {
+            match value {
+                Value::List(list) => {
+                    let list = list
+                        .borrow()
+                        .iter()
+                        .map(|v| int(&v.borrow()))
+                        .collect::<Vec<_>>();
+                    Value::from(list)
+                }
+                _ => unreachable!(),
             }
-            _ => unreachable!(),
         }
-    }
-    pub fn int(value: &Value) -> Value {
-        match value {
-            Value::String(s) => {
-                Value::Number(Number::Int64(s.parse::<i64>().expect("non-integer")))
+        pub(super) fn int(value: &Value) -> Value {
+            match value {
+                Value::String(s) => {
+                    Value::Number(Number::Int64(s.parse::<i64>().expect("non-integer")))
+                }
+                Value::Number(Number::Int64(i)) => Value::Number(Number::Int64(*i)),
+                _ => unreachable!(),
             }
-            Value::Number(Number::Int64(i)) => Value::Number(Number::Int64(*i)),
-            _ => unreachable!(),
         }
-    }
 
-    pub fn list(value: &Value) -> Value {
-        match value {
-            Value::List(_) => value.clone(),
-            _ => todo!(),
-        }
-    }
-
-    pub fn range1(value: &Value) -> Value {
-        match value {
-            Value::Number(Number::Int64(i)) => {
-                let list = (0..*i)
-                    .map(|i| Value::Number(Number::Int64(i)))
-                    .collect::<Vec<_>>();
-                Value::from(list)
+        pub(super) fn list(value: &Value) -> Value {
+            match value {
+                Value::List(_) => value.clone(),
+                _ => todo!(),
             }
-            _ => unreachable!(),
+        }
+
+        pub(super) fn range1(value: &Value) -> Value {
+            match value {
+                Value::Number(Number::Int64(i)) => {
+                    let list = (0..*i)
+                        .map(|i| Value::Number(Number::Int64(i)))
+                        .collect::<Vec<_>>();
+                    Value::from(list)
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        pub(super) fn sorted(value: &Value) -> Value {
+            value.sort();
+            value.clone()
+        }
+
+        pub(super) fn len(value: &Value) -> Value {
+            value.__len()
         }
     }
 
-    pub fn sorted(value: &Value) -> Value {
-        value.sort();
-        value.clone()
+    fn map0<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
+        let value = match obj {
+            Object::Ref(r) => f(&r.borrow()),
+            Object::Value(v) => f(v),
+        };
+        Object::Value(value)
     }
 
-    pub fn len(value: &Value) -> Value {
-        value.__len()
+    macro_rules! define_map0 {
+        ($name:ident) => {
+            pub fn $name(obj: &Object) -> Object {
+                map0(obj, value::$name)
+            }
+        };
+    }
+    define_map0!(len);
+    define_map0!(sorted);
+    define_map0!(range1);
+    define_map0!(list);
+    define_map0!(int);
+    define_map0!(map_int);
+
+    pub fn input() -> Object {
+        Object::Value(value::input())
     }
 }
 
 pub use builtin::*;
-pub use value::*;
+pub use object::*;
 
 #[macro_export]
 macro_rules! range {
