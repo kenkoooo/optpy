@@ -67,6 +67,7 @@ def test(a):
     }
 
     assert_eq!(test(&Value::from("abcdef")), Value::from(6));
+    assert_eq!(test(&Value::from("あいうえお")), Value::from(5));
     assert_eq!(
         test(&Value::from(vec![Value::from(1), Value::from(2)])),
         Value::from(2)
