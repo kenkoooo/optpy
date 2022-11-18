@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{
-    Assign, BinaryOperation, BoolOperation, CallFunction, CallMethod, Compare, Expr, Func, If,
-    Index, Statement, UnaryOperation, While,
+    Assign, BinaryOperation, BoolOperation, CallFunction, CallMethod, Compare, Dict, Expr, Func,
+    If, Index, Statement, UnaryOperation, While,
 };
 
 pub(super) fn resolve_function_calls(
@@ -249,6 +249,12 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
         }
         Expr::List(list) => {
             list_from_exprs(list, function_name, store);
+        }
+        Expr::Dict(Dict { pairs }) => {
+            for (key, value) in pairs {
+                list_from_expr(key, function_name, store);
+                list_from_expr(value, function_name, store);
+            }
         }
         Expr::ConstantNumber(_) | Expr::ConstantString(_) | Expr::ConstantBoolean(_) => {}
         Expr::UnaryOperation(UnaryOperation { value, op: _ }) => {

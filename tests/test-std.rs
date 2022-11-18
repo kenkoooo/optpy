@@ -72,3 +72,20 @@ def test(a):
         Value::from(2)
     );
 }
+
+#[test]
+fn test_dict() {
+    python_function! {r#"
+def test():
+    x = {1:2, "a":3}
+    return x"#
+    }
+
+    assert_eq!(
+        test(),
+        Value::dict(vec![
+            (Value::from(1), Value::from(2)),
+            (Value::from("a"), Value::from(3))
+        ])
+    );
+}

@@ -225,6 +225,24 @@ pub mod value {
                     .iter()
                     .zip(r0.borrow().iter())
                     .all(|(l, r)| l.borrow().eq(&r.borrow())),
+                (Self::Dict(l0), Self::Dict(r0)) => {
+                    let l = l0
+                        .borrow()
+                        .iter()
+                        .all(|(key, value)| match r0.borrow().get(key) {
+                            Some(r) => value.borrow().eq(&r.borrow()),
+                            None => false,
+                        });
+
+                    let r = r0
+                        .borrow()
+                        .iter()
+                        .all(|(key, value)| match l0.borrow().get(key) {
+                            Some(l) => value.borrow().eq(&l.borrow()),
+                            None => false,
+                        });
+                    r && l
+                }
                 _ => false,
             }
         }

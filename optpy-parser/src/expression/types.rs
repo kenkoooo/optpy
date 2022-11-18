@@ -38,6 +38,12 @@ pub struct Index<E> {
     pub value: Box<E>,
     pub index: Box<E>,
 }
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct Dict<E> {
+    pub pairs: Vec<(E, E)>,
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub(crate) struct ListComprehension<E> {
     pub(crate) value: Box<E>,

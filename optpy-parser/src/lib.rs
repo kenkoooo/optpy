@@ -1,7 +1,7 @@
 mod expression;
 pub use expression::{
     BinaryOperation, BinaryOperator, BoolOperation, BoolOperator, CallFunction, CallMethod,
-    Compare, CompareOperator, Expr, Index, Number, UnaryOperation, UnaryOperator,
+    Compare, CompareOperator, Dict, Expr, Index, Number, UnaryOperation, UnaryOperator,
 };
 
 mod statement;
