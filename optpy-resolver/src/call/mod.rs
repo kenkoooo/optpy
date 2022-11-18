@@ -322,56 +322,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_call_resolver() {
-        let code = r"
-            |__v0, __v1 = map(int, input().split())
-            |__v2 = __v0 + __v1
-            |def __f0(__v3):
-            |    def __f1(__v4):
-            |        __v5 = __v1 + __v2
-            |        return __v4 + __v5
-            |    return __f1(__v1) + __v3
-            |__v6 = __f0(__v0 + __v1 + __v2)
-            |print(__v6)"
-            .strip_margin();
-
-        let expected = r"
-            |__v0 = map_int(input().split())
-            |__v1 = __v0[0]
-            |__v2 = __v0[1]
-            |__v3 = __v1 + __v2
-            |def __f0(__v4, __v2):
-            |    def __f1(__v5, __v2, __v3):
-            |        __v6 = __v2 + __v3
-            |        return __v5 + __v6
-            |    return __f1(__v2, __v2, __v3) + __v4
-            |__v7 = __f0(__v1 + __v2 + __v3, __v2)
-            |print__macro__(__v7)"
-            .strip_margin();
-
-        let ast = parse(code).unwrap();
-        let (statements, definitions) = resolve(&ast);
-        assert_eq!(statements, parse(expected).unwrap());
-        assert_eq!(
-            definitions,
-            BTreeMap::from([
-                (
-                    "".into(),
-                    BTreeSet::from([
-                        "__v0".into(),
-                        "__v1".into(),
-                        "__v2".into(),
-                        "__v3".into(),
-                        "__v7".into(),
-                    ])
-                ),
-                ("__f0".into(), BTreeSet::from([])),
-                ("__f1".into(), BTreeSet::from(["__v6".into()]))
-            ])
-        );
-    }
-
-    #[test]
     fn test_non_variable_function() {
         let code = r"
             |def f():

@@ -80,30 +80,4 @@ while len(__tmp_for_loop_iter_14800386153579835208) > 0:
 ";
         assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
     }
-
-    #[test]
-    fn test_list_comprehension() {
-        let code = r"a = [[i*j for j in range(M)] for i in range(N)]";
-
-        let expected = r"
-def __f15179191387192794179():
-    __result = []
-    __tmp_for_loop_iter_8723995406448537821 = list(range(N))
-    __tmp_for_loop_iter_8723995406448537821.reverse()
-    while len(__tmp_for_loop_iter_8723995406448537821) > 0:
-        i = __tmp_for_loop_iter_8723995406448537821.pop()
-        def __f862823992932926381():
-            __result = []
-            __tmp_for_loop_iter_324655153418689908 = list(range(M))
-            __tmp_for_loop_iter_324655153418689908.reverse()
-            while len(__tmp_for_loop_iter_324655153418689908) > 0:
-                j = __tmp_for_loop_iter_324655153418689908.pop()
-                __result.append(i * j)
-            return __result
-        __result.append(__f862823992932926381())
-    return __result
-a = __f15179191387192794179()
-";
-        assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
-    }
 }
