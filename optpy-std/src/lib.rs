@@ -83,13 +83,25 @@ pub mod cell {
     }
 }
 pub mod number {
-    use std::ops::{Add, Div, Mul, Rem, Sub};
+    use std::{
+        hash::Hash,
+        ops::{Add, Div, Mul, Rem, Sub},
+    };
 
     #[derive(Debug, Clone, Copy)]
     pub enum Number {
         Int64(i64),
         Float(f64),
     }
+    impl Hash for Number {
+        fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+            match self {
+                Number::Int64(i) => i.hash(state),
+                Number::Float(_) => todo!(),
+            }
+        }
+    }
+    impl Eq for Number {}
 
     impl PartialOrd for Number {
         fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
@@ -166,10 +178,21 @@ pub mod number {
         }
     }
 }
-pub mod value {
-    use std::{ops::Mul, rc::Rc};
 
-    use crate::{cell::UnsafeRefMut, number::Number};
+pub mod dict {
+
+    use crate::number::Number;
+
+    #[derive(Debug, Clone, Hash, PartialEq, Eq)]
+    pub enum DictKey {
+        Number(Number),
+        String(String),
+    }
+}
+pub mod value {
+    use std::{collections::HashMap, ops::Mul, rc::Rc};
+
+    use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number};
 
     type RefCell<T> = crate::cell::UnsafeRefCell<T>;
 
@@ -179,6 +202,7 @@ pub mod value {
         String(Rc<String>),
         Number(Number),
         Boolean(bool),
+        Dict(Rc<RefCell<HashMap<DictKey, Rc<RefCell<Value>>>>>),
         None,
     }
 
@@ -244,6 +268,21 @@ pub mod value {
     impl Value {
         pub fn none() -> Value {
             Value::None
+        }
+        pub fn dict(pairs: Vec<(Value, Value)>) -> Value {
+            let map = pairs
+                .into_iter()
+                .map(|(key, value)| {
+                    let key = match key {
+                        Value::String(s) => DictKey::String(s.to_string()),
+                        Value::Number(n) => DictKey::Number(n),
+                        _ => todo!(),
+                    };
+                    let value = Rc::new(RefCell::new(value));
+                    (key, value)
+                })
+                .collect::<HashMap<_, _>>();
+            Value::Dict(Rc::new(RefCell::new(map)))
         }
 
         pub fn __shallow_copy(&self) -> Value {
