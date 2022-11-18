@@ -326,6 +326,20 @@ pub mod value {
                 (Value::List(list), Value::Number(Number::Int64(i))) => {
                     list.borrow_mut()[*i as usize].borrow_mut()
                 }
+                (Value::Dict(dict), Value::Number(x)) => {
+                    let key = DictKey::Number(*x);
+                    dict.borrow_mut()
+                        .entry(key)
+                        .or_insert_with(|| Rc::new(RefCell::new(Value::none())))
+                        .borrow_mut()
+                }
+                (Value::Dict(dict), Value::String(s)) => {
+                    let key = DictKey::String(s.to_string());
+                    dict.borrow_mut()
+                        .entry(key)
+                        .or_insert_with(|| Rc::new(RefCell::new(Value::none())))
+                        .borrow_mut()
+                }
                 _ => todo!(),
             }
         }
