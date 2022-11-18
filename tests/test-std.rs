@@ -154,3 +154,20 @@ def test4():
     return x["a"]"#}
     assert_eq!(test4(), Object::from(3));
 }
+
+#[test]
+fn test_mutable_index_reference() {
+    python_function! {r#"
+def test():
+    def f(x):
+        x.pop()
+        return [1, 2, 3]
+
+
+    x = [[1, 2, 3]]
+    if x[0] == f(x):
+        return "eq"
+    else:
+        return "neq""#}
+    assert_eq!(test(), Object::from("eq"));
+}
