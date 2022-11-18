@@ -118,6 +118,7 @@ fn format_statement(
             }
         }
         Statement::Break => quote! { break; },
+        Statement::Continue => quote! { continue; },
     }
 }
 

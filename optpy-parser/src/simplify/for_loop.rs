@@ -34,6 +34,7 @@ fn simplify_statement(stmt: RawStmt<Expr>) -> Vec<Statement> {
             vec![Statement::While(While { test, body })]
         }
         RawStmt::Break => vec![Statement::Break],
+        RawStmt::Continue => vec![Statement::Continue],
         RawStmt::For(For { target, iter, body }) => {
             let mut hasher = DefaultHasher::new();
             body.hash(&mut hasher);

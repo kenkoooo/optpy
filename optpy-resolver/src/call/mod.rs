@@ -1,3 +1,6 @@
+mod functiontree;
+mod referencestore;
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{
@@ -5,11 +8,32 @@ use optpy_parser::{
     If, Index, Statement, UnaryOperation, While,
 };
 
+use self::{functiontree::FunctionTree, referencestore::ReferenceStore};
+
 pub(super) fn resolve_function_calls(
     statements: &[Statement],
 ) -> (Vec<Statement>, BTreeMap<String, BTreeSet<String>>) {
     let mut store = ReferenceStore::default();
-    list_variable_contexts(statements, "$", &mut store);
+    let mut tree = FunctionTree::default();
+    list_variable_contexts(statements, "$", &mut store, &mut tree);
+
+    let variables = store.list_variables();
+    for variable in variables {
+        let functions = store.list_by_variable(&variable);
+        for function in functions.iter() {
+            let mut path = tree.path(function);
+            while let Some(top) = path.pop() {
+                if functions.contains(&top) {
+                    path.push(top);
+                    break;
+                }
+            }
+
+            for function in path {
+                store.record(&variable, &function);
+            }
+        }
+    }
 
     let mut definitions = BTreeMap::new();
     let mut extensions = BTreeMap::new();
@@ -25,6 +49,7 @@ pub(super) fn resolve_function_calls(
     let statements = resolve_statements(statements, &extensions);
     (statements, definitions)
 }
+
 fn resolve_statement(
     statement: &Statement,
     extensions: &BTreeMap<String, BTreeSet<String>>,
@@ -62,6 +87,7 @@ fn resolve_statement(
             Statement::While(While { test, body })
         }
         Statement::Break => Statement::Break,
+        Statement::Continue => Statement::Continue,
     }
 }
 
@@ -164,12 +190,29 @@ fn collect_extension(
                 }
                 store.remove_function(name);
                 for arg in args {
-                    assert!(internal.remove(arg));
+                    assert!(
+                        internal.remove(arg),
+                        "no arg={} in internal={:?} in function={}",
+                        arg,
+                        internal,
+                        name
+                    );
                 }
                 definitions.insert(name.clone(), internal);
                 extensions.insert(name.clone(), external);
             }
-            _ => {}
+            Statement::If(If { body, orelse, .. }) => {
+                collect_extension(body, store, definitions, extensions);
+                collect_extension(orelse, store, definitions, extensions);
+            }
+            Statement::While(While { body, .. }) => {
+                collect_extension(body, store, definitions, extensions);
+            }
+            Statement::Break
+            | Statement::Continue
+            | Statement::Assign(_)
+            | Statement::Expression(_)
+            | Statement::Return(_) => {}
         }
     }
 }
@@ -178,6 +221,7 @@ fn list_variable_contexts(
     statements: &[Statement],
     function_name: &str,
     store: &mut ReferenceStore,
+    tree: &mut FunctionTree,
 ) {
     for statement in statements {
         match statement {
@@ -195,20 +239,21 @@ fn list_variable_contexts(
             }
             Statement::If(If { test, body, orelse }) => {
                 list_from_expr(test, function_name, store);
-                list_variable_contexts(body, function_name, store);
-                list_variable_contexts(orelse, function_name, store);
+                list_variable_contexts(body, function_name, store, tree);
+                list_variable_contexts(orelse, function_name, store, tree);
             }
             Statement::Func(Func { name, args, body }) => {
-                list_variable_contexts(body, name, store);
+                tree.add_edge(function_name, &name);
+                list_variable_contexts(body, name, store, tree);
                 for arg in args {
                     store.record(arg, name);
                 }
             }
             Statement::While(While { test, body }) => {
                 list_from_expr(test, function_name, store);
-                list_variable_contexts(body, function_name, store);
+                list_variable_contexts(body, function_name, store, tree);
             }
-            Statement::Break => continue,
+            Statement::Break | Statement::Continue => {}
         }
     }
 }
@@ -268,53 +313,6 @@ fn list_from_exprs(exprs: &[Expr], function_name: &str, store: &mut ReferenceSto
     }
 }
 
-#[derive(Default, Debug)]
-struct ReferenceStore {
-    variable_functions: BTreeMap<String, BTreeSet<String>>,
-    function_variables: BTreeMap<String, BTreeSet<String>>,
-}
-
-impl ReferenceStore {
-    fn record(&mut self, variable_name: &str, function_name: &str) {
-        self.variable_functions
-            .entry(variable_name.to_string())
-            .or_default()
-            .insert(function_name.to_string());
-        self.function_variables
-            .entry(function_name.to_string())
-            .or_default()
-            .insert(variable_name.to_string());
-    }
-
-    fn list_by_function(&self, function_name: &str) -> BTreeSet<String> {
-        self.function_variables
-            .get(function_name)
-            .cloned()
-            .unwrap_or_default()
-    }
-
-    fn list_by_variable(&self, variable_name: &str) -> BTreeSet<String> {
-        self.variable_functions
-            .get(variable_name)
-            .cloned()
-            .unwrap_or_default()
-    }
-
-    fn remove_function(&mut self, function_name: &str) {
-        let variables = self
-            .function_variables
-            .remove(function_name)
-            .unwrap_or_default();
-        for variable in variables {
-            assert!(self
-                .variable_functions
-                .get_mut(&variable)
-                .expect("invalid")
-                .remove(function_name));
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use optpy_parser::{parse, CallFunction, Number};
@@ -322,56 +320,6 @@ mod tests {
     use crate::{resolve, util::StripMargin};
 
     use super::*;
-
-    #[test]
-    fn test_call_resolver() {
-        let code = r"
-            |__v0, __v1 = map(int, input().split())
-            |__v2 = __v0 + __v1
-            |def __f0(__v3):
-            |    def __f1(__v4):
-            |        __v5 = __v1 + __v2
-            |        return __v4 + __v5
-            |    return __f1(__v1) + __v3
-            |__v6 = __f0(__v0 + __v1 + __v2)
-            |print(__v6)"
-            .strip_margin();
-
-        let expected = r"
-            |__v0 = map_int(input().split())
-            |__v1 = __v0[0]
-            |__v2 = __v0[1]
-            |__v3 = __v1 + __v2
-            |def __f0(__v4, __v2):
-            |    def __f1(__v5, __v2, __v3):
-            |        __v6 = __v2 + __v3
-            |        return __v5 + __v6
-            |    return __f1(__v2, __v2, __v3) + __v4
-            |__v7 = __f0(__v1 + __v2 + __v3, __v2)
-            |print__macro__(__v7)"
-            .strip_margin();
-
-        let ast = parse(code).unwrap();
-        let (statements, definitions) = resolve(&ast);
-        assert_eq!(statements, parse(expected).unwrap());
-        assert_eq!(
-            definitions,
-            BTreeMap::from([
-                (
-                    "".into(),
-                    BTreeSet::from([
-                        "__v0".into(),
-                        "__v1".into(),
-                        "__v2".into(),
-                        "__v3".into(),
-                        "__v7".into(),
-                    ])
-                ),
-                ("__f0".into(), BTreeSet::from([])),
-                ("__f1".into(), BTreeSet::from(["__v6".into()]))
-            ])
-        );
-    }
 
     #[test]
     fn test_non_variable_function() {
