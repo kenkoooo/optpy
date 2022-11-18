@@ -266,3 +266,21 @@ def test():
         Value::from(vec![Value::from(0), Value::from(2), Value::from(4)])
     );
 }
+
+#[test]
+fn test_list_comprehension() {
+    python_function! {r#"
+def test(N, M):
+    a = [[i*j for j in range(M)] for i in range(N)]
+    return a
+    "#}
+
+    assert_eq!(
+        test(&Value::from(3), &Value::from(2)),
+        Value::from(vec![
+            Value::from(vec![Value::from(0), Value::from(0)]),
+            Value::from(vec![Value::from(0), Value::from(1)]),
+            Value::from(vec![Value::from(0), Value::from(2)])
+        ])
+    );
+}

@@ -58,9 +58,13 @@ pub mod cell {
         }
     }
 
-    #[derive(Debug)]
     pub struct UnsafeRefCell<T> {
         cell: UnsafeCell<T>,
+    }
+    impl<T: Debug> Debug for UnsafeRefCell<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            self.borrow().fmt(f)
+        }
     }
 
     impl<T> UnsafeRefCell<T> {
