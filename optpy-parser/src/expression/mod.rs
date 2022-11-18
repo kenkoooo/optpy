@@ -2,7 +2,7 @@ mod types;
 pub(crate) use types::ListComprehension;
 pub use types::{
     BinaryOperation, BinaryOperator, BoolOperation, BoolOperator, CallFunction, CallMethod,
-    Compare, CompareOperator, Comprehension, Index, Number, UnaryOperation, UnaryOperator,
+    Compare, CompareOperator, Comprehension, Dict, Index, Number, UnaryOperation, UnaryOperator,
 };
 
 use rustpython_parser::ast::ExprKind;
@@ -22,6 +22,7 @@ pub enum Expr {
     ConstantString(String),
     ConstantBoolean(bool),
     List(Vec<Expr>),
+    Dict(Dict<Expr>),
 }
 
 #[derive(Clone)]
@@ -40,6 +41,7 @@ pub(crate) enum RawExpr {
     ConstantBoolean(bool),
     List(Vec<RawExpr>),
     ListComprehension(ListComprehension<RawExpr>),
+    Dict(Dict<RawExpr>),
 }
 
 impl RawExpr {
@@ -145,6 +147,12 @@ impl RawExpr {
             ExprKind::List { elts, ctx: _ } => {
                 let list = parse_expressions(elts);
                 Self::List(list)
+            }
+            ExprKind::Dict { keys, values } => {
+                let keys = parse_expressions(keys);
+                let values = parse_expressions(values);
+                let pairs = keys.into_iter().zip(values).collect::<Vec<_>>();
+                Self::Dict(Dict { pairs })
             }
             ExprKind::ListComp { elt, generators } => {
                 let value = RawExpr::parse(&elt.node);

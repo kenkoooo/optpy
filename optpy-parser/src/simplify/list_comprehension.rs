@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    expression::{ListComprehension, RawExpr},
+    expression::{Dict, ListComprehension, RawExpr},
     statement::{Assign, RawStmt},
     BinaryOperation, BoolOperation, BoolOperator, CallFunction, CallMethod, Compare, Expr, For,
     Func, If, Index, UnaryOperation, While,
@@ -142,6 +142,18 @@ fn eval_expr(expr: RawExpr) -> (Expr, Vec<RawStmt<Expr>>) {
         RawExpr::List(list) => {
             let (list, s) = exprs(list);
             (Expr::List(list), s)
+        }
+        RawExpr::Dict(Dict { pairs }) => {
+            let mut statements = vec![];
+            let mut p = vec![];
+            for (key, value) in pairs {
+                let (key, s) = eval_expr(key);
+                statements.extend(s);
+                let (value, s) = eval_expr(value);
+                statements.extend(s);
+                p.push((key, value));
+            }
+            (Expr::Dict(Dict { pairs: p }), statements)
         }
         RawExpr::ListComprehension(ListComprehension { value, generators }) => {
             let tmp_list = Expr::VariableName("__result".into());

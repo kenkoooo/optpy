@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{
     Assign, BinaryOperation, BinaryOperator, BoolOperation, BoolOperator, CallFunction, CallMethod,
-    Compare, CompareOperator, Expr, Func, If, Index, Number, Statement, UnaryOperation,
+    Compare, CompareOperator, Dict, Expr, Func, If, Index, Number, Statement, UnaryOperation,
     UnaryOperator, While,
 };
 use proc_macro2::{Ident, TokenStream};
@@ -196,6 +196,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
                 Value::from(vec![#(Value::from(&#list)),*])
             }
         }
+        Expr::Dict(Dict { pairs }) => {}
         Expr::ConstantString(value) => {
             quote! {
                 Value::from(#value)
