@@ -348,7 +348,7 @@ pub mod value {
             *self = value.clone();
         }
 
-        pub fn reverse(&mut self) {
+        pub fn reverse(&self) {
             match self {
                 Value::List(list) => {
                     list.borrow_mut().reverse();
@@ -357,7 +357,7 @@ pub mod value {
             }
         }
 
-        pub fn pop(&mut self) -> Value {
+        pub fn pop(&self) -> Value {
             match self {
                 Value::List(list) => {
                     let last = list.borrow_mut().pop().expect("empty list");
@@ -366,7 +366,7 @@ pub mod value {
                 _ => unreachable!(),
             }
         }
-        pub fn append(&mut self, value: &Value) {
+        pub fn append(&self, value: &Value) {
             match self {
                 Value::List(list) => {
                     list.borrow_mut().push(Rc::new(RefCell::new(value.clone())));

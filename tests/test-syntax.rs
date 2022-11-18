@@ -174,6 +174,17 @@ def test():
 }
 
 #[test]
+fn test_mut_mutated_self() {
+    python_function! {r#"
+def test():
+    x = [0]
+    x.append(x.pop()+200)
+    return x[0]
+    "#}
+    assert_eq!(test(), Value::from(200));
+}
+
+#[test]
 fn test_assign_in_loop() {
     python_function! {r#"
 def test():
