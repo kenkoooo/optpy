@@ -72,6 +72,8 @@ pub enum CompareOperator {
     GreaterOrEqual,
     Equal,
     NotEqual,
+    NotIn,
+    In,
 }
 
 impl CompareOperator {
@@ -83,6 +85,8 @@ impl CompareOperator {
             Cmpop::GtE => Self::GreaterOrEqual,
             Cmpop::Eq => Self::Equal,
             Cmpop::NotEq => Self::NotEqual,
+            Cmpop::NotIn => Self::NotIn,
+            Cmpop::In => Self::In,
             op => todo!("{:?}", op),
         }
     }
