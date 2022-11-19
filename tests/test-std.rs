@@ -256,3 +256,15 @@ def test():
         );
     }
 }
+
+#[test]
+fn test_function_call_index() {
+    python_function! {r"
+def test():
+    i = 0
+    def f():
+        return i
+    a = [0, 1, 2]
+    return a[f()]"}
+    assert_eq!(test(), Object::from(0));
+}
