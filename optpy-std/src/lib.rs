@@ -751,10 +751,14 @@ pub mod builtin {
             }
         }
 
-        pub(super) fn range1(value: &Value) -> Value {
-            match value {
-                Value::Number(Number::Int64(i)) => {
-                    let list = (0..*i)
+        pub(super) fn __range1(value: &Value) -> Value {
+            __range2(&Value::Number(Number::Int64(0)), value)
+        }
+
+        pub(super) fn __range2(start: &Value, stop: &Value) -> Value {
+            match (start, stop) {
+                (Value::Number(Number::Int64(start)), Value::Number(Number::Int64(stop))) => {
+                    let list = (*start..*stop)
                         .map(|i| Value::Number(Number::Int64(i)))
                         .collect::<Vec<_>>();
                     Value::from(list)
@@ -790,10 +794,29 @@ pub mod builtin {
     }
     define_map0!(len);
     define_map0!(sorted);
-    define_map0!(range1);
+    define_map0!(__range1);
     define_map0!(list);
     define_map0!(int);
     define_map0!(map_int);
+
+    fn map1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {
+        let value = match (obj1, obj2) {
+            (Object::Ref(obj1), Object::Ref(obj2)) => f(&obj1.borrow(), &obj2.borrow()),
+            (Object::Ref(obj1), Object::Value(obj2)) => f(&obj1.borrow(), obj2),
+            (Object::Value(obj1), Object::Ref(obj2)) => f(obj1, &obj2.borrow()),
+            (Object::Value(obj1), Object::Value(obj2)) => f(obj1, obj2),
+        };
+        Object::Value(value)
+    }
+
+    macro_rules! define_map1 {
+        ($name:ident) => {
+            pub fn $name(obj1: &Object, obj2: &Object) -> Object {
+                map1(obj1, obj2, value::$name)
+            }
+        };
+    }
+    define_map1!(__range2);
 
     pub fn __pow3(number: &Object, power: &Object, modulus: &Object) -> Object {
         let number = number.__number();
@@ -832,7 +855,10 @@ pub use object::*;
 #[macro_export]
 macro_rules! range {
     ($stop:expr) => {
-        range1($stop)
+        __range1($stop)
+    };
+    ($start:expr, $stop:expr) => {
+        __range2($start, $stop)
     };
 }
 
