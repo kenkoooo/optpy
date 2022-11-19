@@ -1,10 +1,11 @@
+use std::{collections::HashMap, rc::Rc};
 
-use crate::{number::Number, value::Value, Object};
+use crate::{cell::UnsafeRefCell, number::Number, value::Value, Object};
 
 mod value {
-    use std::io::stdin;
+    use std::{collections::HashMap, io::stdin, rc::Rc};
 
-    use crate::{number::Number, value::Value};
+    use crate::{cell::UnsafeRefCell, number::Number, value::Value};
 
     pub(super) fn input() -> Value {
         let mut buf = String::new();
@@ -66,6 +67,33 @@ mod value {
     pub(super) fn len(value: &Value) -> Value {
         value.__len()
     }
+    pub(super) fn __set1(iter: &Value) -> Value {
+        match iter {
+            Value::List(list) => {
+                let map = list
+                    .borrow()
+                    .iter()
+                    .map(|v| {
+                        (
+                            v.borrow().__as_dict_key(),
+                            Rc::new(UnsafeRefCell::new(Value::None)),
+                        )
+                    })
+                    .collect::<HashMap<_, _>>();
+                Value::Dict(Rc::new(UnsafeRefCell::new(map)))
+            }
+            Value::Dict(map) => {
+                let map = map
+                    .borrow()
+                    .keys()
+                    .map(|key| (key.clone(), Rc::new(UnsafeRefCell::new(Value::None))))
+                    .collect::<HashMap<_, _>>();
+                Value::Dict(Rc::new(UnsafeRefCell::new(map)))
+            }
+            Value::String(_) => todo!(),
+            _ => unreachable!(),
+        }
+    }
 }
 
 fn map0<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
@@ -89,6 +117,7 @@ define_map0!(__range1);
 define_map0!(list);
 define_map0!(int);
 define_map0!(map_int);
+define_map0!(__set1);
 
 fn map1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {
     let value = match (obj1, obj2) {
@@ -137,4 +166,15 @@ pub fn __pow3(number: &Object, power: &Object, modulus: &Object) -> Object {
 
 pub fn input() -> Object {
     Object::Value(value::input())
+}
+
+pub fn exit(code: &Object) -> ! {
+    match code.__number() {
+        Number::Int64(code) => std::process::exit(code as i32),
+        _ => unreachable!(),
+    }
+}
+
+pub fn __set0() -> Object {
+    Object::Value(Value::Dict(Rc::new(UnsafeRefCell::new(HashMap::new()))))
 }

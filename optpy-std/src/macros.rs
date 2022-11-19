@@ -22,3 +22,12 @@ macro_rules! pow {
         __pow3($number, $power, $modulus)
     };
 }
+#[macro_export]
+macro_rules! set {
+    () => {
+        __set0()
+    };
+    ($iter:expr) => {
+        __set1($iter)
+    };
+}
