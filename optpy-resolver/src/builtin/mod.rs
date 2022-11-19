@@ -73,6 +73,11 @@ impl ExprResolve for Expr {
                         name: "print__macro__".to_string(),
                         args: args.resolve(),
                     })
+                } else if name == "pow" {
+                    Expr::CallFunction(CallFunction {
+                        name: "pow__macro__".to_string(),
+                        args: args.resolve(),
+                    })
                 } else {
                     Expr::CallFunction(CallFunction {
                         name: name.to_string(),

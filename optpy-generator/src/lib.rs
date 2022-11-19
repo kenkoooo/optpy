@@ -149,7 +149,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
         Expr::Tuple(values) => {
             let values = format_exprs(values);
             quote! {
-               Object::from(&[ #(#values),* ])
+               Object::from(vec![ #(#values),* ])
             }
         }
         Expr::VariableName(name) => {
