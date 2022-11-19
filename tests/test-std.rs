@@ -268,3 +268,36 @@ def test():
     return a[f()]"}
     assert_eq!(test(), Object::from(0));
 }
+
+#[test]
+fn test_set() {
+    {
+        python_function! {r"
+def test():
+    a = [1, 2, 3, 2, 1]
+    return len(set(a))"}
+        assert_eq!(test(), Object::from(3));
+    }
+    {
+        python_function! {r"
+def test(a):
+    a = set(a)
+    return 1 in a"}
+        assert_eq!(
+            test(&Object::from(vec![
+                Object::from(1),
+                Object::from(2),
+                Object::from(3)
+            ])),
+            Object::from(true)
+        );
+    }
+    {
+        python_function! {r"
+def test():
+    a = set()
+    a.add(1)
+    return 1 in a"}
+        assert_eq!(test(), Object::from(true));
+    }
+}

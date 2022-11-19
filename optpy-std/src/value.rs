@@ -233,6 +233,7 @@ impl Value {
         match self {
             Value::List(list) => Value::Number(Number::Int64(list.borrow().len() as i64)),
             Value::String(s) => Value::Number(Number::Int64(s.chars().count() as i64)),
+            Value::Dict(d) => Value::Number(Number::Int64(d.borrow().len() as i64)),
             _ => unreachable!(),
         }
     }
