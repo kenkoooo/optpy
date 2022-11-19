@@ -209,3 +209,39 @@ def test(x, e, m):
         Object::from(6)
     );
 }
+
+#[test]
+fn test_range() {
+    {
+        python_function! {r#"
+def test():
+    result = []
+    for i in range(5):
+        result.append(i)
+    return result"#}
+
+        assert_eq!(
+            test(),
+            Object::from(vec![
+                Object::from(0),
+                Object::from(1),
+                Object::from(2),
+                Object::from(3),
+                Object::from(4),
+            ])
+        );
+    }
+    {
+        python_function! {r#"
+def test():
+    result = []
+    for i in range(2, 5):
+        result.append(i)
+    return result"#}
+
+        assert_eq!(
+            test(),
+            Object::from(vec![Object::from(2), Object::from(3), Object::from(4),])
+        );
+    }
+}
