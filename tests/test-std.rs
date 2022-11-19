@@ -196,18 +196,29 @@ def test(key):
 
 #[test]
 fn test_pow() {
-    python_function! {r#"
+    {
+        python_function! {r#"
 def test(x, e, m):
     return pow(x, e, m)"#}
 
-    assert_eq!(
-        test(&Object::from(2), &Object::from(3), &Object::from(10)),
-        Object::from(8)
-    );
-    assert_eq!(
-        test(&Object::from(2), &Object::from(4), &Object::from(10)),
-        Object::from(6)
-    );
+        assert_eq!(
+            test(&Object::from(2), &Object::from(3), &Object::from(10)),
+            Object::from(8)
+        );
+        assert_eq!(
+            test(&Object::from(2), &Object::from(4), &Object::from(10)),
+            Object::from(6)
+        );
+    }
+
+    {
+        python_function! {r#"
+def test(x, e):
+    return x ** e"#}
+
+        assert_eq!(test(&Object::from(2), &Object::from(3)), Object::from(8));
+        assert_eq!(test(&Object::from(2), &Object::from(4)), Object::from(16));
+    }
 }
 
 #[test]
