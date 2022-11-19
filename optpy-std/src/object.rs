@@ -1,4 +1,3 @@
-
 use std::{fmt::Debug, rc::Rc};
 
 use crate::{cell::UnsafeRefCell, number::Number, value::Value};
@@ -68,14 +67,6 @@ impl Object {
         };
         Object::Ref(r)
     }
-    pub fn append(&self, object: &Object) {
-        match (self, object) {
-            (Object::Ref(l), Object::Ref(r)) => l.borrow().append(&r.borrow()),
-            (Object::Ref(l), Object::Value(r)) => l.borrow().append(&r),
-            (Object::Value(l), Object::Ref(r)) => l.append(&r.borrow()),
-            (Object::Value(l), Object::Value(r)) => l.append(&r),
-        }
-    }
     pub fn test(&self) -> bool {
         match self {
             Object::Ref(r) => r.borrow().test(),
@@ -129,6 +120,7 @@ macro_rules! impl_map0 {
 impl_map0!(__shallow_copy);
 impl_map0!(split);
 impl_map0!(pop);
+impl_map0!(strip);
 impl_map0!(__unary_add);
 impl_map0!(__unary_sub);
 impl_map0!(__len);
@@ -168,6 +160,27 @@ impl_map1!(__eq);
 impl_map1!(__ne);
 impl_map1!(__in);
 impl_map1!(__not_in);
+
+fn mut1<F: Fn(&Value, &Value)>(obj1: &Object, obj2: &Object, f: F) {
+    match (obj1, obj2) {
+        (Object::Ref(obj1), Object::Ref(obj2)) => f(&obj1.borrow(), &obj2.borrow()),
+        (Object::Ref(obj1), Object::Value(obj2)) => f(&obj1.borrow(), &obj2),
+        (Object::Value(obj1), Object::Ref(obj2)) => f(&obj1, &obj2.borrow()),
+        (Object::Value(obj1), Object::Value(obj2)) => f(&obj1, &obj2),
+    }
+}
+
+macro_rules! impl_mut1 {
+    ($name:ident) => {
+        impl Object {
+            pub fn $name(&self, obj: &Object) {
+                mut1(self, obj, Value::$name)
+            }
+        }
+    };
+}
+impl_mut1!(append);
+impl_mut1!(add);
 
 macro_rules! impl_from {
     ($t:ty) => {

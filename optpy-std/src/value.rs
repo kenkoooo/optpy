@@ -1,4 +1,3 @@
-
 use std::{collections::HashMap, ops::Mul, rc::Rc};
 
 use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number};
@@ -189,10 +188,26 @@ impl Value {
             _ => unreachable!(),
         }
     }
+    pub fn strip(&self) -> Value {
+        match self {
+            Value::String(s) => Value::from(s.trim()),
+            _ => unreachable!(),
+        }
+    }
     pub fn append(&self, value: &Value) {
         match self {
             Value::List(list) => {
                 list.borrow_mut().push(Rc::new(RefCell::new(value.clone())));
+            }
+            _ => unreachable!(),
+        }
+    }
+    pub fn add(&self, value: &Value) {
+        match self {
+            Value::Dict(map) => {
+                let key = value.__as_dict_key();
+                map.borrow_mut()
+                    .insert(key, Rc::new(RefCell::new(Value::None)));
             }
             _ => unreachable!(),
         }
