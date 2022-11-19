@@ -353,6 +353,8 @@ mod object {
     impl_map1!(__le);
     impl_map1!(__eq);
     impl_map1!(__ne);
+    impl_map1!(__in);
+    impl_map1!(__not_in);
 
     macro_rules! impl_from {
         ($t:ty) => {
@@ -491,6 +493,21 @@ pub mod value {
     impl_compare!(__le, le);
     impl_compare!(__eq, eq);
     impl_compare!(__ne, ne);
+    impl Value {
+        fn includes(&self, value: &Value) -> bool {
+            match self {
+                Value::List(list) => list.borrow().iter().any(|e| e.borrow().eq(value)),
+                Value::Dict(map) => map.borrow().contains_key(&value.__as_dict_key()),
+                _ => todo!(),
+            }
+        }
+        pub fn __in(&self, rhs: &Value) -> Value {
+            Value::Boolean(rhs.includes(self))
+        }
+        pub fn __not_in(&self, rhs: &Value) -> Value {
+            Value::Boolean(!rhs.includes(self))
+        }
+    }
 
     impl Value {
         pub fn none() -> Value {
@@ -500,11 +517,7 @@ pub mod value {
             let map = pairs
                 .into_iter()
                 .map(|(key, value)| {
-                    let key = match key {
-                        Value::String(s) => DictKey::String(s.to_string()),
-                        Value::Number(n) => DictKey::Number(n),
-                        _ => todo!(),
-                    };
+                    let key = key.__as_dict_key();
                     let value = Rc::new(RefCell::new(value));
                     (key, value)
                 })
@@ -535,21 +548,22 @@ pub mod value {
                 (Value::List(list), Value::Number(Number::Int64(i))) => {
                     list.borrow_mut()[*i as usize].clone()
                 }
-                (Value::Dict(dict), Value::Number(x)) => {
-                    let key = DictKey::Number(*x);
-                    dict.borrow_mut()
-                        .entry(key)
-                        .or_insert_with(|| Rc::new(RefCell::new(Value::none())))
-                        .clone()
-                }
-                (Value::Dict(dict), Value::String(s)) => {
-                    let key = DictKey::String(s.to_string());
+                (Value::Dict(dict), _) => {
+                    let key = index.__as_dict_key();
                     dict.borrow_mut()
                         .entry(key)
                         .or_insert_with(|| Rc::new(RefCell::new(Value::none())))
                         .clone()
                 }
                 _ => todo!(),
+            }
+        }
+
+        pub fn __as_dict_key(&self) -> DictKey {
+            match self {
+                Value::String(s) => DictKey::String(s.to_string()),
+                Value::Number(n) => DictKey::Number(*n),
+                _ => unreachable!(),
             }
         }
 

@@ -256,6 +256,8 @@ fn format_compare_ident(op: &CompareOperator) -> Ident {
         CompareOperator::GreaterOrEqual => format_ident!("__ge"),
         CompareOperator::Equal => format_ident!("__eq"),
         CompareOperator::NotEqual => format_ident!("__ne"),
+        CompareOperator::In => format_ident!("__in"),
+        CompareOperator::NotIn => format_ident!("__not_in"),
     }
 }
 fn format_binary_ident(op: &BinaryOperator) -> Ident {

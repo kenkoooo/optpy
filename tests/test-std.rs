@@ -171,3 +171,25 @@ def test():
         return "neq""#}
     assert_eq!(test(), Object::from("eq"));
 }
+
+#[test]
+fn test_in() {
+    {
+        python_function! {r#"
+def test(key):
+    a = {key: 10}
+    return "a" in a"#};
+
+        assert_eq!(test(&Object::from("b")), Object::from(false));
+        assert_eq!(test(&Object::from("a")), Object::from(true));
+    }
+    {
+        python_function! {r#"
+def test(key):
+    a = {key: 10}
+    return "a" not in a"#};
+
+        assert_eq!(test(&Object::from("b")), Object::from(true));
+        assert_eq!(test(&Object::from("a")), Object::from(false));
+    }
+}
