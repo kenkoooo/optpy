@@ -106,6 +106,7 @@ pub enum BinaryOperator {
     Div,
     Mod,
     FloorDiv,
+    Pow,
 }
 
 impl BinaryOperator {
@@ -117,6 +118,7 @@ impl BinaryOperator {
             rustpython_parser::ast::Operator::Div => Self::Div,
             rustpython_parser::ast::Operator::Mod => Self::Mod,
             rustpython_parser::ast::Operator::FloorDiv => Self::FloorDiv,
+            rustpython_parser::ast::Operator::Pow => Self::Pow,
             op => todo!("{:?}", op),
         }
     }

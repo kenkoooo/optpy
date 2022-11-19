@@ -135,6 +135,12 @@ pub mod number {
                 _ => todo!(),
             }
         }
+        pub fn pow(&self, rhs: Number) -> Number {
+            match (self, rhs) {
+                (Number::Int64(l0), Number::Int64(r0)) => Number::Int64(l0.pow(r0 as u32)),
+                _ => todo!(),
+            }
+        }
     }
     impl ToString for Number {
         fn to_string(&self) -> String {
@@ -354,6 +360,7 @@ mod object {
     impl_map1!(__mul);
     impl_map1!(__rem);
     impl_map1!(__div);
+    impl_map1!(__pow);
     impl_map1!(__gt);
     impl_map1!(__ge);
     impl_map1!(__lt);
@@ -470,6 +477,7 @@ pub mod value {
         ($name:ident, $op:ident) => {
             impl Value {
                 pub fn $name(&self, rhs: &Value) -> Value {
+                    #[allow(unused_imports)]
                     use std::ops::*;
                     match (self, rhs) {
                         (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs.$op(*rhs)),
@@ -484,6 +492,7 @@ pub mod value {
     impl_binop!(__mul, mul);
     impl_binop!(__rem, rem);
     impl_binop!(__div, div);
+    impl_binop!(__pow, pow);
 
     macro_rules! impl_compare {
         ($name:ident, $op:ident) => {
