@@ -301,3 +301,11 @@ def test():
         assert_eq!(test(), Object::from(true));
     }
 }
+
+#[test]
+fn test_strip() {
+    python_function! {r"
+def test(a):
+    return a.strip()"}
+    assert_eq!(test(&Object::from("   aaa   ")), Object::from("aaa"));
+}
