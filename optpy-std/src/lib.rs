@@ -196,7 +196,7 @@ pub mod dict {
 mod object {
     use std::{fmt::Debug, rc::Rc};
 
-    use crate::{cell::UnsafeRefCell, value::Value};
+    use crate::{cell::UnsafeRefCell, number::Number, value::Value};
 
     pub enum Object {
         Ref(Rc<UnsafeRefCell<Value>>),
@@ -275,6 +275,13 @@ mod object {
             match self {
                 Object::Ref(r) => r.borrow().test(),
                 Object::Value(v) => v.test(),
+            }
+        }
+
+        pub fn __number(&self) -> Number {
+            match self {
+                Object::Ref(r) => r.borrow().__number(),
+                Object::Value(v) => v.__number(),
             }
         }
     }
@@ -638,6 +645,13 @@ pub mod value {
                 _ => unreachable!(),
             }
         }
+
+        pub fn __number(&self) -> Number {
+            match self {
+                Value::Number(n) => *n,
+                _ => unreachable!(),
+            }
+        }
     }
 
     impl From<&str> for Value {
@@ -693,7 +707,8 @@ pub mod value {
 }
 
 pub mod builtin {
-    use crate::{value::Value, Object};
+
+    use crate::{number::Number, value::Value, Object};
 
     mod value {
         use std::io::stdin;
@@ -780,6 +795,32 @@ pub mod builtin {
     define_map0!(int);
     define_map0!(map_int);
 
+    pub fn __pow3(number: &Object, power: &Object, modulus: &Object) -> Object {
+        let number = number.__number();
+        let power = power.__number();
+        let modulus = modulus.__number();
+        let int = |n: Number| match n {
+            Number::Int64(i) => i,
+            Number::Float(_) => unreachable!(),
+        };
+
+        let number = int(number);
+        let power = int(power);
+        let modulus = int(modulus);
+
+        let mut result = 1;
+        let mut cur = number;
+        let mut e = power;
+        while e > 0 {
+            if e & 1 == 1 {
+                result = (result * cur) % modulus;
+            }
+            cur = (cur * cur) % modulus;
+            e >>= 1;
+        }
+        Object::Value(Value::Number(Number::Int64(result)))
+    }
+
     pub fn input() -> Object {
         Object::Value(value::input())
     }
@@ -800,5 +841,12 @@ macro_rules! print {
     ($($arg:expr),+) => {
         let s = [$($arg),+].iter().map(|v| v.to_string()).collect::<Vec<_>>();
         println!("{}", s.join(" "));
+    };
+}
+
+#[macro_export]
+macro_rules! pow {
+    ($number:expr, $power:expr, $modulus:expr) => {
+        __pow3($number, $power, $modulus)
     };
 }
