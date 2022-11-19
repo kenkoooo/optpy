@@ -159,7 +159,35 @@ fn resolve_expr(expr: &Expr, extensions: &BTreeMap<String, BTreeSet<String>>) ->
                 op: *op,
             })
         }
-        expr => expr.clone(),
+        Expr::ConstantString(_)
+        | Expr::ConstantBoolean(_)
+        | Expr::ConstantNumber(_)
+        | Expr::VariableName(_) => expr.clone(),
+        Expr::UnaryOperation(UnaryOperation { value, op }) => {
+            let value = Box::new(resolve_expr(value, extensions));
+            Expr::UnaryOperation(UnaryOperation { value, op: *op })
+        }
+        Expr::Index(Index { value, index }) => {
+            let value = Box::new(resolve_expr(value, extensions));
+            let index = Box::new(resolve_expr(index, extensions));
+            Expr::Index(Index { value, index })
+        }
+        Expr::List(list) => {
+            let list = resolve_exprs(list, extensions);
+            Expr::List(list)
+        }
+        Expr::Dict(Dict { pairs }) => {
+            let pairs = pairs
+                .iter()
+                .map(|(key, value)| {
+                    (
+                        resolve_expr(key, extensions),
+                        resolve_expr(value, extensions),
+                    )
+                })
+                .collect();
+            Expr::Dict(Dict { pairs })
+        }
     }
 }
 
