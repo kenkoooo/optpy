@@ -318,3 +318,13 @@ def test():
     exit(1)
     return 1"}
 }
+
+#[test]
+fn test_str() {
+    python_function! {r"
+def test(a):
+    return str(a)"}
+    assert_eq!(test(&Object::from(1)), Object::from("1"));
+    assert_eq!(test(&Object::from(0.5)), Object::from("0.5"));
+    assert_eq!(test(&Object::from("string")), Object::from("string"));
+}
