@@ -203,3 +203,7 @@ pub fn __exit0() -> ! {
 pub fn __set0() -> Object {
     Object::Value(Value::Dict(Rc::new(UnsafeRefCell::new(HashMap::new()))))
 }
+
+pub fn dict() -> Object {
+    Object::Value(Value::Dict(Rc::new(UnsafeRefCell::new(HashMap::new()))))
+}
