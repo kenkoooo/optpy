@@ -41,3 +41,42 @@ macro_rules! exit {
         __exit1($code)
     };
 }
+
+#[macro_export]
+macro_rules! max {
+    ($e:expr) => {
+        __max1($e)
+    };
+    ($a:expr, $b:expr) => {
+        __max2($a, $b)
+    };
+    ($a:expr, $($arg:expr),+) => {
+        __max2($a, &max!($($arg),+))
+    };
+}
+
+#[macro_export]
+macro_rules! min {
+    ($e:expr) => {
+        __min1($e)
+    };
+    ($a:expr, $b:expr) => {
+        __min2($a, $b)
+    };
+    ($a:expr, $($arg:expr),+) => {
+        __min2($a, &min!($($arg),+))
+    };
+}
+
+#[macro_export]
+macro_rules! sum {
+    ($e:expr) => {
+        __sum1($e)
+    };
+    ($a:expr, $b:expr) => {
+        __sum2($a, $b)
+    };
+    ($a:expr, $($arg:expr),+) => {
+        __sum2($a, &sum!($($arg),+))
+    };
+}
