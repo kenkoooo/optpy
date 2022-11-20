@@ -366,3 +366,13 @@ def test():
     }
     assert_eq!(test(), Object::none());
 }
+
+#[test]
+fn test_set() {
+    python_function! {r"
+def test(b):
+    a = {b}
+    return 1 in a"}
+    assert_eq!(test(&Object::from("a")), Object::from(false));
+    assert_eq!(test(&Object::from(1)), Object::from(true));
+}

@@ -157,6 +157,11 @@ impl RawExpr {
                 let pairs = keys.into_iter().zip(values).collect::<Vec<_>>();
                 Self::Dict(Dict { pairs })
             }
+            ExprKind::Set { elts } => {
+                let elts = parse_expressions(elts);
+                let pairs = elts.into_iter().map(|elt| (elt, RawExpr::None)).collect();
+                Self::Dict(Dict { pairs })
+            }
             ExprKind::ListComp { elt, generators } => list_comprehension(elt, generators),
             ExprKind::UnaryOp { op, operand } => {
                 let value = RawExpr::parse(&operand.node);
