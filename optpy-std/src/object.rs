@@ -160,6 +160,7 @@ impl_map1!(__eq);
 impl_map1!(__ne);
 impl_map1!(__in);
 impl_map1!(__not_in);
+impl_map1!(__bit_and);
 
 fn mut1<F: Fn(&Value, &Value)>(obj1: &Object, obj2: &Object, f: F) {
     match (obj1, obj2) {
