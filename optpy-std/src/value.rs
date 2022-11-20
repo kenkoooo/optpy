@@ -152,7 +152,12 @@ impl Value {
     pub fn index(&self, index: &Value) -> Rc<RefCell<Value>> {
         match (self, index) {
             (Value::List(list), Value::Number(Number::Int64(i))) => {
-                list.borrow_mut()[*i as usize].clone()
+                if *i < 0 {
+                    let i = list.borrow().len() as i64 + *i;
+                    list.borrow_mut()[i as usize].clone()
+                } else {
+                    list.borrow_mut()[*i as usize].clone()
+                }
             }
             (Value::Dict(dict), _) => {
                 let key = index.__as_dict_key();

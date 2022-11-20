@@ -476,3 +476,16 @@ def test():
         assert_eq!(test(), Object::from(3));
     }
 }
+
+#[test]
+fn test_negative_index() {
+    python_function! {r"
+def test():
+    a = [1, 2, 3]
+    return [a[-1], a[-2], a[-3]]
+    "}
+    assert_eq!(
+        test(),
+        Object::from(vec![Object::from(3), Object::from(2), Object::from(1)])
+    );
+}
