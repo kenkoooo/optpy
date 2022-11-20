@@ -489,3 +489,13 @@ def test():
         Object::from(vec![Object::from(3), Object::from(2), Object::from(1)])
     );
 }
+#[test]
+fn test_del_list() {
+    python_function! {r"
+def test():
+    a = [1, 2, 3]
+    del a[0]
+    return a
+    "}
+    assert_eq!(test(), Object::from(vec![Object::from(2), Object::from(3)]));
+}

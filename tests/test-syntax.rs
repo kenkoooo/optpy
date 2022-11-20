@@ -354,3 +354,15 @@ def test():
     }
     assert_eq!(test(), Object::none());
 }
+
+#[test]
+fn test_del() {
+    python_function! {
+        r"
+def test():
+    a = 1
+    del a
+    return a"
+    }
+    assert_eq!(test(), Object::none());
+}
