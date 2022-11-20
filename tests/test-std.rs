@@ -449,3 +449,30 @@ def test(arr):
         );
     }
 }
+
+#[test]
+fn test_sum() {
+    {
+        python_function! {r"
+def test():
+    return sum(1, 2)
+    "}
+        assert_eq!(test(), Object::from(3));
+    }
+
+    {
+        python_function! {r"
+def test():
+    return sum(1, 2, 3)
+    "}
+        assert_eq!(test(), Object::from(6));
+    }
+
+    {
+        python_function! {r"
+def test():
+    return sum([1, 2])
+    "}
+        assert_eq!(test(), Object::from(3));
+    }
+}

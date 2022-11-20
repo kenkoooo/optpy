@@ -103,6 +103,18 @@ mod value {
             b.clone()
         }
     }
+    pub(super) fn __sum1(a: &Value) -> Value {
+        match a {
+            Value::List(list) => list
+                .borrow()
+                .iter()
+                .fold(Value::from(0), |a, b| a.__add(&b.borrow())),
+            _ => todo!(),
+        }
+    }
+    pub(super) fn __sum2(a: &Value, b: &Value) -> Value {
+        a.__add(b)
+    }
 
     pub(super) fn sorted(value: &Value) -> Value {
         value.sort();
@@ -175,6 +187,7 @@ define_map1_1!(sorted);
 define_map1_1!(__range1);
 define_map1_1!(__max1);
 define_map1_1!(__min1);
+define_map1_1!(__sum1);
 define_map1_1!(list);
 define_map1_1!(int);
 define_map1_1!(str);
@@ -201,6 +214,7 @@ macro_rules! define_map2_1 {
 define_map2_1!(__range2);
 define_map2_1!(__min2);
 define_map2_1!(__max2);
+define_map2_1!(__sum2);
 
 pub fn __pow3(number: &Object, power: &Object, modulus: &Object) -> Object {
     let number = number.__number();

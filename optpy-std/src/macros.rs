@@ -67,3 +67,16 @@ macro_rules! min {
         __min2($a, &min!($($arg),+))
     };
 }
+
+#[macro_export]
+macro_rules! sum {
+    ($e:expr) => {
+        __sum1($e)
+    };
+    ($a:expr, $b:expr) => {
+        __sum2($a, $b)
+    };
+    ($a:expr, $($arg:expr),+) => {
+        __sum2($a, &sum!($($arg),+))
+    };
+}
