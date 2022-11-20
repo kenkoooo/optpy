@@ -35,6 +35,13 @@ mod value {
             _ => unreachable!(),
         }
     }
+    pub(super) fn str(value: &Value) -> Value {
+        match value {
+            Value::String(_) => value.clone(),
+            Value::Number(n) => Value::String(Rc::new(n.to_string())),
+            _ => todo!(),
+        }
+    }
 
     pub(super) fn list(value: &Value) -> Value {
         match value {
@@ -116,6 +123,7 @@ define_map0!(sorted);
 define_map0!(__range1);
 define_map0!(list);
 define_map0!(int);
+define_map0!(str);
 define_map0!(map_int);
 define_map0!(__set1);
 
