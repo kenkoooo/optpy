@@ -114,9 +114,25 @@ impl Value {
             _ => todo!(),
         }
     }
-}
 
-impl Value {
+    pub fn __delete(&self, index: &Value) {
+        match (self, index) {
+            (Value::List(list), Value::Number(Number::Int64(i))) => {
+                if *i < 0 {
+                    let i = list.borrow().len() as i64 + *i;
+                    list.borrow_mut().remove(i as usize);
+                } else {
+                    list.borrow_mut().remove(*i as usize);
+                }
+            }
+            (Value::Dict(dict), index) => {
+                let key = index.__as_dict_key();
+                dict.borrow_mut().remove(&key);
+            }
+            _ => todo!(),
+        }
+    }
+
     pub fn none() -> Value {
         Value::None
     }

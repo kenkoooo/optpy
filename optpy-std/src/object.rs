@@ -82,25 +82,25 @@ impl Object {
     }
 }
 
-fn method<F: Fn(&Value)>(obj: &Object, f: F) {
+fn map_1_0<F: Fn(&Value)>(obj: &Object, f: F) {
     match obj {
         Object::Ref(r) => f(&r.borrow()),
         Object::Value(v) => f(v),
     }
 }
-macro_rules! impl_method {
+macro_rules! impl_map_1_0 {
     ($name:ident) => {
         impl Object {
             pub fn $name(&self) {
-                method(self, Value::$name);
+                map_1_0(self, Value::$name);
             }
         }
     };
 }
-impl_method!(sort);
-impl_method!(reverse);
+impl_map_1_0!(sort);
+impl_map_1_0!(reverse);
 
-fn map0<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
+fn map_1_1<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
     let value = match obj {
         Object::Ref(r) => f(&r.borrow()),
         Object::Value(v) => f(v),
@@ -108,25 +108,25 @@ fn map0<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
     Object::Value(value)
 }
 
-macro_rules! impl_map0 {
+macro_rules! impl_map_1_1 {
     ($name:ident) => {
         impl Object {
             pub fn $name(&self) -> Object {
-                map0(self, Value::$name)
+                map_1_1(self, Value::$name)
             }
         }
     };
 }
-impl_map0!(__shallow_copy);
-impl_map0!(split);
-impl_map0!(pop);
-impl_map0!(strip);
-impl_map0!(__unary_add);
-impl_map0!(__unary_sub);
-impl_map0!(__unary_not);
-impl_map0!(__len);
+impl_map_1_1!(__shallow_copy);
+impl_map_1_1!(split);
+impl_map_1_1!(pop);
+impl_map_1_1!(strip);
+impl_map_1_1!(__unary_add);
+impl_map_1_1!(__unary_sub);
+impl_map_1_1!(__unary_not);
+impl_map_1_1!(__len);
 
-fn map1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {
+fn map_2_1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {
     let value = match (obj1, obj2) {
         (Object::Ref(l), Object::Ref(r)) => f(&l.borrow(), &r.borrow()),
         (Object::Ref(l), Object::Value(r)) => f(&l.borrow(), &r),
@@ -136,35 +136,35 @@ fn map1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> O
     Object::Value(value)
 }
 
-macro_rules! impl_map1 {
+macro_rules! impl_map_2_1 {
     ($name:ident) => {
         impl Object {
             pub fn $name(&self, value: &Object) -> Object {
-                map1(self, value, Value::$name)
+                map_2_1(self, value, Value::$name)
             }
         }
     };
 }
 
-impl_map1!(__floor_div);
-impl_map1!(count);
-impl_map1!(__add);
-impl_map1!(__sub);
-impl_map1!(__mul);
-impl_map1!(__rem);
-impl_map1!(__div);
-impl_map1!(__pow);
-impl_map1!(__gt);
-impl_map1!(__ge);
-impl_map1!(__lt);
-impl_map1!(__le);
-impl_map1!(__eq);
-impl_map1!(__ne);
-impl_map1!(__in);
-impl_map1!(__not_in);
-impl_map1!(__bit_and);
+impl_map_2_1!(__floor_div);
+impl_map_2_1!(count);
+impl_map_2_1!(__add);
+impl_map_2_1!(__sub);
+impl_map_2_1!(__mul);
+impl_map_2_1!(__rem);
+impl_map_2_1!(__div);
+impl_map_2_1!(__pow);
+impl_map_2_1!(__gt);
+impl_map_2_1!(__ge);
+impl_map_2_1!(__lt);
+impl_map_2_1!(__le);
+impl_map_2_1!(__eq);
+impl_map_2_1!(__ne);
+impl_map_2_1!(__in);
+impl_map_2_1!(__not_in);
+impl_map_2_1!(__bit_and);
 
-fn mut1<F: Fn(&Value, &Value)>(obj1: &Object, obj2: &Object, f: F) {
+fn map_2_0<F: Fn(&Value, &Value)>(obj1: &Object, obj2: &Object, f: F) {
     match (obj1, obj2) {
         (Object::Ref(obj1), Object::Ref(obj2)) => f(&obj1.borrow(), &obj2.borrow()),
         (Object::Ref(obj1), Object::Value(obj2)) => f(&obj1.borrow(), &obj2),
@@ -173,17 +173,18 @@ fn mut1<F: Fn(&Value, &Value)>(obj1: &Object, obj2: &Object, f: F) {
     }
 }
 
-macro_rules! impl_mut1 {
+macro_rules! impl_map_2_0 {
     ($name:ident) => {
         impl Object {
             pub fn $name(&self, obj: &Object) {
-                mut1(self, obj, Value::$name)
+                map_2_0(self, obj, Value::$name)
             }
         }
     };
 }
-impl_mut1!(append);
-impl_mut1!(add);
+impl_map_2_0!(append);
+impl_map_2_0!(add);
+impl_map_2_0!(__delete);
 
 macro_rules! impl_from {
     ($t:ty) => {
