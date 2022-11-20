@@ -414,3 +414,14 @@ def test(s, t):
         Object::from(2)
     );
 }
+
+#[test]
+fn test_min_max() {
+    python_function! {r"
+def test(a, b):
+    return [min(a,b), max(a,b)]"}
+    assert_eq!(
+        test(&Object::from(1), &Object::from(2)),
+        Object::from(vec![Object::from(1), Object::from(2)])
+    );
+}
