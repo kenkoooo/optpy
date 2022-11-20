@@ -153,6 +153,13 @@ def test4():
     x["a"] = 3
     return x["a"]"#}
     assert_eq!(test4(), Object::from(3));
+
+    python_function! {r#"
+def test5():
+    x = dict()
+    x["a"] = 3
+    return x["a"]"#}
+    assert_eq!(test5(), Object::from(3));
 }
 
 #[test]
