@@ -309,3 +309,12 @@ def test(a):
     return a.strip()"}
     assert_eq!(test(&Object::from("   aaa   ")), Object::from("aaa"));
 }
+
+#[test]
+fn test_compile_exit() {
+    python_function! {r"
+def test():
+    exit()
+    exit(1)
+    return 1"}
+}
