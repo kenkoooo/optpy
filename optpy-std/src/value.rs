@@ -236,6 +236,12 @@ impl Value {
             _ => unreachable!(),
         }
     }
+    pub fn __unary_not(&self) -> Value {
+        match self {
+            Value::Boolean(b) => Value::Boolean(!*b),
+            _ => unreachable!(),
+        }
+    }
     pub fn __len(&self) -> Value {
         match self {
             Value::List(list) => Value::Number(Number::Int64(list.borrow().len() as i64)),

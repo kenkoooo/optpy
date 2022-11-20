@@ -123,6 +123,7 @@ impl_map0!(pop);
 impl_map0!(strip);
 impl_map0!(__unary_add);
 impl_map0!(__unary_sub);
+impl_map0!(__unary_not);
 impl_map0!(__len);
 
 fn map1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {

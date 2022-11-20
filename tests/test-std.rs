@@ -344,3 +344,12 @@ def test(a, b):
         Object::from(true)
     );
 }
+
+#[test]
+fn test_unary_not() {
+    python_function! {r"
+def test(a):
+    return not a"}
+    assert_eq!(test(&Object::from(true)), Object::from(false));
+    assert_eq!(test(&Object::from(false)), Object::from(true));
+}
