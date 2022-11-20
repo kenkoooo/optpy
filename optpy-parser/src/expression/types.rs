@@ -137,6 +137,7 @@ pub struct Comprehension<E> {
 pub enum UnaryOperator {
     Add,
     Sub,
+    Not,
 }
 
 impl UnaryOperator {
@@ -144,6 +145,7 @@ impl UnaryOperator {
         match op {
             Unaryop::UAdd => Self::Add,
             Unaryop::USub => Self::Sub,
+            Unaryop::Not => Self::Not,
             op => todo!("{:?}", op),
         }
     }

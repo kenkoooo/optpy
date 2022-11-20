@@ -276,6 +276,7 @@ fn format_unary_ident(op: &UnaryOperator) -> Ident {
     match op {
         UnaryOperator::Add => format_ident!("__unary_add"),
         UnaryOperator::Sub => format_ident!("__unary_sub"),
+        UnaryOperator::Not => format_ident!("__unary_not"),
     }
 }
 
