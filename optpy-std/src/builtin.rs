@@ -2,10 +2,16 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::{cell::UnsafeRefCell, number::Number, value::Value, Object};
 
+fn rc_unsafe_ref_cell<T>(v: T) -> Rc<UnsafeRefCell<T>> {
+    Rc::new(UnsafeRefCell::new(v))
+}
+
 mod value {
     use std::{collections::HashMap, io::stdin, rc::Rc};
 
-    use crate::{cell::UnsafeRefCell, number::Number, value::Value};
+    use crate::{number::Number, value::Value};
+
+    use super::rc_unsafe_ref_cell;
 
     pub(super) fn input() -> Value {
         let mut buf = String::new();
@@ -142,25 +148,40 @@ mod value {
                 let map = list
                     .borrow()
                     .iter()
-                    .map(|v| {
-                        (
-                            v.borrow().__as_dict_key(),
-                            Rc::new(UnsafeRefCell::new(Value::None)),
-                        )
-                    })
+                    .map(|v| (v.borrow().__as_dict_key(), rc_unsafe_ref_cell(Value::None)))
                     .collect::<HashMap<_, _>>();
-                Value::Dict(Rc::new(UnsafeRefCell::new(map)))
+                Value::Dict(rc_unsafe_ref_cell(map))
             }
             Value::Dict(map) => {
                 let map = map
                     .borrow()
                     .keys()
-                    .map(|key| (key.clone(), Rc::new(UnsafeRefCell::new(Value::None))))
+                    .map(|key| (key.clone(), rc_unsafe_ref_cell(Value::None)))
                     .collect::<HashMap<_, _>>();
-                Value::Dict(Rc::new(UnsafeRefCell::new(map)))
+                Value::Dict(rc_unsafe_ref_cell(map))
             }
             Value::String(_) => todo!(),
             _ => unreachable!(),
+        }
+    }
+
+    pub(super) fn enumerate(iter: &Value) -> Value {
+        match iter {
+            Value::List(list) => {
+                let list = list
+                    .borrow()
+                    .iter()
+                    .enumerate()
+                    .map(|(i, v)| {
+                        rc_unsafe_ref_cell(Value::from(vec![
+                            Value::from(i as i64),
+                            v.borrow().clone(),
+                        ]))
+                    })
+                    .collect();
+                Value::List(rc_unsafe_ref_cell(list))
+            }
+            iter => enumerate(&list(iter)),
         }
     }
 }
@@ -193,6 +214,7 @@ define_map1_1!(int);
 define_map1_1!(str);
 define_map1_1!(map_int);
 define_map1_1!(__set1);
+define_map1_1!(enumerate);
 
 fn map_2_1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {
     let value = match (obj1, obj2) {
@@ -257,9 +279,9 @@ pub fn __exit0() -> ! {
 }
 
 pub fn __set0() -> Object {
-    Object::Value(Value::Dict(Rc::new(UnsafeRefCell::new(HashMap::new()))))
+    Object::Value(Value::Dict(rc_unsafe_ref_cell(HashMap::new())))
 }
 
 pub fn dict() -> Object {
-    Object::Value(Value::Dict(Rc::new(UnsafeRefCell::new(HashMap::new()))))
+    Object::Value(Value::Dict(rc_unsafe_ref_cell(HashMap::new())))
 }

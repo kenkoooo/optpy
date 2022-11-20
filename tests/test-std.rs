@@ -499,3 +499,19 @@ def test():
     "}
     assert_eq!(test(), Object::from(vec![Object::from(2), Object::from(3)]));
 }
+
+#[test]
+fn test_enumerate() {
+    python_function! {r#"
+def test():
+    a = ["a", "b", "c"]
+    return enumerate(a)"#}
+    assert_eq!(
+        test(),
+        Object::from(vec![
+            Object::from(vec![Object::from(0), Object::from("a")]),
+            Object::from(vec![Object::from(1), Object::from("b")]),
+            Object::from(vec![Object::from(2), Object::from("c")]),
+        ])
+    );
+}
