@@ -55,6 +55,9 @@ mod value {
             _ => todo!(),
         }
     }
+    pub(super) fn tuple(value: &Value) -> Value {
+        list(value)
+    }
 
     pub(super) fn __range1(value: &Value) -> Value {
         __range2(&Value::Number(Number::Int64(0)), value)
@@ -210,6 +213,7 @@ define_map1_1!(__max1);
 define_map1_1!(__min1);
 define_map1_1!(__sum1);
 define_map1_1!(list);
+define_map1_1!(tuple);
 define_map1_1!(int);
 define_map1_1!(str);
 define_map1_1!(map_int);
