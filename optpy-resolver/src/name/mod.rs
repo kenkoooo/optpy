@@ -190,9 +190,10 @@ fn resolve_expr(
             let list = resolve_exprs(list, variables, functions, ctx);
             Expr::List(list)
         }
-        Expr::ConstantString(_) | Expr::ConstantNumber(_) | Expr::ConstantBoolean(_) => {
-            expr.clone()
-        }
+        Expr::ConstantString(_)
+        | Expr::ConstantNumber(_)
+        | Expr::ConstantBoolean(_)
+        | Expr::None => expr.clone(),
         Expr::UnaryOperation(UnaryOperation { value, op }) => {
             let value = resolve_expr(value, variables, functions, ctx);
             Expr::UnaryOperation(UnaryOperation {

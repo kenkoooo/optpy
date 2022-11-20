@@ -94,6 +94,7 @@ fn eval_expr(expr: RawExpr) -> (Expr, Vec<RawStmt<Expr>>) {
         RawExpr::ConstantNumber(v) => (Expr::ConstantNumber(v), vec![]),
         RawExpr::ConstantString(v) => (Expr::ConstantString(v), vec![]),
         RawExpr::ConstantBoolean(v) => (Expr::ConstantBoolean(v), vec![]),
+        RawExpr::None => (Expr::None, vec![]),
         RawExpr::BoolOperation(BoolOperation { op, conditions }) => {
             let (conditions, s) = exprs(conditions);
             (Expr::BoolOperation(BoolOperation { op, conditions }), s)

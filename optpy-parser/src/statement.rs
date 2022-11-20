@@ -2,7 +2,7 @@ use rustpython_parser::ast::{Stmt, StmtKind};
 
 use crate::{
     expression::{Expr, RawExpr},
-    hash, BinaryOperation, BinaryOperator,
+    hash, BinaryOperation, BinaryOperator, CallMethod, Index,
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -141,6 +141,25 @@ impl RawStmt<RawExpr> {
                 })]
             }
             StmtKind::Pass => vec![],
+            StmtKind::Delete { targets } => targets
+                .iter()
+                .map(|target| {
+                    let target = RawExpr::parse(&target.node);
+                    match target {
+                        RawExpr::Index(Index { value, index }) => {
+                            Self::Expression(RawExpr::CallMethod(CallMethod {
+                                value,
+                                name: "__delete".into(),
+                                args: vec![*index],
+                            }))
+                        }
+                        target => Self::Assign(Assign {
+                            target,
+                            value: RawExpr::None,
+                        }),
+                    }
+                })
+                .collect(),
             statement => todo!("{:?}", statement),
         }
     }

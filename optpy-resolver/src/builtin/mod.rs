@@ -117,7 +117,8 @@ impl ExprResolve for Expr {
             Expr::ConstantNumber(_)
             | Expr::ConstantString(_)
             | Expr::VariableName(_)
-            | Expr::ConstantBoolean(_) => self.clone(),
+            | Expr::ConstantBoolean(_)
+            | Expr::None => self.clone(),
             Expr::UnaryOperation(UnaryOperation { value, op }) => {
                 Expr::UnaryOperation(UnaryOperation {
                     value: Box::new(value.resolve()),
