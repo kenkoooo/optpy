@@ -385,3 +385,25 @@ def test(s):
         Object::from(false)
     );
 }
+
+#[test]
+fn test_count() {
+    python_function! {r"
+def test(s, t):
+    return s.count(t)"}
+    assert_eq!(
+        test(&Object::from("abcdabc"), &Object::from("abc")),
+        Object::from(2)
+    );
+    assert_eq!(
+        test(&Object::from("abcdabc"), &Object::from("abcd")),
+        Object::from(1)
+    );
+    assert_eq!(
+        test(
+            &Object::from(vec![Object::from(1), Object::from(2), Object::from(2)]),
+            &Object::from(2)
+        ),
+        Object::from(2)
+    );
+}

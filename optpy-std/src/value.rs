@@ -274,6 +274,30 @@ impl Value {
             _ => unreachable!(),
         }
     }
+
+    pub fn count(&self, value: &Value) -> Value {
+        match (self, value) {
+            (Value::List(list), value) => {
+                let count = list
+                    .borrow()
+                    .iter()
+                    .filter(|v| v.borrow().eq(value))
+                    .count();
+                Value::Number(Number::Int64(count as i64))
+            }
+            (Value::String(lhs), Value::String(rhs)) => {
+                let mut lhs = lhs.as_str();
+                let rhs = rhs.as_str();
+                let mut count = 0;
+                while let Some((_, suffix)) = lhs.split_once(rhs) {
+                    count += 1;
+                    lhs = suffix;
+                }
+                Value::Number(Number::Int64(count))
+            }
+            _ => todo!(),
+        }
+    }
 }
 
 impl From<&str> for Value {
