@@ -313,3 +313,33 @@ def test():
         Object::from(vec![Object::from(3), Object::from(3), Object::from(3)])
     );
 }
+
+#[test]
+fn test_list_move() {
+    {
+        python_function! {r"
+def test():
+    a = 1
+    b = 2
+    x = []
+    x.append((a, b))
+    return [x, a, b]"}
+    }
+    {
+        python_function! {r"
+def test():
+    a = 1
+    b = 2
+    x = []
+    x.append([a, b])
+    return [x, a, b]"}
+    }
+    {
+        python_function! {r"
+def test():
+    a = 1
+    b = 2
+    x = {a: b}
+    return [x, a, b]"}
+    }
+}
