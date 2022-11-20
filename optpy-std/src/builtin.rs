@@ -65,14 +65,38 @@ mod value {
             _ => unreachable!(),
         }
     }
-    pub(super) fn min(a: &Value, b: &Value) -> Value {
+    pub(super) fn __min1(a: &Value) -> Value {
+        match a {
+            Value::List(list) => list
+                .borrow()
+                .iter()
+                .min_by(|a, b| a.borrow().partial_cmp(&b.borrow()).unwrap())
+                .unwrap()
+                .borrow()
+                .clone(),
+            _ => todo!(),
+        }
+    }
+    pub(super) fn __min2(a: &Value, b: &Value) -> Value {
         if a > b {
             b.clone()
         } else {
             a.clone()
         }
     }
-    pub(super) fn max(a: &Value, b: &Value) -> Value {
+    pub(super) fn __max1(a: &Value) -> Value {
+        match a {
+            Value::List(list) => list
+                .borrow()
+                .iter()
+                .max_by(|a, b| a.borrow().partial_cmp(&b.borrow()).unwrap())
+                .unwrap()
+                .borrow()
+                .clone(),
+            _ => todo!(),
+        }
+    }
+    pub(super) fn __max2(a: &Value, b: &Value) -> Value {
         if a > b {
             a.clone()
         } else {
@@ -149,6 +173,8 @@ define_map1_1!(any);
 define_map1_1!(all);
 define_map1_1!(sorted);
 define_map1_1!(__range1);
+define_map1_1!(__max1);
+define_map1_1!(__min1);
 define_map1_1!(list);
 define_map1_1!(int);
 define_map1_1!(str);
@@ -173,8 +199,8 @@ macro_rules! define_map2_1 {
     };
 }
 define_map2_1!(__range2);
-define_map2_1!(min);
-define_map2_1!(max);
+define_map2_1!(__min2);
+define_map2_1!(__max2);
 
 pub fn __pow3(number: &Object, power: &Object, modulus: &Object) -> Object {
     let number = number.__number();
