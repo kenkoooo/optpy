@@ -531,3 +531,15 @@ def test():
         ])
     );
 }
+
+#[test]
+fn test_next() {
+    python_function! {r"
+def test():
+    x = (i for i in range(3))
+    return [next(x), next(x), next(x)]"}
+    assert_eq!(
+        test(),
+        Object::from(vec![Object::from(0), Object::from(1), Object::from(2)])
+    );
+}
