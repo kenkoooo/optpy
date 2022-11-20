@@ -1,4 +1,9 @@
 mod expression;
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
+
 pub use expression::{
     BinaryOperation, BinaryOperator, BoolOperation, BoolOperator, CallFunction, CallMethod,
     Compare, CompareOperator, Dict, Expr, Index, Number, UnaryOperation, UnaryOperator,
@@ -17,12 +22,18 @@ pub fn parse<S: AsRef<str>>(code: S) -> Result<Vec<Statement>, ParseError> {
     let ast = rustpython_parser::parser::parse_program(code.as_ref(), "<embedded>")?;
     let statements = ast
         .iter()
-        .map(|s| RawStmt::parse(&s.node))
+        .flat_map(|s| RawStmt::parse(&s.node))
         .collect::<Vec<_>>();
     let statements = simplify::simplify_list_comprehensions(statements);
     let statements = simplify::simplify_for_loops(statements);
     let statements = simplify::simplify_tuple_assignments(statements);
     Ok(statements)
+}
+
+pub(crate) fn hash<T: Hash>(x: &T) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    x.hash(&mut hasher);
+    hasher.finish()
 }
 
 #[cfg(test)]

@@ -1,10 +1,6 @@
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-};
-
 use crate::{
     expression::{Dict, ListComprehension, RawExpr},
+    hash,
     statement::{Assign, RawStmt},
     BinaryOperation, BoolOperation, BoolOperator, CallFunction, CallMethod, Compare, Expr, For,
     Func, If, Index, UnaryOperation, While,
@@ -202,9 +198,7 @@ fn eval_expr(expr: RawExpr) -> (Expr, Vec<RawStmt<Expr>>) {
             function_body.extend(generation_body);
             function_body.push(RawStmt::Return(Some(tmp_list)));
 
-            let mut hasher = DefaultHasher::new();
-            function_body.hash(&mut hasher);
-            let hash = hasher.finish();
+            let hash = hash(&function_body);
             let function_name = format!("__f{}", hash);
 
             (

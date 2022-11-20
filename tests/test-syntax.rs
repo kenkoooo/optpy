@@ -1,3 +1,4 @@
+use optpy_std::Object;
 use optpy_test_macro::python_function;
 
 type Value = optpy_std::Object;
@@ -294,5 +295,21 @@ def test(N, M):
             Value::from(vec![Value::from(0), Value::from(1)]),
             Value::from(vec![Value::from(0), Value::from(2)])
         ])
+    );
+}
+
+#[test]
+fn test_multiple_target_assign() {
+    python_function! {r"
+def test():
+    x = [1, 2, 3]
+    def f():
+        return x.pop()
+    a = b = c = f()
+    return [a, b, c]
+"}
+    assert_eq!(
+        test(),
+        Object::from(vec![Object::from(3), Object::from(3), Object::from(3)])
     );
 }
