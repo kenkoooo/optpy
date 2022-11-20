@@ -75,7 +75,16 @@ mod value {
         value.__len()
     }
     pub(super) fn any(value: &Value) -> Value {
-        Value::Boolean(true).__in(value)
+        match value {
+            Value::List(list) => Value::Boolean(list.borrow().iter().any(|v| v.borrow().test())),
+            _ => todo!(),
+        }
+    }
+    pub(super) fn all(value: &Value) -> Value {
+        match value {
+            Value::List(list) => Value::Boolean(list.borrow().iter().all(|v| v.borrow().test())),
+            _ => todo!(),
+        }
     }
     pub(super) fn __set1(iter: &Value) -> Value {
         match iter {
@@ -123,6 +132,7 @@ macro_rules! define_map0 {
 }
 define_map0!(len);
 define_map0!(any);
+define_map0!(all);
 define_map0!(sorted);
 define_map0!(__range1);
 define_map0!(list);

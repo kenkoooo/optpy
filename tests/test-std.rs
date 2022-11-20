@@ -369,3 +369,19 @@ def test(s):
         Object::from(false)
     );
 }
+
+#[test]
+fn test_all() {
+    python_function! {r"
+def test(s):
+    return all(si in [1, 2, 3] for si in s)"}
+
+    assert_eq!(
+        test(&Object::from(vec![Object::from(1), Object::from(3)])),
+        Object::from(true)
+    );
+    assert_eq!(
+        test(&Object::from(vec![Object::from(1), Object::from(4)])),
+        Object::from(false)
+    );
+}
