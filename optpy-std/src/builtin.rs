@@ -187,6 +187,15 @@ mod value {
             iter => enumerate(&list(iter)),
         }
     }
+    pub(super) fn next(iter: &Value) -> Value {
+        match iter {
+            Value::List(list) => {
+                let head = list.borrow_mut().remove(0);
+                head.borrow().clone()
+            }
+            _ => todo!(),
+        }
+    }
 }
 
 fn map_1_1<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
@@ -219,6 +228,7 @@ define_map1_1!(str);
 define_map1_1!(map_int);
 define_map1_1!(__set1);
 define_map1_1!(enumerate);
+define_map1_1!(next);
 
 fn map_2_1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {
     let value = match (obj1, obj2) {
