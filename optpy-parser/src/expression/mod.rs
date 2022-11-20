@@ -154,30 +154,7 @@ impl RawExpr {
                 let pairs = keys.into_iter().zip(values).collect::<Vec<_>>();
                 Self::Dict(Dict { pairs })
             }
-            ExprKind::ListComp { elt, generators } => {
-                let value = RawExpr::parse(&elt.node);
-                let generators = generators
-                    .iter()
-                    .map(
-                        |rustpython_parser::ast::Comprehension {
-                             target, iter, ifs, ..
-                         }| {
-                            let target = RawExpr::parse(&target.node);
-                            let iter = RawExpr::parse(&iter.node);
-                            let ifs = parse_expressions(ifs);
-                            Comprehension {
-                                target: Box::new(target),
-                                iter: Box::new(iter),
-                                ifs,
-                            }
-                        },
-                    )
-                    .collect();
-                Self::ListComprehension(ListComprehension {
-                    value: Box::new(value),
-                    generators,
-                })
-            }
+            ExprKind::ListComp { elt, generators } => list_comprehension(elt, generators),
             ExprKind::UnaryOp { op, operand } => {
                 let value = RawExpr::parse(&operand.node);
                 let op = UnaryOperator::parse(op);
@@ -186,6 +163,7 @@ impl RawExpr {
                     op,
                 })
             }
+            ExprKind::GeneratorExp { elt, generators } => list_comprehension(elt, generators),
             expr => todo!("unsupported expression: {:?}", expr),
         }
     }
@@ -196,4 +174,32 @@ fn parse_expressions(expressions: &[rustpython_parser::ast::Expr]) -> Vec<RawExp
         .iter()
         .map(|e| RawExpr::parse(&e.node))
         .collect()
+}
+
+fn list_comprehension(
+    elt: &rustpython_parser::ast::Expr,
+    generators: &[rustpython_parser::ast::Comprehension],
+) -> RawExpr {
+    let value = RawExpr::parse(&elt.node);
+    let generators = generators
+        .iter()
+        .map(
+            |rustpython_parser::ast::Comprehension {
+                 target, iter, ifs, ..
+             }| {
+                let target = RawExpr::parse(&target.node);
+                let iter = RawExpr::parse(&iter.node);
+                let ifs = parse_expressions(ifs);
+                Comprehension {
+                    target: Box::new(target),
+                    iter: Box::new(iter),
+                    ifs,
+                }
+            },
+        )
+        .collect();
+    RawExpr::ListComprehension(ListComprehension {
+        value: Box::new(value),
+        generators,
+    })
 }
