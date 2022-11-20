@@ -147,9 +147,9 @@ fn format_expr(expr: &Expr) -> TokenStream {
             }
         }
         Expr::Tuple(values) => {
-            let values = format_exprs(values);
+            let list = format_exprs(values);
             quote! {
-               Object::from(vec![ #(#values),* ])
+               Object::from(vec![ #(Object::from(&#list)),* ])
             }
         }
         Expr::VariableName(name) => {
@@ -204,7 +204,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
                     let key = format_expr(key);
                     let value = format_expr(value);
                     quote! {
-                        (#key, #value)
+                        (Object::from(&#key), Object::from(&#value))
                     }
                 })
                 .collect::<Vec<_>>();
