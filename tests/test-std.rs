@@ -515,3 +515,19 @@ def test():
         ])
     );
 }
+
+#[test]
+fn test_tuple() {
+    python_function! {r#"
+def test():
+    a = ["a", "b", "c"]
+    return tuple(a)"#}
+    assert_eq!(
+        test(),
+        Object::from(vec![
+            Object::from("a"),
+            Object::from("b"),
+            Object::from("c"),
+        ])
+    );
+}
