@@ -31,3 +31,13 @@ macro_rules! set {
         __set1($iter)
     };
 }
+
+#[macro_export]
+macro_rules! exit {
+    () => {
+        __exit0()
+    };
+    ($code:expr) => {
+        __exit1($code)
+    };
+}

@@ -168,11 +168,14 @@ pub fn input() -> Object {
     Object::Value(value::input())
 }
 
-pub fn exit(code: &Object) -> ! {
+pub fn __exit1(code: &Object) -> ! {
     match code.__number() {
         Number::Int64(code) => std::process::exit(code as i32),
         _ => unreachable!(),
     }
+}
+pub fn __exit0() -> ! {
+    std::process::exit(0)
 }
 
 pub fn __set0() -> Object {

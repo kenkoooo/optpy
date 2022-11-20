@@ -65,10 +65,12 @@ impl ExprResolve for Expr {
                     })
                 } else {
                     match name.as_str() {
-                        "range" | "print" | "pow" | "set" => Expr::CallFunction(CallFunction {
-                            name: format!("{name}__macro__"),
-                            args: args.resolve(),
-                        }),
+                        "range" | "print" | "pow" | "set" | "exit" => {
+                            Expr::CallFunction(CallFunction {
+                                name: format!("{name}__macro__"),
+                                args: args.resolve(),
+                            })
+                        }
                         _ => Expr::CallFunction(CallFunction {
                             name: name.to_string(),
                             args: args.resolve(),
