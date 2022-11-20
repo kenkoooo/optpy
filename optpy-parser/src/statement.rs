@@ -140,6 +140,7 @@ impl RawStmt<RawExpr> {
                     }),
                 })]
             }
+            StmtKind::Pass => vec![],
             statement => todo!("{:?}", statement),
         }
     }
