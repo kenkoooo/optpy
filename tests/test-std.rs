@@ -328,3 +328,19 @@ def test(a):
     assert_eq!(test(&Object::from(0.5)), Object::from("0.5"));
     assert_eq!(test(&Object::from("string")), Object::from("string"));
 }
+
+#[test]
+fn test_bool_and_assign() {
+    python_function! {r"
+def test(a, b):
+    a &= b
+    return a"}
+    assert_eq!(
+        test(&Object::from(true), &Object::from(false)),
+        Object::from(false)
+    );
+    assert_eq!(
+        test(&Object::from(true), &Object::from(true)),
+        Object::from(true)
+    );
+}

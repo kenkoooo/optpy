@@ -269,6 +269,7 @@ fn format_binary_ident(op: &BinaryOperator) -> Ident {
         BinaryOperator::Mod => format_ident!("__rem"),
         BinaryOperator::FloorDiv => format_ident!("__floor_div"),
         BinaryOperator::Pow => format_ident!("__pow"),
+        BinaryOperator::BitAnd => format_ident!("__bit_and"),
     }
 }
 fn format_unary_ident(op: &UnaryOperator) -> Ident {

@@ -106,6 +106,13 @@ impl Value {
     pub fn __not_in(&self, rhs: &Value) -> Value {
         Value::Boolean(!rhs.includes(self))
     }
+
+    pub fn __bit_and(&self, rhs: &Value) -> Value {
+        match (self, rhs) {
+            (Value::Boolean(a), Value::Boolean(b)) => Value::Boolean(*a && *b),
+            _ => todo!(),
+        }
+    }
 }
 
 impl Value {
