@@ -184,6 +184,11 @@ fn format_expr(expr: &Expr) -> TokenStream {
             quote! { #left . #op (&#right) }
         }
         Expr::ConstantNumber(number) => format_number(number),
+        Expr::None => {
+            quote! {
+                Object::none()
+            }
+        }
         Expr::Index(Index { value, index }) => {
             let value = format_expr(value);
             let index = format_expr(index);

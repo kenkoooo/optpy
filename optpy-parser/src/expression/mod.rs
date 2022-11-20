@@ -21,6 +21,7 @@ pub enum Expr {
     ConstantNumber(Number),
     ConstantString(String),
     ConstantBoolean(bool),
+    None,
     List(Vec<Expr>),
     Dict(Dict<Expr>),
 }
@@ -39,6 +40,7 @@ pub(crate) enum RawExpr {
     ConstantNumber(Number),
     ConstantString(String),
     ConstantBoolean(bool),
+    None,
     List(Vec<RawExpr>),
     ListComprehension(ListComprehension<RawExpr>),
     Dict(Dict<RawExpr>),
@@ -142,6 +144,7 @@ impl RawExpr {
                 rustpython_parser::ast::Constant::Float(f) => {
                     RawExpr::ConstantNumber(Number::Float(f.to_string()))
                 }
+                rustpython_parser::ast::Constant::None => RawExpr::None,
                 value => todo!("{:?}", value),
             },
             ExprKind::List { elts, ctx: _ } => {

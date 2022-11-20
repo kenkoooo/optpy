@@ -162,7 +162,8 @@ fn resolve_expr(expr: &Expr, extensions: &BTreeMap<String, BTreeSet<String>>) ->
         Expr::ConstantString(_)
         | Expr::ConstantBoolean(_)
         | Expr::ConstantNumber(_)
-        | Expr::VariableName(_) => expr.clone(),
+        | Expr::VariableName(_)
+        | Expr::None => expr.clone(),
         Expr::UnaryOperation(UnaryOperation { value, op }) => {
             let value = Box::new(resolve_expr(value, extensions));
             Expr::UnaryOperation(UnaryOperation { value, op: *op })
@@ -329,7 +330,10 @@ fn list_from_expr(expr: &Expr, function_name: &str, store: &mut ReferenceStore) 
                 list_from_expr(value, function_name, store);
             }
         }
-        Expr::ConstantNumber(_) | Expr::ConstantString(_) | Expr::ConstantBoolean(_) => {}
+        Expr::ConstantNumber(_)
+        | Expr::ConstantString(_)
+        | Expr::ConstantBoolean(_)
+        | Expr::None => {}
         Expr::UnaryOperation(UnaryOperation { value, op: _ }) => {
             list_from_expr(value, function_name, store);
         }

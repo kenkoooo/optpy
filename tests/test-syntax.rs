@@ -343,3 +343,14 @@ def test():
     return [x, a, b]"}
     }
 }
+
+#[test]
+fn test_none() {
+    python_function! {
+        r"
+def test():
+    a = None
+    return a"
+    }
+    assert_eq!(test(), Object::none());
+}

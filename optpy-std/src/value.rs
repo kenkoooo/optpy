@@ -51,6 +51,7 @@ impl PartialEq for Value {
                     });
                 r && l
             }
+            (Self::None, Self::None) => true,
             _ => false,
         }
     }
