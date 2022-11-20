@@ -25,10 +25,10 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Install cargo-llvm-cov
-        run: cargo install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Install cargo-nextest
-        run: cargo install cargo-nextest
+        uses: taiki-e/install-action@nextest
 
       - name: Run tests
         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info nextest
