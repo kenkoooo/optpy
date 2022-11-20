@@ -353,3 +353,19 @@ def test(a):
     assert_eq!(test(&Object::from(true)), Object::from(false));
     assert_eq!(test(&Object::from(false)), Object::from(true));
 }
+
+#[test]
+fn test_any() {
+    python_function! {r"
+def test(s):
+    return any(si in [1, 2, 3] for si in s)"}
+
+    assert_eq!(
+        test(&Object::from(vec![Object::from(1), Object::from(4)])),
+        Object::from(true)
+    );
+    assert_eq!(
+        test(&Object::from(vec![Object::from(5), Object::from(4)])),
+        Object::from(false)
+    );
+}

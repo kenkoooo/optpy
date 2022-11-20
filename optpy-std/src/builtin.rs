@@ -74,6 +74,9 @@ mod value {
     pub(super) fn len(value: &Value) -> Value {
         value.__len()
     }
+    pub(super) fn any(value: &Value) -> Value {
+        Value::Boolean(true).__in(value)
+    }
     pub(super) fn __set1(iter: &Value) -> Value {
         match iter {
             Value::List(list) => {
@@ -119,6 +122,7 @@ macro_rules! define_map0 {
     };
 }
 define_map0!(len);
+define_map0!(any);
 define_map0!(sorted);
 define_map0!(__range1);
 define_map0!(list);
