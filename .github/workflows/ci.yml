@@ -10,32 +10,35 @@ jobs:
   tests:
     name: Tests
     runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -Cinstrument-coverage
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: 1.65.0
-          components: llvm-tools-preview
-
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
-
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
-
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@nextest
-
-      - name: Run tests
-        run: cargo llvm-cov --all-features --workspace --json --output-path coverage.json nextest
+        
+      - name: Install llvm-tools-preview
+        run: rustup component add llvm-tools-preview
+        
+      - name: Build
+        run: cargo build --verbose
+        
+      - name: Test
+        run: cargo test --workspace
+        env:
+          LLVM_PROFILE_FILE: optpy-%p-%m.profraw
+      
+      - name: Install grcov
+        run: curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-x86_64-unknown-linux-gnu.tar.bz2 | tar jxf -
+      
+      - name: Generate lcov
+        run: ./grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.json
+          files: ./lcov.info
           fail_ci_if_error: true
