@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Mul, rc::Rc};
 
-use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number};
+use crate::{dict::DictKey, number::Number};
 
 type RefCell<T> = crate::cell::UnsafeRefCell<T>;
 
@@ -341,21 +341,6 @@ impl From<Vec<Value>> for Value {
     fn from(list: Vec<Value>) -> Self {
         let list = list.into_iter().map(|v| Rc::new(RefCell::new(v))).collect();
         Value::List(Rc::new(RefCell::new(list)))
-    }
-}
-impl From<&Value> for Value {
-    fn from(r: &Value) -> Self {
-        r.__shallow_copy()
-    }
-}
-impl From<UnsafeRefMut<Value>> for Value {
-    fn from(r: UnsafeRefMut<Value>) -> Self {
-        r.__shallow_copy()
-    }
-}
-impl From<&UnsafeRefMut<Value>> for Value {
-    fn from(r: &UnsafeRefMut<Value>) -> Self {
-        r.__shallow_copy()
     }
 }
 impl From<bool> for Value {

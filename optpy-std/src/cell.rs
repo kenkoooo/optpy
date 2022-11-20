@@ -1,4 +1,3 @@
-
 use std::{
     cell::UnsafeCell,
     fmt::Debug,
@@ -42,21 +41,6 @@ impl<T: ?Sized + PartialEq> PartialEq<T> for UnsafeRef<T> {
         self.deref() == other
     }
 }
-impl<T: ?Sized + PartialEq> PartialEq<T> for UnsafeRefMut<T> {
-    fn eq(&self, other: &T) -> bool {
-        self.deref() == other
-    }
-}
-impl<T: Debug> Debug for UnsafeRef<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.deref().fmt(f)
-    }
-}
-impl<T: Debug> Debug for UnsafeRefMut<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.deref().fmt(f)
-    }
-}
 
 pub struct UnsafeRefCell<T> {
     cell: UnsafeCell<T>,
@@ -80,8 +64,5 @@ impl<T> UnsafeRefCell<T> {
     pub fn borrow_mut(&self) -> UnsafeRefMut<T> {
         let value = unsafe { NonNull::new_unchecked(self.cell.get()) };
         UnsafeRefMut { value }
-    }
-    pub fn replace(&self, t: T) -> T {
-        std::mem::replace(&mut *self.borrow_mut(), t)
     }
 }
