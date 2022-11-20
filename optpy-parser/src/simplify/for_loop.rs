@@ -1,9 +1,5 @@
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-};
-
 use crate::{
+    hash,
     statement::{Assign, RawStmt},
     CallFunction, CallMethod, Compare, CompareOperator, Expr, For, Func, If, Number, Statement,
     While,
@@ -36,9 +32,7 @@ fn simplify_statement(stmt: RawStmt<Expr>) -> Vec<Statement> {
         RawStmt::Break => vec![Statement::Break],
         RawStmt::Continue => vec![Statement::Continue],
         RawStmt::For(For { target, iter, body }) => {
-            let mut hasher = DefaultHasher::new();
-            body.hash(&mut hasher);
-            let hash = hasher.finish();
+            let hash = hash(&body);
             let tmp_target = Expr::VariableName(format!("__tmp_for_loop_iter_{}", hash));
 
             let mut while_body = vec![Statement::Assign(Assign {
