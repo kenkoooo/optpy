@@ -543,3 +543,25 @@ def test():
         Object::from(vec![Object::from(0), Object::from(1), Object::from(2)])
     );
 }
+
+#[test]
+fn test_multiply_list() {
+    python_function! {r"
+def test():
+    x = [1, 2, 3]
+    return x * 3"}
+    assert_eq!(
+        test(),
+        Object::from(vec![
+            Object::from(1),
+            Object::from(2),
+            Object::from(3),
+            Object::from(1),
+            Object::from(2),
+            Object::from(3),
+            Object::from(1),
+            Object::from(2),
+            Object::from(3)
+        ])
+    );
+}

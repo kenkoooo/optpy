@@ -73,10 +73,27 @@ macro_rules! impl_binop {
 }
 impl_binop!(__add, add);
 impl_binop!(__sub, sub);
-impl_binop!(__mul, mul);
 impl_binop!(__rem, rem);
 impl_binop!(__div, div);
 impl_binop!(__pow, pow);
+
+impl Value {
+    pub fn __mul(&self, rhs: &Value) -> Value {
+        match (self, rhs) {
+            (Value::List(list), Value::Number(Number::Int64(n))) => {
+                let mut result = vec![];
+                for _ in 0..(*n) {
+                    for element in list.borrow().iter() {
+                        result.push(Rc::new(RefCell::new(element.borrow().clone())));
+                    }
+                }
+                Value::List(Rc::new(RefCell::new(result)))
+            }
+            (Value::Number(a), Value::Number(b)) => Value::Number(*a * *b),
+            _ => todo!(),
+        }
+    }
+}
 
 macro_rules! impl_compare {
     ($name:ident, $op:ident) => {
