@@ -147,6 +147,7 @@ macro_rules! impl_map1 {
 }
 
 impl_map1!(__floor_div);
+impl_map1!(count);
 impl_map1!(__add);
 impl_map1!(__sub);
 impl_map1!(__mul);
