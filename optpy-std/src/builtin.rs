@@ -129,7 +129,7 @@ mod value {
     }
 }
 
-fn map0<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
+fn map_1_1<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
     let value = match obj {
         Object::Ref(r) => f(&r.borrow()),
         Object::Value(v) => f(v),
@@ -137,25 +137,25 @@ fn map0<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
     Object::Value(value)
 }
 
-macro_rules! define_map0 {
+macro_rules! define_map1_1 {
     ($name:ident) => {
         pub fn $name(obj: &Object) -> Object {
-            map0(obj, value::$name)
+            map_1_1(obj, value::$name)
         }
     };
 }
-define_map0!(len);
-define_map0!(any);
-define_map0!(all);
-define_map0!(sorted);
-define_map0!(__range1);
-define_map0!(list);
-define_map0!(int);
-define_map0!(str);
-define_map0!(map_int);
-define_map0!(__set1);
+define_map1_1!(len);
+define_map1_1!(any);
+define_map1_1!(all);
+define_map1_1!(sorted);
+define_map1_1!(__range1);
+define_map1_1!(list);
+define_map1_1!(int);
+define_map1_1!(str);
+define_map1_1!(map_int);
+define_map1_1!(__set1);
 
-fn map1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {
+fn map_2_1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {
     let value = match (obj1, obj2) {
         (Object::Ref(obj1), Object::Ref(obj2)) => f(&obj1.borrow(), &obj2.borrow()),
         (Object::Ref(obj1), Object::Value(obj2)) => f(&obj1.borrow(), obj2),
@@ -165,16 +165,16 @@ fn map1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> O
     Object::Value(value)
 }
 
-macro_rules! define_map1 {
+macro_rules! define_map2_1 {
     ($name:ident) => {
         pub fn $name(obj1: &Object, obj2: &Object) -> Object {
-            map1(obj1, obj2, value::$name)
+            map_2_1(obj1, obj2, value::$name)
         }
     };
 }
-define_map1!(__range2);
-define_map1!(min);
-define_map1!(max);
+define_map2_1!(__range2);
+define_map2_1!(min);
+define_map2_1!(max);
 
 pub fn __pow3(number: &Object, power: &Object, modulus: &Object) -> Object {
     let number = number.__number();
