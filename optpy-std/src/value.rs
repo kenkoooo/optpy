@@ -308,14 +308,9 @@ impl Value {
                 Value::Number(Number::Int64(count as i64))
             }
             (Value::String(lhs), Value::String(rhs)) => {
-                let mut lhs = lhs.as_str();
+                let lhs = lhs.as_str();
                 let rhs = rhs.as_str();
-                let mut count = 0;
-                while let Some((_, suffix)) = lhs.split_once(rhs) {
-                    count += 1;
-                    lhs = suffix;
-                }
-                Value::Number(Number::Int64(count))
+                Value::Number(Number::Int64(lhs.split(rhs).count() as i64 - 1))
             }
             _ => todo!(),
         }
