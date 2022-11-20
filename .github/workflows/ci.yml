@@ -10,6 +10,8 @@ jobs:
   tests:
     name: Tests
     runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -Cinstrument-coverage
 
     steps:
       - uses: actions/checkout@v3
@@ -23,18 +25,20 @@ jobs:
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
-
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
-
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@nextest
         
-      - name: Check old coverage
-        run: ls -l
-
-      - name: Run tests
-        run: cargo llvm-cov --all-features --workspace --lcov --output-path ./lcov.info
+      - name: Build
+        run: cargo build --verbose
+        
+      - name: Test
+        run: cargo test --workspace
+        env:
+          LLVM_PROFILE_FILE: optpy-%p-%m.profraw
+      
+      - name: Install grcov
+        run: curl -L https://github.com/mozilla/grcov/releases/latest/download/grcov-x86_64-unknown-linux-gnu.tar.bz2 | tar jxf -
+      
+      - name: Generate lcov
+        run: ./grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
