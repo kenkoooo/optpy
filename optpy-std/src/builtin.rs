@@ -65,6 +65,20 @@ mod value {
             _ => unreachable!(),
         }
     }
+    pub(super) fn min(a: &Value, b: &Value) -> Value {
+        if a > b {
+            b.clone()
+        } else {
+            a.clone()
+        }
+    }
+    pub(super) fn max(a: &Value, b: &Value) -> Value {
+        if a > b {
+            a.clone()
+        } else {
+            b.clone()
+        }
+    }
 
     pub(super) fn sorted(value: &Value) -> Value {
         value.sort();
@@ -159,6 +173,8 @@ macro_rules! define_map1 {
     };
 }
 define_map1!(__range2);
+define_map1!(min);
+define_map1!(max);
 
 pub fn __pow3(number: &Object, power: &Object, modulus: &Object) -> Object {
     let number = number.__number();
