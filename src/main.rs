@@ -4,30 +4,71 @@ use std::{
 };
 
 use anyhow::Result;
-use clap::Parser;
-use optpy::compile;
+use clap::{Parser, Subcommand};
+use optpy::{compile, dump::DumpPython};
+use optpy_parser::parse;
+use optpy_resolver::resolve;
+use optpy_type_resolver::{read_types, try_resolve};
 
 #[derive(Parser, Debug)]
 struct Args {
-    /// Input Python file
-    input: PathBuf,
+    #[command(subcommand)]
+    command: Command,
+}
 
-    /// Path to output Rust file
-    output: Option<PathBuf>,
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// Generate a Rust file from a Python file
+    Compile {
+        /// Input Python file
+        input: PathBuf,
+
+        /// Path to output Rust file
+        output: Option<PathBuf>,
+    },
+    /// Run type resolver (experimental)
+    Type {
+        /// Input Python file
+        input: PathBuf,
+    },
+    /// Dump internal Python statements
+    Dump {
+        /// Input Python file
+        input: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
     env_logger::init();
     let args = Args::parse();
-    let code = read_to_string(&args.input)?;
-    let result = compile(code)?;
 
-    let output = match args.output.as_ref() {
-        Some(output) => output.clone(),
-        None => args.input.with_extension("rs"),
-    };
-    write(&output, result)?;
-    log::info!("Generated {:?}", output);
+    match args.command {
+        Command::Compile { input, output } => {
+            let code = read_to_string(&input)?;
+            let result = compile(code)?;
+
+            let output = match output {
+                Some(output) => output,
+                None => input.with_extension("rs"),
+            };
+            write(&output, result)?;
+            log::info!("Generated {:?}", output);
+        }
+        Command::Type { input } => {
+            let code = read_to_string(&input)?;
+            let ast = parse(code)?;
+            let (ast, _) = resolve(&ast);
+            let edges = read_types(&ast);
+            try_resolve(&edges);
+        }
+        Command::Dump { input } => {
+            let code = read_to_string(&input)?;
+            let ast = parse(code)?;
+            let (ast, _) = resolve(&ast);
+            let python_code = ast.to_python_code();
+            println!("{}", python_code);
+        }
+    }
 
     Ok(())
 }

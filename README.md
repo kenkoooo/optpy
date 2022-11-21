@@ -15,7 +15,7 @@ https://user-images.githubusercontent.com/9150073/200675788-267792f1-a14c-4746-a
 ## Usage
 
 ```sh
-./optpy <Input Python file> [Output Rust file]
+./optpy compile <Input Python file> [Output Rust file]
 ```
 
 # TODO
