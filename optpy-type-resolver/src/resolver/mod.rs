@@ -6,63 +6,43 @@ use self::unionfind::UnionFind;
 
 mod unionfind;
 
-macro_rules! t {
-    ($x:ident) => {
-        Type::$x
-    };
-    (List<$x:ident>) => {
-        Type::List(Box::new(t!($x)))
-    };
+fn hints() -> Vec<Edge> {
+    use Type::*;
+    fn list(ty: Type) -> Type {
+        Type::List(Box::new(ty))
+    }
+    fn edge<T: Into<Vertex>, U: Into<Vertex>>(t: T, u: U) -> Edge {
+        Edge::equal(t.into(), u.into())
+    }
+    fn func<S: AsRef<str>>(name: S, args: &[Type]) -> Vertex {
+        Vertex::ReturnType {
+            function: name.as_ref().into(),
+            args: args.iter().map(|arg| arg.clone().into()).collect(),
+        }
+    }
+    fn method<T: Into<Vertex>, S: AsRef<str>>(value: T, name: S, args: &[Type]) -> Vertex {
+        Vertex::MethodReturnType {
+            value: Box::new(value.into()),
+            name: name.as_ref().into(),
+            args: args.iter().map(|arg| arg.clone().into()).collect(),
+        }
+    }
+
+    vec![
+        edge(func("input", &[]), String),
+        edge(func("map_int", &[list(String)]), list(Number)),
+        edge(func("range__macro__", &[Number]), list(Number)),
+        edge(func("list", &[list(Number)]), list(Number)),
+        edge(method(list(Number), "pop", &[]), Number),
+        edge(method(String, "split", &[]), list(String)),
+    ]
 }
 
 pub fn try_resolve(edges: &[Edge]) {
     let mut edges = edges.to_vec();
 
     // add hints
-    edges.push(Edge::equal(
-        t!(String).into(),
-        Vertex::ReturnType {
-            function: "input".into(),
-            args: vec![],
-        },
-    ));
-    edges.push(Edge::equal(
-        t!(List<String>).into(),
-        Vertex::MethodReturnType {
-            value: Box::new(Type::String.into()),
-            name: "split".into(),
-            args: vec![],
-        },
-    ));
-    edges.push(Edge::equal(
-        t!(Number).into(),
-        Vertex::MethodReturnType {
-            value: Box::new((t!(List<Number>)).into()),
-            name: "pop".into(),
-            args: vec![],
-        },
-    ));
-    edges.push(Edge::equal(
-        t!(List<Number>).into(),
-        Vertex::ReturnType {
-            function: "map_int".into(),
-            args: vec![t!(List<String>).into()],
-        },
-    ));
-    edges.push(Edge::equal(
-        t!(List<Number>).into(),
-        Vertex::ReturnType {
-            function: "range__macro__".into(),
-            args: vec![t!(Number).into()],
-        },
-    ));
-    edges.push(Edge::equal(
-        t!(List<Number>).into(),
-        Vertex::ReturnType {
-            function: "list".into(),
-            args: vec![t!(List<Number>).into()],
-        },
-    ));
+    edges.extend(hints());
 
     let mut fixed = BTreeMap::new();
     let mut uf = UnionFind::new();
