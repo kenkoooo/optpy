@@ -6,19 +6,28 @@ use self::unionfind::UnionFind;
 
 mod unionfind;
 
+macro_rules! t {
+    ($x:ident) => {
+        Type::$x
+    };
+    (List<$x:ident>) => {
+        Type::List(Box::new(t!($x)))
+    };
+}
+
 pub fn try_resolve(edges: &[Edge]) {
     let mut edges = edges.to_vec();
 
     // add hints
     edges.push(Edge::equal(
-        Vertex::Fixed(Type::String),
+        t!(String).into(),
         Vertex::ReturnType {
             function: "input".into(),
             args: vec![],
         },
     ));
     edges.push(Edge::equal(
-        Type::List(Box::new(Type::String)).into(),
+        t!(List<String>).into(),
         Vertex::MethodReturnType {
             value: Box::new(Type::String.into()),
             name: "split".into(),
@@ -26,32 +35,32 @@ pub fn try_resolve(edges: &[Edge]) {
         },
     ));
     edges.push(Edge::equal(
-        Type::Number.into(),
+        t!(Number).into(),
         Vertex::MethodReturnType {
-            value: Box::new(Type::List(Box::new(Type::Number)).into()),
+            value: Box::new((t!(List<Number>)).into()),
             name: "pop".into(),
             args: vec![],
         },
     ));
     edges.push(Edge::equal(
-        Type::List(Box::new(Type::Number)).into(),
+        t!(List<Number>).into(),
         Vertex::ReturnType {
             function: "map_int".into(),
-            args: vec![Type::List(Box::new(Type::String)).into()],
+            args: vec![t!(List<String>).into()],
         },
     ));
     edges.push(Edge::equal(
-        Type::List(Box::new(Type::Number)).into(),
+        t!(List<Number>).into(),
         Vertex::ReturnType {
             function: "range__macro__".into(),
-            args: vec![Type::Number.into()],
+            args: vec![t!(Number).into()],
         },
     ));
     edges.push(Edge::equal(
-        Type::List(Box::new(Type::Number)).into(),
+        t!(List<Number>).into(),
         Vertex::ReturnType {
             function: "list".into(),
-            args: vec![Type::List(Box::new(Type::Number)).into()],
+            args: vec![t!(List<Number>).into()],
         },
     ));
 
