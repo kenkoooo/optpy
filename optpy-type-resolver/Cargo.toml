@@ -1,9 +1,0 @@
-[package]
-name = "optpy-type-resolver"
-version = "0.1.0"
-edition = "2021"
-publish = false
-
-
-[dependencies]
-optpy-parser = { path = "../optpy-parser" }
