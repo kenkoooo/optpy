@@ -1007,7 +1007,6 @@ dependencies = [
  "optpy-resolver",
  "optpy-std",
  "optpy-test-macro",
- "optpy-type-resolver",
 ]
 
 [[package]]
@@ -1046,13 +1045,6 @@ dependencies = [
  "optpy-resolver",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "optpy-type-resolver"
-version = "0.1.0"
-dependencies = [
- "optpy-parser",
 ]
 
 [[package]]

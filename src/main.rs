@@ -8,7 +8,6 @@ use clap::{Parser, Subcommand};
 use optpy::{compile, dump::DumpPython};
 use optpy_parser::parse;
 use optpy_resolver::resolve;
-use optpy_type_resolver::{read_types, try_resolve};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -25,11 +24,6 @@ enum Command {
 
         /// Path to output Rust file
         output: Option<PathBuf>,
-    },
-    /// Run type resolver (experimental)
-    Type {
-        /// Input Python file
-        input: PathBuf,
     },
     /// Dump internal Python statements
     Dump {
@@ -53,13 +47,6 @@ fn main() -> Result<()> {
             };
             write(&output, result)?;
             log::info!("Generated {:?}", output);
-        }
-        Command::Type { input } => {
-            let code = read_to_string(&input)?;
-            let ast = parse(code)?;
-            let (ast, _) = resolve(&ast);
-            let edges = read_types(&ast);
-            try_resolve(&edges);
         }
         Command::Dump { input } => {
             let code = read_to_string(&input)?;
