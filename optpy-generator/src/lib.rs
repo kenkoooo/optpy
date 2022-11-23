@@ -78,6 +78,23 @@ fn format_statement(
             }
         }
         Statement::Func(Func { name, args, body }) => {
+            let type_params = args
+                .iter()
+                .map(|arg| {
+                    let t = format_ident!("T_{}", arg);
+                    quote! {
+                        #t: OptpyValue
+                    }
+                })
+                .collect::<Vec<_>>();
+            let interface = args
+                .iter()
+                .map(|arg| {
+                    let v = format_ident!("{}", arg);
+                    let t = format_ident!("T_{}", arg);
+                    quote! {#v: &#t}
+                })
+                .collect::<Vec<_>>();
             let args = args
                 .iter()
                 .map(|arg| format_ident!("{}", arg))
@@ -85,7 +102,7 @@ fn format_statement(
             let body = generate_function_body(body, name, definitions);
             let name = format_ident!("{}", name);
             quote! {
-                fn #name( #(#args: &Object),*  ) -> Object {
+                fn #name<#(#type_params),*>( #(#interface),*  ) -> Object {
                     #(let mut #args = #args.__shallow_copy();)*
                     #body
                     return Object::none();
@@ -96,7 +113,7 @@ fn format_statement(
             Some(value) => {
                 let value = format_expr(value);
                 quote! {
-                    return Object::from(#value);
+                    return Object::from(&#value);
                 }
             }
             None => {
