@@ -1,12 +1,13 @@
 use std::fmt::Debug;
 
-use crate::number::Number;
+use crate::{number::Number, Object};
 
 pub trait OptpyValue: ToString + Debug {
-    fn assign<T: OptpyValue>(&mut self);
+    fn assign<T: OptpyValue>(&mut self, value: &T);
     fn index<T: OptpyValue>(&self, index: &T) -> Self;
     fn test(&self) -> bool;
     fn __number(&self) -> Number;
+    fn __object(&self) -> &Object;
 
     fn sort(&self);
     fn reverse(&self);

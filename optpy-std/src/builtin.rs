@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{cell::UnsafeRefCell, number::Number, value::Value, Object};
+use crate::{cell::UnsafeRefCell, number::Number, value::Value, Object, OptpyValue};
 
 fn rc_unsafe_ref_cell<T>(v: T) -> Rc<UnsafeRefCell<T>> {
     Rc::new(UnsafeRefCell::new(v))
@@ -252,7 +252,7 @@ define_map2_1!(__min2);
 define_map2_1!(__max2);
 define_map2_1!(__sum2);
 
-pub fn __pow3(number: &Object, power: &Object, modulus: &Object) -> Object {
+pub fn __pow3<T: OptpyValue>(number: &T, power: &T, modulus: &T) -> impl OptpyValue {
     let number = number.__number();
     let power = power.__number();
     let modulus = modulus.__number();

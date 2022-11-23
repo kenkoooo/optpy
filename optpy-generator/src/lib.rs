@@ -96,7 +96,7 @@ fn format_statement(
             Some(value) => {
                 let value = format_expr(value);
                 quote! {
-                    return Object::from(#value);
+                    return Object::from(&#value);
                 }
             }
             None => {
