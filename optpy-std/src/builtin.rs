@@ -198,8 +198,8 @@ mod value {
     }
 }
 
-fn map_1_1<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
-    let value = match obj {
+fn map_1_1<F: Fn(&Value) -> Value, T: OptpyValue>(obj: &T, f: F) -> impl OptpyValue {
+    let value = match obj.__object() {
         Object::Ref(r) => f(&r.borrow()),
         Object::Value(v) => f(v),
     };
@@ -208,7 +208,7 @@ fn map_1_1<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
 
 macro_rules! define_map1_1 {
     ($name:ident) => {
-        pub fn $name(obj: &Object) -> Object {
+        pub fn $name<T: OptpyValue>(obj: &T) -> impl OptpyValue {
             map_1_1(obj, value::$name)
         }
     };
@@ -230,8 +230,12 @@ define_map1_1!(__set1);
 define_map1_1!(enumerate);
 define_map1_1!(next);
 
-fn map_2_1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {
-    let value = match (obj1, obj2) {
+fn map_2_1<F: Fn(&Value, &Value) -> Value, T: OptpyValue, S: OptpyValue>(
+    obj1: &T,
+    obj2: &S,
+    f: F,
+) -> Object {
+    let value = match (obj1.__object(), obj2.__object()) {
         (Object::Ref(obj1), Object::Ref(obj2)) => f(&obj1.borrow(), &obj2.borrow()),
         (Object::Ref(obj1), Object::Value(obj2)) => f(&obj1.borrow(), obj2),
         (Object::Value(obj1), Object::Ref(obj2)) => f(obj1, &obj2.borrow()),
@@ -242,7 +246,7 @@ fn map_2_1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -
 
 macro_rules! define_map2_1 {
     ($name:ident) => {
-        pub fn $name(obj1: &Object, obj2: &Object) -> Object {
+        pub fn $name<T: OptpyValue, S: OptpyValue>(obj1: &T, obj2: &S) -> impl OptpyValue {
             map_2_1(obj1, obj2, value::$name)
         }
     };
@@ -252,7 +256,11 @@ define_map2_1!(__min2);
 define_map2_1!(__max2);
 define_map2_1!(__sum2);
 
-pub fn __pow3<T: OptpyValue>(number: &T, power: &T, modulus: &T) -> impl OptpyValue {
+pub fn __pow3<T: OptpyValue, S: OptpyValue, U: OptpyValue>(
+    number: &T,
+    power: &S,
+    modulus: &U,
+) -> impl OptpyValue {
     let number = number.__number();
     let power = power.__number();
     let modulus = modulus.__number();
