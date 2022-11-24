@@ -8,11 +8,19 @@ macro_rules! assert_typed_eq {
 }
 
 #[test]
-fn test_sorted() {
-    typed_python_function! {r"
-def test():
-    x = [2, 1]
-    x = sorted(x)
-    return x"}
-    assert_typed_eq!(test(), Object::from(vec![Object::from(1), Object::from(2)]));
+fn test_if_statement() {
+    typed_python_function! {r#"
+def test(a, b):
+    ans = a * b
+    if ans % 2 == 0:
+        return "Even"
+    else:
+        return "Odd"
+    "#}
+
+    let result = test(&Object::from(3), &Object::from(4));
+    assert_typed_eq!(result, Object::from("Even"));
+
+    let result = test(&Object::from(3), &Object::from(5));
+    assert_typed_eq!(result, Object::from("Odd"));
 }

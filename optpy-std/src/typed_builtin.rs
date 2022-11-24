@@ -5,7 +5,7 @@ use crate::{
     number::Number,
     typed_object::{
         AddValue, BooleanValue, DictValue, Length, ListValue, NoneValue, NumberValue, Object,
-        StringValue,
+        StringValue, Value,
     },
 };
 

@@ -88,8 +88,22 @@ fn format_statement(
             let body = generate_function_body(body, name, definitions, enable_types);
             let name = format_ident!("{}", name);
             if enable_types {
+                let type_params = (0..args.len())
+                    .map(|i| format_ident!("T{}", i))
+                    .collect::<Vec<_>>();
+                let interface = args
+                    .iter()
+                    .enumerate()
+                    .map(|(i, arg)| {
+                        let arg = format_ident!("{}", arg);
+                        let t = format_ident!("T{}", i);
+                        quote! {
+                            #arg: &Object<#t>
+                        }
+                    })
+                    .collect::<Vec<_>>();
                 quote! {
-                    fn #name( #(#args: &Object),*  ) -> Object<impl Value> {
+                    fn #name<#(#type_params: Value),*>( #(#interface),* ) -> Object<impl Value> {
                         #(let mut #args = #args.__shallow_copy();)*
                         #body
                         return Object::default();

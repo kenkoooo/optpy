@@ -78,7 +78,12 @@ pub fn typed_python_function(tokens: TokenStream) -> TokenStream {
         })
         .collect::<Vec<_>>();
     let type_params = (0..interface.len())
-        .map(|i| format_ident!("T{}", i))
+        .map(|i| {
+            let t = format_ident!("T{}", i);
+            quote! {
+                #t: optpy_std::typed_object::Value
+            }
+        })
         .collect::<Vec<_>>();
     let args = args
         .into_iter()
@@ -98,7 +103,6 @@ pub fn typed_python_function(tokens: TokenStream) -> TokenStream {
         }
     };
 
-    // panic!("{}", result.to_string());
     result.into()
 }
 

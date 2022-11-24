@@ -51,9 +51,31 @@ impl<T: Default> Default for Object<T> {
     }
 }
 
-pub trait Value: Clone + Debug {
+pub trait Value: Clone + Debug + Default {
     fn assign(&mut self, value: &Self) {
         *self = value.clone();
+    }
+    fn __number(&self) -> Number {
+        todo!()
+    }
+    fn __string(&self) -> Rc<String> {
+        todo!()
+    }
+
+    fn __add<T: Value>(&self, _: &T) -> Self {
+        todo!()
+    }
+    fn __mul<T: Value>(&self, _: &T) -> Self {
+        todo!()
+    }
+    fn __rem<T: Value>(&self, _: &T) -> Self {
+        todo!()
+    }
+    fn __eq<T: Value>(&self, _: &T) -> bool {
+        todo!()
+    }
+    fn test(&self) -> bool {
+        todo!()
     }
 }
 impl<V: Clone> Object<V> {
@@ -63,6 +85,22 @@ impl<V: Clone> Object<V> {
             Object::Value(v) => v.clone(),
         }
     }
+    pub fn __shallow_copy(&self) -> Self {
+        self.clone()
+    }
+}
+
+macro_rules! impl_binop {
+    ($name:ident) => {
+        pub fn $name<T: Value>(&self, other: &Object<T>) -> Self {
+            match (self, other) {
+                (Object::Ref(l), Object::Ref(r)) => Object::Value(l.borrow().$name(&*r.borrow())),
+                (Object::Ref(l), Object::Value(r)) => Object::Value(l.borrow().$name(r)),
+                (Object::Value(l), Object::Ref(r)) => Object::Value(l.$name(&*r.borrow())),
+                (Object::Value(l), Object::Value(r)) => Object::Value(l.$name(r)),
+            }
+        }
+    };
 }
 
 impl<V: Value> Object<V> {
@@ -72,6 +110,26 @@ impl<V: Value> Object<V> {
             (Object::Ref(l), Object::Value(r)) => l.borrow_mut().assign(r),
             (Object::Value(l), Object::Ref(r)) => l.assign(&r.borrow()),
             (Object::Value(l), Object::Value(r)) => l.assign(r),
+        }
+    }
+    impl_binop!(__add);
+    impl_binop!(__mul);
+    impl_binop!(__rem);
+    pub fn __eq<T: Value>(&self, other: &Object<T>) -> Object<BooleanValue> {
+        match (self, other) {
+            (Object::Ref(l), Object::Ref(r)) => {
+                Object::Value(BooleanValue(l.borrow().__eq(&*r.borrow())))
+            }
+            (Object::Ref(l), Object::Value(r)) => Object::Value(BooleanValue(l.borrow().__eq(r))),
+            (Object::Value(l), Object::Ref(r)) => Object::Value(BooleanValue(l.__eq(&*r.borrow()))),
+            (Object::Value(l), Object::Value(r)) => Object::Value(BooleanValue(l.__eq(r))),
+        }
+    }
+
+    pub fn test(&self) -> bool {
+        match self {
+            Object::Ref(r) => r.borrow().test(),
+            Object::Value(v) => v.test(),
         }
     }
 }
@@ -131,7 +189,27 @@ impl<T: Clone> From<Vec<Object<T>>> for Object<ListValue<T>> {
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, Default, PartialOrd)]
 pub struct NumberValue(pub Number);
-impl Value for NumberValue {}
+impl Value for NumberValue {
+    fn __number(&self) -> Number {
+        self.0.clone()
+    }
+    fn __add<T: Value>(&self, other: &T) -> Self {
+        let x = self.0 + other.__number();
+        Self(x)
+    }
+
+    fn __mul<T: Value>(&self, other: &T) -> Self {
+        let x = self.0 * other.__number();
+        Self(x)
+    }
+    fn __rem<T: Value>(&self, other: &T) -> Self {
+        let x = self.0 % other.__number();
+        Self(x)
+    }
+    fn __eq<T: Value>(&self, other: &T) -> bool {
+        self.0 == other.__number()
+    }
+}
 
 impl From<NumberValue> for i64 {
     fn from(n: NumberValue) -> Self {
@@ -159,20 +237,33 @@ impl<T> Default for ListValue<T> {
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct StringValue(pub Rc<String>);
-impl Value for StringValue {}
+impl Value for StringValue {
+    fn __string(&self) -> Rc<String> {
+        Rc::clone(&self.0)
+    }
+}
 
 impl From<StringValue> for i64 {
     fn from(n: StringValue) -> Self {
         n.0.parse().expect("non-integer")
     }
 }
+impl Default for StringValue {
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct BooleanValue(pub bool);
-impl Value for BooleanValue {}
-impl BooleanValue {
-    pub fn test(&self) -> bool {
+impl Value for BooleanValue {
+    fn test(&self) -> bool {
         self.0
+    }
+}
+impl Default for BooleanValue {
+    fn default() -> Self {
+        Self(false)
     }
 }
 
@@ -184,10 +275,20 @@ impl<K: Eq + Hash, V> Clone for DictValue<K, V> {
         Self(Rc::clone(&self.0))
     }
 }
+impl<K: Eq + Hash, V> Default for DictValue<K, V> {
+    fn default() -> Self {
+        Self(Rc::new(UnsafeRefCell::new(HashMap::new())))
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct NoneValue;
 impl Value for NoneValue {}
+impl Default for NoneValue {
+    fn default() -> Self {
+        Self
+    }
+}
 
 pub trait IndexValue<K, V> {
     fn index(&self, index: &K) -> Rc<UnsafeRefCell<V>>;
