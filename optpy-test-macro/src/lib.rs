@@ -25,7 +25,7 @@ pub fn python_function(tokens: TokenStream) -> TokenStream {
         _ => panic!(),
     };
 
-    let code = generate_function_body(&ast, "", &definitions);
+    let code = generate_function_body(&ast, "", &definitions, false);
     let function_name = format_ident!("{}", function_name);
     let args = args
         .into_iter()
@@ -45,6 +45,60 @@ pub fn python_function(tokens: TokenStream) -> TokenStream {
         }
     };
 
+    result.into()
+}
+#[proc_macro]
+pub fn typed_python_function(tokens: TokenStream) -> TokenStream {
+    let input: PythonTestInput = syn::parse(tokens).unwrap();
+    let code = input.python_code.value();
+
+    let ast = parse(code).unwrap();
+    assert_eq!(ast.len(), 1);
+    let function_name = match &ast[0] {
+        optpy_parser::Statement::Func(Func { name, .. }) => name.clone(),
+        _ => panic!(),
+    };
+    let (ast, definitions) = resolve(&ast);
+    let (name, args) = match &ast[0] {
+        optpy_parser::Statement::Func(Func { name, args, .. }) => (name.clone(), args.clone()),
+        _ => panic!(),
+    };
+
+    let code = generate_function_body(&ast, "", &definitions, true);
+    let function_name = format_ident!("{}", function_name);
+    let interface = args
+        .iter()
+        .enumerate()
+        .map(|(i, arg)| {
+            let arg = format_ident!("{}", arg);
+            let param = format_ident!("T{}", i);
+            quote! {
+                #arg: &optpy_std::typed_object::Object<#param>
+            }
+        })
+        .collect::<Vec<_>>();
+    let type_params = (0..interface.len())
+        .map(|i| format_ident!("T{}", i))
+        .collect::<Vec<_>>();
+    let args = args
+        .into_iter()
+        .map(|arg| format_ident!("{}", arg))
+        .collect::<Vec<_>>();
+    let resolved_name = format_ident!("{}", name);
+
+    let result = quote! {
+        #[allow(unreachable_code)]
+        fn #function_name<#(#type_params),*>(#(#interface),*) -> optpy_std::typed_object::Object<impl optpy_std::typed_object::Value> {
+            use optpy_std::typed_object::*;
+            use optpy_std::typed_builtin::*;
+            use optpy_std::*;
+            #code
+
+            #resolved_name( #(#args),* )
+        }
+    };
+
+    // panic!("{}", result.to_string());
     result.into()
 }
 

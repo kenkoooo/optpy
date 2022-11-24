@@ -350,7 +350,7 @@ def test():
     a = None
     return a"
     }
-    assert_eq!(test(), Object::none());
+    assert_eq!(test(), Object::default());
 }
 
 #[test]
@@ -362,7 +362,7 @@ def test():
     del a
     return a"
     }
-    assert_eq!(test(), Object::none());
+    assert_eq!(test(), Object::default());
 }
 
 #[test]

@@ -150,9 +150,6 @@ impl Value {
         }
     }
 
-    pub fn none() -> Value {
-        Value::None
-    }
     pub fn dict(pairs: Vec<(Value, Value)>) -> Value {
         let map = pairs
             .into_iter()
@@ -197,7 +194,7 @@ impl Value {
                 let key = index.__as_dict_key();
                 dict.borrow_mut()
                     .entry(key)
-                    .or_insert_with(|| Rc::new(RefCell::new(Value::none())))
+                    .or_insert_with(|| Rc::new(RefCell::new(Value::None)))
                     .clone()
             }
             _ => todo!(),

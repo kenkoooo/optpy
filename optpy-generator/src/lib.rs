@@ -11,8 +11,9 @@ use quote::{format_ident, quote, TokenStreamExt};
 pub fn generate_code(
     statements: &[Statement],
     definitions: &BTreeMap<String, BTreeSet<String>>,
+    enable_types: bool,
 ) -> TokenStream {
-    let body = generate_function_body(statements, "", definitions);
+    let body = generate_function_body(statements, "", definitions, enable_types);
     quote! {
         fn main() {
             #body
@@ -24,18 +25,19 @@ pub fn generate_function_body(
     body: &[Statement],
     function_name: &str,
     definitions: &BTreeMap<String, BTreeSet<String>>,
+    enable_types: bool,
 ) -> TokenStream {
     let mut result = TokenStream::new();
     if let Some(definitions) = definitions.get(function_name) {
         for variable in definitions {
             let variable = format_ident!("{}", variable);
             result.append_all(quote! {
-                let mut #variable = Object::none();
+                let mut #variable = Object::default();
             });
         }
     }
     for statement in body {
-        let statement = format_statement(statement, definitions);
+        let statement = format_statement(statement, definitions, enable_types);
         result.append_all(statement);
     }
     result
@@ -44,6 +46,7 @@ pub fn generate_function_body(
 fn format_statement(
     statement: &Statement,
     definitions: &BTreeMap<String, BTreeSet<String>>,
+    enable_types: bool,
 ) -> TokenStream {
     match statement {
         Statement::Assign(Assign { target, value }) => {
@@ -63,11 +66,11 @@ fn format_statement(
             let test = format_expr(test);
             let body = body
                 .iter()
-                .map(|s| format_statement(s, definitions))
+                .map(|s| format_statement(s, definitions, enable_types))
                 .collect::<Vec<_>>();
             let orelse = orelse
                 .iter()
-                .map(|s| format_statement(s, definitions))
+                .map(|s| format_statement(s, definitions, enable_types))
                 .collect::<Vec<_>>();
             quote! {
                 if (#test).test() {
@@ -82,13 +85,23 @@ fn format_statement(
                 .iter()
                 .map(|arg| format_ident!("{}", arg))
                 .collect::<Vec<_>>();
-            let body = generate_function_body(body, name, definitions);
+            let body = generate_function_body(body, name, definitions, enable_types);
             let name = format_ident!("{}", name);
-            quote! {
-                fn #name( #(#args: &Object),*  ) -> Object {
-                    #(let mut #args = #args.__shallow_copy();)*
-                    #body
-                    return Object::none();
+            if enable_types {
+                quote! {
+                    fn #name( #(#args: &Object),*  ) -> Object<impl Value> {
+                        #(let mut #args = #args.__shallow_copy();)*
+                        #body
+                        return Object::default();
+                    }
+                }
+            } else {
+                quote! {
+                    fn #name( #(#args: &Object),*  ) -> Object {
+                        #(let mut #args = #args.__shallow_copy();)*
+                        #body
+                        return Object::default();
+                    }
                 }
             }
         }
@@ -101,7 +114,7 @@ fn format_statement(
             }
             None => {
                 quote! {
-                    return Object::none();
+                    return Object::default();
                 }
             }
         },
@@ -109,7 +122,7 @@ fn format_statement(
             let test = format_expr(test);
             let body = body
                 .iter()
-                .map(|s| format_statement(s, definitions))
+                .map(|s| format_statement(s, definitions, enable_types))
                 .collect::<Vec<_>>();
             quote! {
                 while (#test).test() {
@@ -186,7 +199,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
         Expr::ConstantNumber(number) => format_number(number),
         Expr::None => {
             quote! {
-                Object::none()
+                Object::default()
             }
         }
         Expr::Index(Index { value, index }) => {

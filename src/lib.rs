@@ -9,7 +9,7 @@ use optpy_std::OPTPY_STD_STR;
 pub fn compile<S: AsRef<str>>(code: S) -> Result<String> {
     let ast = parse(code)?;
     let (ast, definitions) = resolve(&ast);
-    let code = generate_code(&ast, &definitions);
+    let code = generate_code(&ast, &definitions, false);
 
     let mut result = OPTPY_STD_STR.to_string();
     result += &code.to_string();

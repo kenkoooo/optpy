@@ -26,6 +26,7 @@ impl<V: Debug> Debug for Object<V> {
         }
     }
 }
+
 impl<V: Clone> Clone for Object<V> {
     fn clone(&self) -> Self {
         match self {
@@ -44,8 +45,13 @@ impl<V: PartialOrd> PartialOrd for Object<V> {
         }
     }
 }
+impl<T: Default> Default for Object<T> {
+    fn default() -> Self {
+        Object::Value(T::default())
+    }
+}
 
-pub trait Value: Clone + PartialEq + Debug {
+pub trait Value: Clone + Debug {
     fn assign(&mut self, value: &Self) {
         *self = value.clone();
     }
@@ -93,6 +99,11 @@ impl<K: Eq + Hash + Clone, V: Default> Object<DictValue<K, V>> {
     }
 }
 
+impl<T: Clone> From<&Object<T>> for Object<T> {
+    fn from(obj: &Object<T>) -> Self {
+        Object::Value(obj.__inner())
+    }
+}
 impl From<&str> for Object<StringValue> {
     fn from(s: &str) -> Self {
         Object::Value(StringValue(Rc::new(s.to_string())))
@@ -106,6 +117,15 @@ impl From<i64> for Object<NumberValue> {
 impl From<f64> for Object<NumberValue> {
     fn from(v: f64) -> Self {
         Object::Value(NumberValue(Number::Float(v)))
+    }
+}
+impl<T: Clone> From<Vec<Object<T>>> for Object<ListValue<T>> {
+    fn from(list: Vec<Object<T>>) -> Self {
+        let list = list
+            .into_iter()
+            .map(|v| Rc::new(UnsafeRefCell::new(v.__inner())))
+            .collect();
+        Object::Value(ListValue(Rc::new(UnsafeRefCell::new(list))))
     }
 }
 
@@ -125,10 +145,15 @@ impl From<NumberValue> for i64 {
 #[derive(PartialEq, Debug)]
 pub struct ListValue<T>(pub Rc<UnsafeRefCell<Vec<Rc<UnsafeRefCell<T>>>>>);
 
-impl<T: Debug + PartialEq> Value for ListValue<T> {}
+impl<T: Debug> Value for ListValue<T> {}
 impl<T> Clone for ListValue<T> {
     fn clone(&self) -> Self {
         Self(Rc::clone(&self.0))
+    }
+}
+impl<T> Default for ListValue<T> {
+    fn default() -> Self {
+        Self(Rc::new(UnsafeRefCell::new(vec![])))
     }
 }
 
@@ -153,7 +178,7 @@ impl BooleanValue {
 
 #[derive(PartialEq, Debug)]
 pub struct DictValue<K: Eq + Hash, V>(pub Rc<UnsafeRefCell<HashMap<K, Rc<UnsafeRefCell<V>>>>>);
-impl<K: Eq + Hash + Debug, V: Debug + PartialEq> Value for DictValue<K, V> {}
+impl<K: Eq + Hash + Debug, V: Debug> Value for DictValue<K, V> {}
 impl<K: Eq + Hash, V> Clone for DictValue<K, V> {
     fn clone(&self) -> Self {
         Self(Rc::clone(&self.0))

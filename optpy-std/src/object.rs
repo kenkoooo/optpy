@@ -27,10 +27,13 @@ impl Debug for Object {
     }
 }
 
-impl Object {
-    pub fn none() -> Object {
-        Object::Value(Value::none())
+impl Default for Object {
+    fn default() -> Self {
+        Object::Value(Value::None)
     }
+}
+
+impl Object {
     pub fn dict(pairs: Vec<(Object, Object)>) -> Object {
         let pairs = pairs
             .into_iter()
