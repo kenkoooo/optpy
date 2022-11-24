@@ -50,6 +50,11 @@ impl<T: Debug> Debug for UnsafeRefCell<T> {
         self.borrow().fmt(f)
     }
 }
+impl<T: PartialEq> PartialEq for UnsafeRefCell<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.borrow().eq(&other.borrow())
+    }
+}
 
 impl<T> UnsafeRefCell<T> {
     pub fn new(value: T) -> UnsafeRefCell<T> {

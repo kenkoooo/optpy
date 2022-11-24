@@ -35,7 +35,9 @@ pub fn python_function(tokens: TokenStream) -> TokenStream {
 
     let result = quote! {
         #[allow(unreachable_code)]
-        fn #function_name(#(#args: &optpy_std::Object),*) -> optpy_std::Object {
+        fn #function_name(#(#args: &optpy_std::object::Object),*) -> optpy_std::object::Object {
+            use optpy_std::object::*;
+            use optpy_std::builtin::*;
             use optpy_std::*;
             #code
 

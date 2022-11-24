@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{cell::UnsafeRefCell, number::Number, value::Value, Object};
+use crate::{cell::UnsafeRefCell, number::Number, object::Object, value::Value};
 
 fn rc_unsafe_ref_cell<T>(v: T) -> Rc<UnsafeRefCell<T>> {
     Rc::new(UnsafeRefCell::new(v))

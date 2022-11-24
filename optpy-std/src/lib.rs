@@ -21,13 +21,14 @@ pub const OPTPY_STD_STR: &str = concat!(
     "pub use object::*;"
 );
 
-mod builtin;
+pub mod builtin;
+pub mod typed_builtin;
+
+pub mod object;
+pub mod typed_object;
+
 mod cell;
 mod dict;
 mod macros;
 mod number;
-mod object;
 mod value;
-
-pub use builtin::*;
-pub use object::*;

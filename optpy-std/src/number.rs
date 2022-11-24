@@ -1,4 +1,3 @@
-
 use std::{
     hash::Hash,
     ops::{Add, Div, Mul, Rem, Sub},
@@ -8,6 +7,11 @@ use std::{
 pub enum Number {
     Int64(i64),
     Float(f64),
+}
+impl Default for Number {
+    fn default() -> Self {
+        Self::Int64(0)
+    }
 }
 impl Hash for Number {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -51,6 +55,12 @@ impl Number {
         match (self, rhs) {
             (Number::Int64(l0), Number::Int64(r0)) => Number::Int64(l0.pow(r0 as u32)),
             _ => todo!(),
+        }
+    }
+    pub fn __int(&self) -> i64 {
+        match self {
+            Number::Int64(i) => *i,
+            Number::Float(_) => unreachable!(),
         }
     }
 }

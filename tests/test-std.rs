@@ -1,4 +1,4 @@
-use optpy_std::Object;
+use optpy_std::object::Object;
 use optpy_test_macro::python_function;
 
 #[test]

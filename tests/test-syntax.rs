@@ -1,7 +1,5 @@
-use optpy_std::Object;
+use optpy_std::object::Object;
 use optpy_test_macro::python_function;
-
-type Value = optpy_std::Object;
 
 #[test]
 fn test_if_statement() {
@@ -14,11 +12,11 @@ def test(a, b):
         return "Odd"
     "#}
 
-    let result = test(&Value::from(3), &Value::from(4));
-    assert_eq!(result, Value::from("Even"));
+    let result = test(&Object::from(3), &Object::from(4));
+    assert_eq!(result, Object::from("Even"));
 
-    let result = test(&Value::from(3), &Value::from(5));
-    assert_eq!(result, Value::from("Odd"));
+    let result = test(&Object::from(3), &Object::from(5));
+    assert_eq!(result, Object::from("Odd"));
 }
 
 #[test]
@@ -32,11 +30,11 @@ def test(a, b, c):
         return "OUT"
     "#}
 
-    let result = test(&Value::from(3), &Value::from(4), &Value::from(5));
-    assert_eq!(result, Value::from("IN"));
+    let result = test(&Object::from(3), &Object::from(4), &Object::from(5));
+    assert_eq!(result, Object::from("IN"));
 
-    let result = test(&Value::from(3), &Value::from(5), &Value::from(4));
-    assert_eq!(result, Value::from("OUT"));
+    let result = test(&Object::from(3), &Object::from(5), &Object::from(4));
+    assert_eq!(result, Object::from("OUT"));
 }
 
 #[test]
@@ -47,12 +45,12 @@ def test(A):
     return A[0]
     "}
     assert_eq!(
-        test(&Value::from(vec![
-            Value::from(1),
-            Value::from(2),
-            Value::from(3)
+        test(&Object::from(vec![
+            Object::from(1),
+            Object::from(2),
+            Object::from(3)
         ])),
-        Value::from(2)
+        Object::from(2)
     );
 }
 
@@ -76,21 +74,21 @@ def solve(N, A):
 "}
 
     let result = solve(
-        &Value::from(3),
-        &Value::from(vec![Value::from(8), Value::from(12), Value::from(40)]),
+        &Object::from(3),
+        &Object::from(vec![Object::from(8), Object::from(12), Object::from(40)]),
     );
-    assert_eq!(result, Value::from(2));
+    assert_eq!(result, Object::from(2));
 
     let result = solve(
-        &Value::from(4),
-        &Value::from(vec![
-            Value::from(5),
-            Value::from(6),
-            Value::from(8),
-            Value::from(10),
+        &Object::from(4),
+        &Object::from(vec![
+            Object::from(5),
+            Object::from(6),
+            Object::from(8),
+            Object::from(10),
         ]),
     );
-    assert_eq!(result, Value::from(0));
+    assert_eq!(result, Object::from(0));
 }
 
 #[test]
@@ -103,11 +101,11 @@ def test(N):
     return ans
     "#}
 
-    let result = test(&Value::from(5));
-    assert_eq!(result, Value::from(10));
+    let result = test(&Object::from(5));
+    assert_eq!(result, Object::from(10));
 
-    let result = test(&Value::from(10));
-    assert_eq!(result, Value::from(45));
+    let result = test(&Object::from(10));
+    assert_eq!(result, Object::from(45));
 }
 
 #[test]
@@ -122,11 +120,11 @@ def test(n):
     return n
     "#}
 
-    assert_eq!(test(&Value::from(0)), Value::from(1));
-    assert_eq!(test(&Value::from(1)), Value::from(1));
-    assert_eq!(test(&Value::from(2)), Value::from(2));
-    assert_eq!(test(&Value::from(3)), Value::from(3));
-    assert_eq!(test(&Value::from(4)), Value::from(5));
+    assert_eq!(test(&Object::from(0)), Object::from(1));
+    assert_eq!(test(&Object::from(1)), Object::from(1));
+    assert_eq!(test(&Object::from(2)), Object::from(2));
+    assert_eq!(test(&Object::from(3)), Object::from(3));
+    assert_eq!(test(&Object::from(4)), Object::from(5));
 }
 
 #[test]
@@ -140,7 +138,7 @@ def test():
     "#}
     assert_eq!(
         test(),
-        Value::from(vec![Value::from("A"), Value::from("B")])
+        Object::from(vec![Object::from("A"), Object::from("B")])
     );
 }
 
@@ -157,9 +155,9 @@ def test():
 
     assert_eq!(
         test(),
-        Value::from(vec![
-            Value::from(vec![Value::from("B"), Value::from("A")]),
-            Value::from(vec![Value::from("D"), Value::from("C")])
+        Object::from(vec![
+            Object::from(vec![Object::from("B"), Object::from("A")]),
+            Object::from(vec![Object::from("D"), Object::from("C")])
         ])
     );
 }
@@ -172,7 +170,7 @@ def test():
     x[0] = x[0]
     return x[0]
     "#}
-    assert_eq!(test(), Value::from(0));
+    assert_eq!(test(), Object::from(0));
 }
 
 #[test]
@@ -183,7 +181,7 @@ def test():
     x.append(x.pop()+200)
     return x[0]
     "#}
-    assert_eq!(test(), Value::from(200));
+    assert_eq!(test(), Object::from(200));
 }
 
 #[test]
@@ -194,7 +192,7 @@ def test():
         x = i
     return x
     "#}
-    assert_eq!(test(), Value::from(2));
+    assert_eq!(test(), Object::from(2));
 }
 
 #[test]
@@ -208,7 +206,7 @@ def test_mutate_argument():
     return arr[0]
 "};
     let result = test_mutate_argument();
-    assert_eq!(result, Value::from(200));
+    assert_eq!(result, Object::from(200));
 }
 
 #[test]
@@ -224,11 +222,11 @@ def test_short_circuit_evaluation(N):
     else:
         return eval
     "#};
-    let result = test_short_circuit_evaluation(&Value::from(0));
-    assert_eq!(result, Value::from(vec![Value::from(1)]));
+    let result = test_short_circuit_evaluation(&Object::from(0));
+    assert_eq!(result, Object::from(vec![Object::from(1)]));
 
-    let result = test_short_circuit_evaluation(&Value::from(1));
-    assert_eq!(result, Value::from(vec![]));
+    let result = test_short_circuit_evaluation(&Object::from(1));
+    assert_eq!(result, Object::from(vec![]));
 }
 
 #[test]
@@ -245,7 +243,7 @@ def test_array_assignment():
     let result = test_array_assignment();
     assert_eq!(
         result,
-        Value::from(vec![Value::from(1), Value::from(2), Value::from(2)])
+        Object::from(vec![Object::from(1), Object::from(2), Object::from(2)])
     );
 }
 #[test]
@@ -260,7 +258,7 @@ def test_return_list_ref():
     "
     };
     let result = test_return_list_ref();
-    assert_eq!(result, Value::from(2));
+    assert_eq!(result, Object::from(2));
 }
 
 #[test]
@@ -276,7 +274,7 @@ def test():
 "#}
     assert_eq!(
         test(),
-        Value::from(vec![Value::from(0), Value::from(2), Value::from(4)])
+        Object::from(vec![Object::from(0), Object::from(2), Object::from(4)])
     );
 }
 
@@ -289,11 +287,11 @@ def test(N, M):
     "#}
 
     assert_eq!(
-        test(&Value::from(3), &Value::from(2)),
-        Value::from(vec![
-            Value::from(vec![Value::from(0), Value::from(0)]),
-            Value::from(vec![Value::from(0), Value::from(1)]),
-            Value::from(vec![Value::from(0), Value::from(2)])
+        test(&Object::from(3), &Object::from(2)),
+        Object::from(vec![
+            Object::from(vec![Object::from(0), Object::from(0)]),
+            Object::from(vec![Object::from(0), Object::from(1)]),
+            Object::from(vec![Object::from(0), Object::from(2)])
         ])
     );
 }
