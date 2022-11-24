@@ -1,6 +1,6 @@
 use std::{fmt::Debug, rc::Rc};
 
-use crate::{cell::UnsafeRefCell, number::Number, value::Value, OptpyValue};
+use crate::{cell::UnsafeRefCell, number::Number, value::Value};
 
 pub enum Object {
     Ref(Rc<UnsafeRefCell<Value>>),
@@ -48,6 +48,38 @@ impl Object {
             .collect();
         Object::Value(Value::dict(pairs))
     }
+
+    pub fn assign(&mut self, value: &Object) {
+        match (self, value) {
+            (Object::Ref(l), Object::Ref(r)) => l.borrow_mut().assign(&r.borrow()),
+            (Object::Ref(l), Object::Value(r)) => l.borrow_mut().assign(r),
+            (Object::Value(l), Object::Ref(r)) => l.assign(&r.borrow()),
+            (Object::Value(l), Object::Value(r)) => l.assign(r),
+        }
+    }
+
+    pub fn index(&self, index: &Object) -> Object {
+        let r = match (self, index) {
+            (Object::Ref(l), Object::Ref(r)) => l.borrow().index(&r.borrow()),
+            (Object::Ref(l), Object::Value(r)) => l.borrow().index(&r),
+            (Object::Value(l), Object::Ref(r)) => l.index(&r.borrow()),
+            (Object::Value(l), Object::Value(r)) => l.index(&r),
+        };
+        Object::Ref(r)
+    }
+    pub fn test(&self) -> bool {
+        match self {
+            Object::Ref(r) => r.borrow().test(),
+            Object::Value(v) => v.test(),
+        }
+    }
+
+    pub fn __number(&self) -> Number {
+        match self {
+            Object::Ref(r) => r.borrow().__number(),
+            Object::Value(v) => v.__number(),
+        }
+    }
 }
 
 fn map_1_0<F: Fn(&Value)>(obj: &Object, f: F) {
@@ -58,11 +90,16 @@ fn map_1_0<F: Fn(&Value)>(obj: &Object, f: F) {
 }
 macro_rules! impl_map_1_0 {
     ($name:ident) => {
-        fn $name(&self) {
-            map_1_0(self, Value::$name);
+        impl Object {
+            pub fn $name(&self) {
+                map_1_0(self, Value::$name);
+            }
         }
     };
 }
+impl_map_1_0!(sort);
+impl_map_1_0!(reverse);
+
 fn map_1_1<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
     let value = match obj {
         Object::Ref(r) => f(&r.borrow()),
@@ -73,11 +110,22 @@ fn map_1_1<F: Fn(&Value) -> Value>(obj: &Object, f: F) -> Object {
 
 macro_rules! impl_map_1_1 {
     ($name:ident) => {
-        fn $name(&self) -> Object {
-            map_1_1(self, Value::$name)
+        impl Object {
+            pub fn $name(&self) -> Object {
+                map_1_1(self, Value::$name)
+            }
         }
     };
 }
+impl_map_1_1!(__shallow_copy);
+impl_map_1_1!(split);
+impl_map_1_1!(pop);
+impl_map_1_1!(strip);
+impl_map_1_1!(__unary_add);
+impl_map_1_1!(__unary_sub);
+impl_map_1_1!(__unary_not);
+impl_map_1_1!(__len);
+
 fn map_2_1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -> Object {
     let value = match (obj1, obj2) {
         (Object::Ref(l), Object::Ref(r)) => f(&l.borrow(), &r.borrow()),
@@ -90,12 +138,32 @@ fn map_2_1<F: Fn(&Value, &Value) -> Value>(obj1: &Object, obj2: &Object, f: F) -
 
 macro_rules! impl_map_2_1 {
     ($name:ident) => {
-        fn $name<T: OptpyValue>(&self, value: &T) -> Object {
-            let value = value.__object();
-            map_2_1(self, value, Value::$name)
+        impl Object {
+            pub fn $name(&self, value: &Object) -> Object {
+                map_2_1(self, value, Value::$name)
+            }
         }
     };
 }
+
+impl_map_2_1!(__floor_div);
+impl_map_2_1!(count);
+impl_map_2_1!(__add);
+impl_map_2_1!(__sub);
+impl_map_2_1!(__mul);
+impl_map_2_1!(__rem);
+impl_map_2_1!(__div);
+impl_map_2_1!(__pow);
+impl_map_2_1!(__gt);
+impl_map_2_1!(__ge);
+impl_map_2_1!(__lt);
+impl_map_2_1!(__le);
+impl_map_2_1!(__eq);
+impl_map_2_1!(__ne);
+impl_map_2_1!(__in);
+impl_map_2_1!(__not_in);
+impl_map_2_1!(__bit_and);
+
 fn map_2_0<F: Fn(&Value, &Value)>(obj1: &Object, obj2: &Object, f: F) {
     match (obj1, obj2) {
         (Object::Ref(obj1), Object::Ref(obj2)) => f(&obj1.borrow(), &obj2.borrow()),
@@ -107,83 +175,16 @@ fn map_2_0<F: Fn(&Value, &Value)>(obj1: &Object, obj2: &Object, f: F) {
 
 macro_rules! impl_map_2_0 {
     ($name:ident) => {
-        fn $name<T: OptpyValue>(&self, obj: &T) {
-            let obj = obj.__object();
-            map_2_0(self, obj, Value::$name)
+        impl Object {
+            pub fn $name(&self, obj: &Object) {
+                map_2_0(self, obj, Value::$name)
+            }
         }
     };
 }
-impl OptpyValue for Object {
-    fn assign<T: OptpyValue>(&mut self, value: &T) {
-        let value = value.__object();
-        match (self, value) {
-            (Object::Ref(l), Object::Ref(r)) => l.borrow_mut().assign(&r.borrow()),
-            (Object::Ref(l), Object::Value(r)) => l.borrow_mut().assign(r),
-            (Object::Value(l), Object::Ref(r)) => l.assign(&r.borrow()),
-            (Object::Value(l), Object::Value(r)) => l.assign(r),
-        }
-    }
-
-    fn index<T: OptpyValue>(&self, index: &T) -> Object {
-        let index = index.__object();
-        let r = match (self, index) {
-            (Object::Ref(l), Object::Ref(r)) => l.borrow().index(&r.borrow()),
-            (Object::Ref(l), Object::Value(r)) => l.borrow().index(&r),
-            (Object::Value(l), Object::Ref(r)) => l.index(&r.borrow()),
-            (Object::Value(l), Object::Value(r)) => l.index(&r),
-        };
-        Object::Ref(r)
-    }
-    fn test(&self) -> bool {
-        match self {
-            Object::Ref(r) => r.borrow().test(),
-            Object::Value(v) => v.test(),
-        }
-    }
-
-    fn __number(&self) -> Number {
-        match self {
-            Object::Ref(r) => r.borrow().__number(),
-            Object::Value(v) => v.__number(),
-        }
-    }
-    fn __object(&self) -> &Object {
-        self
-    }
-    impl_map_1_0!(sort);
-    impl_map_1_0!(reverse);
-
-    impl_map_1_1!(__shallow_copy);
-    impl_map_1_1!(split);
-    impl_map_1_1!(pop);
-    impl_map_1_1!(strip);
-    impl_map_1_1!(__unary_add);
-    impl_map_1_1!(__unary_sub);
-    impl_map_1_1!(__unary_not);
-    impl_map_1_1!(__len);
-
-    impl_map_2_1!(__floor_div);
-    impl_map_2_1!(count);
-    impl_map_2_1!(__add);
-    impl_map_2_1!(__sub);
-    impl_map_2_1!(__mul);
-    impl_map_2_1!(__rem);
-    impl_map_2_1!(__div);
-    impl_map_2_1!(__pow);
-    impl_map_2_1!(__gt);
-    impl_map_2_1!(__ge);
-    impl_map_2_1!(__lt);
-    impl_map_2_1!(__le);
-    impl_map_2_1!(__eq);
-    impl_map_2_1!(__ne);
-    impl_map_2_1!(__in);
-    impl_map_2_1!(__not_in);
-    impl_map_2_1!(__bit_and);
-
-    impl_map_2_0!(append);
-    impl_map_2_0!(add);
-    impl_map_2_0!(__delete);
-}
+impl_map_2_0!(append);
+impl_map_2_0!(add);
+impl_map_2_0!(__delete);
 
 macro_rules! impl_from {
     ($t:ty) => {
@@ -199,12 +200,11 @@ impl_from!(i64);
 impl_from!(f64);
 impl_from!(bool);
 
-impl<T: OptpyValue> From<&T> for Object {
-    fn from(v: &T) -> Self {
-        v.__object().__shallow_copy()
+impl From<&Object> for Object {
+    fn from(obj: &Object) -> Self {
+        obj.__shallow_copy()
     }
 }
-
 impl From<Vec<Object>> for Object {
     fn from(list: Vec<Object>) -> Self {
         let list = list
