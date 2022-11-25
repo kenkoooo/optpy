@@ -24,3 +24,38 @@ def test(a, b):
     let result = test(&Object::from(3), &Object::from(5));
     assert_typed_eq!(result, Object::from("Odd"));
 }
+
+#[test]
+fn test_multiple_if_conditions() {
+    typed_python_function! {r#"
+def test(a, b, c):
+    ans = a * b
+    if a <= b < c:
+        return "IN"
+    else:
+        return "OUT"
+    "#}
+
+    let result = test(&Object::from(3), &Object::from(4), &Object::from(5));
+    assert_typed_eq!(result, Object::from("IN"));
+
+    let result = test(&Object::from(3), &Object::from(5), &Object::from(4));
+    assert_typed_eq!(result, Object::from("OUT"));
+}
+
+#[test]
+fn test_list_add_assign() {
+    typed_python_function! {r"
+def test(A):
+    A[0] += 1
+    return A[0]
+    "}
+    assert_typed_eq!(
+        test(&Object::from(vec![
+            Object::from(1),
+            Object::from(2),
+            Object::from(3)
+        ])),
+        Object::from(2)
+    );
+}

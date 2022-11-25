@@ -4,8 +4,8 @@ use crate::{
     cell::UnsafeRefCell,
     number::Number,
     typed_object::{
-        AddValue, BooleanValue, DictValue, Length, ListValue, NoneValue, NumberValue, Object,
-        StringValue, Value,
+        AddValue, BooleanValue, DictValue, ListValue, NoneValue, NumberValue, Object, StringValue,
+        Value,
     },
 };
 
@@ -57,14 +57,14 @@ pub fn input() -> Object<StringValue> {
 pub fn int<T>(value: &Object<T>) -> Object<NumberValue>
 where
     i64: From<T>,
-    T: Clone,
+    T: Value,
 {
     Object::Value(NumberValue(Number::Int64(i64::from(value.__inner()))))
 }
 pub fn map_int<T>(value: &Object<ListValue<T>>) -> Object<ListValue<NumberValue>>
 where
     i64: From<T>,
-    T: Clone,
+    T: Value,
 {
     let list = value
         .__inner()
@@ -80,7 +80,7 @@ where
     Object::Value(ListValue(Rc::new(UnsafeRefCell::new(list))))
 }
 
-pub fn __min1<T: PartialOrd + Clone>(list: &Object<ListValue<T>>) -> Object<T> {
+pub fn __min1<T: PartialOrd + Value>(list: &Object<ListValue<T>>) -> Object<T> {
     let min = list
         .__inner()
         .0
@@ -101,7 +101,7 @@ pub fn __min2<T: PartialOrd + Clone>(a: &Object<T>, b: &Object<T>) -> Object<T> 
     }
 }
 
-pub fn __max1<T: PartialOrd + Clone>(list: &Object<ListValue<T>>) -> Object<T> {
+pub fn __max1<T: PartialOrd + Value>(list: &Object<ListValue<T>>) -> Object<T> {
     let max = list
         .__inner()
         .0
@@ -139,7 +139,7 @@ where
     a.__add(b)
 }
 
-pub fn sorted<T: PartialOrd>(list: &Object<ListValue<T>>) -> Object<ListValue<T>> {
+pub fn sorted<T: Value + PartialOrd>(list: &Object<ListValue<T>>) -> Object<ListValue<T>> {
     list.__inner()
         .0
         .borrow_mut()
@@ -147,12 +147,6 @@ pub fn sorted<T: PartialOrd>(list: &Object<ListValue<T>>) -> Object<ListValue<T>
     list.clone()
 }
 
-pub fn len<T>(obj: &Object<T>) -> Object<NumberValue>
-where
-    Object<T>: Length,
-{
-    obj.__len()
-}
 pub fn any<T>(list: &Object<ListValue<BooleanValue>>) -> Object<BooleanValue> {
     let result = list.__inner().0.borrow().iter().any(|v| v.borrow().test());
     Object::Value(BooleanValue(result))
