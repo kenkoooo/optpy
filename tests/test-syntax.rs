@@ -376,3 +376,21 @@ def test(b):
     assert_eq!(test(&Object::from("a")), Object::from(false));
     assert_eq!(test(&Object::from(1)), Object::from(true));
 }
+
+#[test]
+#[ignore = r"
+This test is to reproduce a bug reported in the following:
+https://github.com/kenkoooo/optpy/issues/100"]
+fn test_index_eval_edge_case() {
+    python_function! {r"
+def test():
+    def f(x):
+        x[0] = 200
+        return 0
+
+    x = [0]
+    return x[0]+f(x)
+    "}
+
+    assert_eq!(test(), Object::from(0));
+}
