@@ -1,4 +1,3 @@
-
 use std::{
     hash::Hash,
     ops::{Add, Div, Mul, Rem, Sub},
@@ -51,6 +50,12 @@ impl Number {
         match (self, rhs) {
             (Number::Int64(l0), Number::Int64(r0)) => Number::Int64(l0.pow(r0 as u32)),
             _ => todo!(),
+        }
+    }
+    pub fn abs(&self) -> Number {
+        match self {
+            Number::Int64(i) => Number::Int64(i.abs()),
+            Number::Float(f) => Number::Float(f.abs()),
         }
     }
 }

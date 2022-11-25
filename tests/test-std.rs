@@ -561,3 +561,13 @@ def test():
         ])
     );
 }
+
+#[test]
+fn test_abs() {
+    python_function! {r"
+def test(a):
+    return abs(a)"}
+    assert_eq!(test(&Value::from(1)), Value::from(1));
+    assert_eq!(test(&Value::from(-1)), Value::from(1));
+    assert_eq!(test(&Value::from(1.5)), Value::from(1.5));
+}
