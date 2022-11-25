@@ -381,6 +381,11 @@ impl From<bool> for Value {
         Value::Boolean(b)
     }
 }
+impl From<&Value> for Value {
+    fn from(v: &Value) -> Self {
+        v.__shallow_copy()
+    }
+}
 impl ToString for Value {
     fn to_string(&self) -> String {
         match self {

@@ -1,7 +1,5 @@
-use optpy_std::Object;
+use optpy_std::Value;
 use optpy_test_macro::python_function;
-
-type Value = optpy_std::Object;
 
 #[test]
 fn test_if_statement() {
@@ -310,7 +308,7 @@ def test():
 "}
     assert_eq!(
         test(),
-        Object::from(vec![Object::from(3), Object::from(3), Object::from(3)])
+        Value::from(vec![Value::from(3), Value::from(3), Value::from(3)])
     );
 }
 
@@ -352,7 +350,7 @@ def test():
     a = None
     return a"
     }
-    assert_eq!(test(), Object::none());
+    assert_eq!(test(), Value::none());
 }
 
 #[test]
@@ -364,7 +362,7 @@ def test():
     del a
     return a"
     }
-    assert_eq!(test(), Object::none());
+    assert_eq!(test(), Value::none());
 }
 
 #[test]
@@ -373,14 +371,11 @@ fn test_set() {
 def test(b):
     a = {b}
     return 1 in a"}
-    assert_eq!(test(&Object::from("a")), Object::from(false));
-    assert_eq!(test(&Object::from(1)), Object::from(true));
+    assert_eq!(test(&Value::from("a")), Value::from(false));
+    assert_eq!(test(&Value::from(1)), Value::from(true));
 }
 
 #[test]
-#[ignore = r"
-This test is to reproduce a bug reported in the following:
-https://github.com/kenkoooo/optpy/issues/100"]
 fn test_index_eval_edge_case() {
     python_function! {r"
 def test():
@@ -392,5 +387,5 @@ def test():
     return x[0]+f(x)
     "}
 
-    assert_eq!(test(), Object::from(0));
+    assert_eq!(test(), Value::from(0));
 }
