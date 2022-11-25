@@ -225,3 +225,10 @@ pub fn __set0() -> Value {
 pub fn dict() -> Value {
     Value::Dict(rc_unsafe_ref_cell(HashMap::new()))
 }
+
+pub fn abs(v: &Value) -> Value {
+    match v {
+        Value::Number(n) => Value::Number(n.abs()),
+        _ => unreachable!(),
+    }
+}
