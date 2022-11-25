@@ -1,6 +1,10 @@
 use std::{fmt::Debug, rc::Rc};
 
-use crate::{cell::UnsafeRefCell, number::Number, value::Value};
+use crate::{
+    cell::{UnsafeRefCell, UnsafeRefMut},
+    number::Number,
+    value::Value,
+};
 
 pub enum Object {
     Ref(Rc<UnsafeRefCell<Value>>),
@@ -58,14 +62,23 @@ impl Object {
         }
     }
 
-    pub fn index(&self, index: &Object) -> Object {
+    pub fn index_ref(&self, index: &Object) -> ObjectRef {
         let r = match (self, index) {
-            (Object::Ref(l), Object::Ref(r)) => l.borrow().index(&r.borrow()),
-            (Object::Ref(l), Object::Value(r)) => l.borrow().index(&r),
-            (Object::Value(l), Object::Ref(r)) => l.index(&r.borrow()),
-            (Object::Value(l), Object::Value(r)) => l.index(&r),
+            (Object::Ref(l), Object::Ref(r)) => l.borrow().index_ref(&r.borrow()),
+            (Object::Ref(l), Object::Value(r)) => l.borrow().index_ref(&r),
+            (Object::Value(l), Object::Ref(r)) => l.index_ref(&r.borrow()),
+            (Object::Value(l), Object::Value(r)) => l.index_ref(&r),
         };
-        Object::Ref(r)
+        ObjectRef(r)
+    }
+    pub fn index_value(&self, index: &Object) -> Object {
+        let value = match (self, index) {
+            (Object::Ref(l), Object::Ref(r)) => l.borrow().index_value(&r.borrow()),
+            (Object::Ref(l), Object::Value(r)) => l.borrow().index_value(&r),
+            (Object::Value(l), Object::Ref(r)) => l.index_value(&r.borrow()),
+            (Object::Value(l), Object::Value(r)) => l.index_value(&r),
+        };
+        Object::Value(value)
     }
     pub fn test(&self) -> bool {
         match self {
@@ -79,6 +92,24 @@ impl Object {
             Object::Ref(r) => r.borrow().__number(),
             Object::Value(v) => v.__number(),
         }
+    }
+}
+
+pub struct ObjectRef(UnsafeRefMut<Value>);
+impl ObjectRef {
+    pub fn assign(&mut self, value: &Object) {
+        match value {
+            Object::Ref(_) => todo!(),
+            Object::Value(v) => self.0.assign(v),
+        }
+    }
+
+    pub fn index_ref(&self, index: &Object) -> ObjectRef {
+        let r = match index {
+            Object::Ref(_) => todo!(),
+            Object::Value(v) => self.0.index_ref(v),
+        };
+        ObjectRef(r)
     }
 }
 

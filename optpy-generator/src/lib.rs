@@ -47,20 +47,20 @@ fn format_statement(
 ) -> TokenStream {
     match statement {
         Statement::Assign(Assign { target, value }) => {
-            let target = format_expr(target);
-            let value = format_expr(value);
+            let target = format_expr(target, true);
+            let value = format_expr(value, false);
             quote! {
                 #target.assign(& #value);
             }
         }
         Statement::Expression(expr) => {
-            let value = format_expr(expr);
+            let value = format_expr(expr, false);
             quote! {
                 #value;
             }
         }
         Statement::If(If { test, body, orelse }) => {
-            let test = format_expr(test);
+            let test = format_expr(test, false);
             let body = body
                 .iter()
                 .map(|s| format_statement(s, definitions))
@@ -94,7 +94,7 @@ fn format_statement(
         }
         Statement::Return(value) => match value {
             Some(value) => {
-                let value = format_expr(value);
+                let value = format_expr(value, false);
                 quote! {
                     return Object::from(#value);
                 }
@@ -106,7 +106,7 @@ fn format_statement(
             }
         },
         Statement::While(While { test, body }) => {
-            let test = format_expr(test);
+            let test = format_expr(test, false);
             let body = body
                 .iter()
                 .map(|s| format_statement(s, definitions))
@@ -122,7 +122,7 @@ fn format_statement(
     }
 }
 
-fn format_expr(expr: &Expr) -> TokenStream {
+fn format_expr(expr: &Expr, assign_lhs: bool) -> TokenStream {
     match expr {
         Expr::CallFunction(CallFunction { name, args }) => {
             let args = format_exprs(args);
@@ -139,7 +139,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
             }
         }
         Expr::CallMethod(CallMethod { value, name, args }) => {
-            let value = format_expr(value);
+            let value = format_expr(value, false);
             let name = format_ident!("{}", name);
             let args = format_exprs(args);
             quote! {
@@ -172,14 +172,14 @@ fn format_expr(expr: &Expr) -> TokenStream {
             quote! { Object::from(#result) }
         }
         Expr::Compare(Compare { left, right, op }) => {
-            let left = format_expr(left);
-            let right = format_expr(right);
+            let left = format_expr(left, false);
+            let right = format_expr(right, false);
             let op = format_compare_ident(op);
             quote! { #left . #op (&#right) }
         }
         Expr::BinaryOperation(BinaryOperation { left, right, op }) => {
-            let left = format_expr(left);
-            let right = format_expr(right);
+            let left = format_expr(left, false);
+            let right = format_expr(right, false);
             let op = format_binary_ident(op);
             quote! { #left . #op (&#right) }
         }
@@ -190,10 +190,16 @@ fn format_expr(expr: &Expr) -> TokenStream {
             }
         }
         Expr::Index(Index { value, index }) => {
-            let value = format_expr(value);
-            let index = format_expr(index);
-            quote! {
-                #value .index(& #index )
+            let value = format_expr(value, assign_lhs);
+            let index = format_expr(index, false);
+            if assign_lhs {
+                quote! {
+                    #value .index_ref(& #index )
+                }
+            } else {
+                quote! {
+                    #value .index_value(& #index )
+                }
             }
         }
         Expr::List(list) => {
@@ -206,8 +212,8 @@ fn format_expr(expr: &Expr) -> TokenStream {
             let pairs = pairs
                 .iter()
                 .map(|(key, value)| {
-                    let key = format_expr(key);
-                    let value = format_expr(value);
+                    let key = format_expr(key, false);
+                    let value = format_expr(value, false);
                     quote! {
                         (Object::from(&#key), Object::from(&#value))
                     }
@@ -234,7 +240,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
             }
         }
         Expr::UnaryOperation(UnaryOperation { value, op }) => {
-            let value = format_expr(value);
+            let value = format_expr(value, false);
             let op = format_unary_ident(op);
             quote! {
                 #value . #op ()
@@ -244,7 +250,7 @@ fn format_expr(expr: &Expr) -> TokenStream {
 }
 
 fn format_exprs(exprs: &[Expr]) -> Vec<TokenStream> {
-    exprs.iter().map(|e| format_expr(e)).collect()
+    exprs.iter().map(|e| format_expr(e, false)).collect()
 }
 
 fn format_boolean_operation(op: &BoolOperator) -> TokenStream {
