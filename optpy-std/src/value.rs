@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Mul, rc::Rc};
 
-use crate::{dict::DictKey, number::Number};
+use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number};
 
 type RefCell<T> = crate::cell::UnsafeRefCell<T>;
 
@@ -183,14 +183,14 @@ impl Value {
         }
     }
 
-    pub fn index(&self, index: &Value) -> Rc<RefCell<Value>> {
+    pub fn index_ref(&self, index: &Value) -> UnsafeRefMut<Value> {
         match (self, index) {
             (Value::List(list), Value::Number(Number::Int64(i))) => {
                 if *i < 0 {
                     let i = list.borrow().len() as i64 + *i;
-                    list.borrow_mut()[i as usize].clone()
+                    list.borrow_mut()[i as usize].borrow_mut()
                 } else {
-                    list.borrow_mut()[*i as usize].clone()
+                    list.borrow_mut()[*i as usize].borrow_mut()
                 }
             }
             (Value::Dict(dict), _) => {
@@ -198,6 +198,27 @@ impl Value {
                 dict.borrow_mut()
                     .entry(key)
                     .or_insert_with(|| Rc::new(RefCell::new(Value::none())))
+                    .borrow_mut()
+            }
+            _ => todo!(),
+        }
+    }
+    pub fn index_value(&self, index: &Value) -> Value {
+        match (self, index) {
+            (Value::List(list), Value::Number(Number::Int64(i))) => {
+                if *i < 0 {
+                    let i = list.borrow().len() as i64 + *i;
+                    list.borrow_mut()[i as usize].borrow().clone()
+                } else {
+                    list.borrow_mut()[*i as usize].borrow().clone()
+                }
+            }
+            (Value::Dict(dict), _) => {
+                let key = index.__as_dict_key();
+                dict.borrow_mut()
+                    .entry(key)
+                    .or_insert_with(|| Rc::new(RefCell::new(Value::none())))
+                    .borrow()
                     .clone()
             }
             _ => todo!(),
