@@ -1,5 +1,6 @@
-use optpy_std::Object;
 use optpy_test_macro::python_function;
+
+type Object = optpy_std::Value;
 
 #[test]
 fn test_sorted() {
