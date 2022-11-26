@@ -1002,11 +1002,19 @@ dependencies = [
  "clap",
  "env_logger",
  "log",
+ "optpy-dump",
  "optpy-generator",
  "optpy-parser",
  "optpy-resolver",
  "optpy-runtime",
  "optpy-test-macro",
+]
+
+[[package]]
+name = "optpy-dump"
+version = "0.1.0"
+dependencies = [
+ "optpy-parser",
 ]
 
 [[package]]

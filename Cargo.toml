@@ -14,6 +14,7 @@ optpy-parser = { path = "./optpy-parser" }
 optpy-resolver = { path = "./optpy-resolver" }
 optpy-generator = { path = "./optpy-generator" }
 optpy-runtime = { path = "./optpy-runtime" }
+optpy-dump = { path = "./optpy-dump" }
 
 [dev-dependencies]
 optpy-test-macro = { path = "./optpy-test-macro" }
@@ -25,5 +26,6 @@ members = [
     "optpy-runtime",
     "optpy-generator",
     "optpy-test-macro",
+    "optpy-dump",
     "tools/source-code-downloader",
 ]

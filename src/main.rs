@@ -5,7 +5,8 @@ use std::{
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use optpy::{compile, dump::DumpPython};
+use optpy::compile;
+use optpy_dump::DumpPython;
 use optpy_parser::parse;
 use optpy_resolver::resolve;
 
