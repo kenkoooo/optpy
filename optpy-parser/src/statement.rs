@@ -15,6 +15,7 @@ pub enum Statement {
     While(While<Statement, Expr>),
     Break,
     Continue,
+    Import(Import),
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 
@@ -48,6 +49,12 @@ pub struct For<S, E> {
     pub(crate) target: E,
     pub(crate) iter: E,
     pub(crate) body: Vec<S>,
+}
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+
+pub struct Import {
+    pub import: String,
+    pub alias: String,
 }
 
 impl RawStmt<RawExpr> {
@@ -160,6 +167,42 @@ impl RawStmt<RawExpr> {
                     }
                 })
                 .collect(),
+            StmtKind::ImportFrom {
+                module,
+                names,
+                level: _,
+            } => {
+                let mut statements = vec![];
+                for name in names {
+                    let import_name = name.node.name.clone();
+                    let alias = name
+                        .node
+                        .asname
+                        .as_ref()
+                        .map(|alias| alias.clone())
+                        .unwrap_or_else(|| import_name.clone());
+                    let import = match module {
+                        Some(from) => format!("{from}.{import_name}"),
+                        None => import_name,
+                    };
+                    statements.push(RawStmt::Import(Import { import, alias }))
+                }
+                statements
+            }
+            StmtKind::Import { names } => {
+                let mut statements = vec![];
+                for name in names {
+                    let import = name.node.name.clone();
+                    let alias = name
+                        .node
+                        .asname
+                        .as_ref()
+                        .map(|alias| alias.clone())
+                        .unwrap_or_else(|| import.clone());
+                    statements.push(RawStmt::Import(Import { import, alias }))
+                }
+                statements
+            }
             statement => todo!("{:?}", statement),
         }
     }
@@ -183,4 +226,5 @@ pub(crate) enum RawStmt<E> {
     Break,
     Continue,
     For(For<RawStmt<E>, E>),
+    Import(Import),
 }

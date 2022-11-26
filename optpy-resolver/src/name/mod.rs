@@ -43,7 +43,8 @@ fn collect_declarations(
             Statement::Return(_)
             | Statement::Expression(_)
             | Statement::Break
-            | Statement::Continue => continue,
+            | Statement::Continue
+            | Statement::Import(_) => continue,
         }
     }
 }
@@ -106,8 +107,7 @@ fn resolve_statements(
                 let body = resolve_statements(body, variables, functions, ctx);
                 Statement::While(While { test, body })
             }
-            Statement::Break => Statement::Break,
-            Statement::Continue => Statement::Continue,
+            Statement::Break | Statement::Continue | Statement::Import(_) => s.clone(),
         })
         .collect()
 }

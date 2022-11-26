@@ -3,7 +3,7 @@ use crate::{
     hash,
     statement::{Assign, RawStmt},
     BinaryOperation, BoolOperation, BoolOperator, CallFunction, CallMethod, Compare, Expr, For,
-    Func, If, Index, UnaryOperation, While,
+    Func, If, Import, Index, UnaryOperation, While,
 };
 
 pub(crate) fn simplify_list_comprehensions(stmts: Vec<RawStmt<RawExpr>>) -> Vec<RawStmt<Expr>> {
@@ -58,6 +58,9 @@ fn stmt(stmt: RawStmt<RawExpr>) -> Vec<RawStmt<Expr>> {
             let body = simplify_list_comprehensions(body);
             s.push(RawStmt::For(For { target, iter, body }));
             s
+        }
+        RawStmt::Import(Import { import, alias }) => {
+            vec![RawStmt::Import(Import { import, alias })]
         }
     }
 }

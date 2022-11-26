@@ -1,6 +1,6 @@
 use optpy_parser::{
     Assign, BinaryOperation, BoolOperation, CallFunction, CallMethod, Compare, Dict, Expr, Func,
-    If, Index, Number, Statement, UnaryOperation, While,
+    If, Import, Index, Number, Statement, UnaryOperation, While,
 };
 
 pub trait DumpPython {
@@ -40,6 +40,9 @@ impl DumpPython for Statement {
             }
             Statement::Break => "break".into(),
             Statement::Continue => "continue".into(),
+            Statement::Import(Import { import, alias }) => {
+                format!("import {import} as {alias}")
+            }
         }
     }
 }

@@ -66,8 +66,7 @@ fn resolve_statement(
             let body = resolve_statements(body, extensions);
             Statement::While(While { test, body })
         }
-        Statement::Break => Statement::Break,
-        Statement::Continue => Statement::Continue,
+        Statement::Break | Statement::Continue | Statement::Import(_) => statement.clone(),
     }
 }
 
@@ -221,7 +220,8 @@ fn collect_extension(
             | Statement::Continue
             | Statement::Assign(_)
             | Statement::Expression(_)
-            | Statement::Return(_) => {}
+            | Statement::Return(_)
+            | Statement::Import(_) => {}
         }
     }
 }
@@ -260,7 +260,7 @@ fn list_variable_contexts(
                 list_from_expr(test, function_name, store);
                 list_variable_contexts(body, function_name, store);
             }
-            Statement::Break | Statement::Continue => {}
+            Statement::Break | Statement::Continue | Statement::Import(_) => {}
         }
     }
 }
