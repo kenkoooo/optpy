@@ -1,5 +1,3 @@
-pub mod dump;
-
 use anyhow::Result;
 use optpy_generator::generate_code;
 use optpy_parser::parse;
