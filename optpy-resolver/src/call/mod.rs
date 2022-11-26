@@ -1,4 +1,3 @@
-mod functiontree;
 mod referencestore;
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -8,32 +7,13 @@ use optpy_parser::{
     If, Index, Statement, UnaryOperation, While,
 };
 
-use self::{functiontree::FunctionTree, referencestore::ReferenceStore};
+use self::referencestore::ReferenceStore;
 
 pub(super) fn resolve_function_calls(
     statements: &[Statement],
 ) -> (Vec<Statement>, BTreeMap<String, BTreeSet<String>>) {
     let mut store = ReferenceStore::default();
-    let mut tree = FunctionTree::default();
-    list_variable_contexts(statements, "$", &mut store, &mut tree);
-
-    let variables = store.list_variables();
-    for variable in variables {
-        let functions = store.list_by_variable(&variable);
-        for function in functions.iter() {
-            let mut path = tree.path(function);
-            while let Some(top) = path.pop() {
-                if functions.contains(&top) {
-                    path.push(top);
-                    break;
-                }
-            }
-
-            for function in path {
-                store.record(&variable, &function);
-            }
-        }
-    }
+    list_variable_contexts(statements, "$", &mut store);
 
     let mut definitions = BTreeMap::new();
     let mut extensions = BTreeMap::new();
@@ -250,7 +230,6 @@ fn list_variable_contexts(
     statements: &[Statement],
     function_name: &str,
     store: &mut ReferenceStore,
-    tree: &mut FunctionTree,
 ) {
     for statement in statements {
         match statement {
@@ -268,19 +247,18 @@ fn list_variable_contexts(
             }
             Statement::If(If { test, body, orelse }) => {
                 list_from_expr(test, function_name, store);
-                list_variable_contexts(body, function_name, store, tree);
-                list_variable_contexts(orelse, function_name, store, tree);
+                list_variable_contexts(body, function_name, store);
+                list_variable_contexts(orelse, function_name, store);
             }
             Statement::Func(Func { name, args, body }) => {
-                tree.add_edge(function_name, &name);
-                list_variable_contexts(body, name, store, tree);
+                list_variable_contexts(body, name, store);
                 for arg in args {
                     store.record(arg, name);
                 }
             }
             Statement::While(While { test, body }) => {
                 list_from_expr(test, function_name, store);
-                list_variable_contexts(body, function_name, store, tree);
+                list_variable_contexts(body, function_name, store);
             }
             Statement::Break | Statement::Continue => {}
         }

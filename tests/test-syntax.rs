@@ -389,3 +389,18 @@ def test():
 
     assert_eq!(test(), Value::from(0));
 }
+
+#[test]
+fn test_sibling_function_resolve() {
+    python_function! {r"
+def test():
+    N = 2
+    def f1():
+        return N + 1
+    def f2():
+        return f1()
+    return f2()
+"}
+
+    assert_eq!(test(), Value::from(3));
+}
