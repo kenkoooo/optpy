@@ -34,8 +34,7 @@ impl StatementResolve for Statement {
                 test: test.resolve(),
                 body: body.resolve(),
             }),
-            Statement::Break => Statement::Break,
-            Statement::Continue => Statement::Continue,
+            Statement::Import(_) | Statement::Break | Statement::Continue => self.clone(),
         }
     }
 }

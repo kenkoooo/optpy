@@ -1,8 +1,8 @@
 use crate::{
     hash,
     statement::{Assign, RawStmt},
-    CallFunction, CallMethod, Compare, CompareOperator, Expr, For, Func, If, Number, Statement,
-    While,
+    CallFunction, CallMethod, Compare, CompareOperator, Expr, For, Func, If, Import, Number,
+    Statement, While,
 };
 
 pub(crate) fn simplify_for_loops(stmts: Vec<RawStmt<Expr>>) -> Vec<Statement> {
@@ -70,6 +70,9 @@ fn simplify_statement(stmt: RawStmt<Expr>) -> Vec<Statement> {
                     body: while_body,
                 }),
             ]
+        }
+        RawStmt::Import(Import { import, alias }) => {
+            vec![Statement::Import(Import { import, alias })]
         }
     }
 }
