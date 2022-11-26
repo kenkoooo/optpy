@@ -4,7 +4,7 @@ use anyhow::Result;
 use optpy_generator::generate_code;
 use optpy_parser::parse;
 use optpy_resolver::resolve;
-use optpy_std::OPTPY_STD_STR;
+use optpy_runtime::OPTPY_STD_STR;
 
 pub fn compile<S: AsRef<str>>(code: S) -> Result<String> {
     let ast = parse(code)?;

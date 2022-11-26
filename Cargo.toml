@@ -13,7 +13,7 @@ log = "0.4"
 optpy-parser = { path = "./optpy-parser" }
 optpy-resolver = { path = "./optpy-resolver" }
 optpy-generator = { path = "./optpy-generator" }
-optpy-std = { path = "./optpy-std" }
+optpy-runtime = { path = "./optpy-runtime" }
 
 [dev-dependencies]
 optpy-test-macro = { path = "./optpy-test-macro" }
@@ -22,7 +22,7 @@ optpy-test-macro = { path = "./optpy-test-macro" }
 members = [
     "optpy-parser",
     "optpy-resolver",
-    "optpy-std",
+    "optpy-runtime",
     "optpy-generator",
     "optpy-test-macro",
     "tools/source-code-downloader",
