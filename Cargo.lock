@@ -1005,7 +1005,7 @@ dependencies = [
  "optpy-generator",
  "optpy-parser",
  "optpy-resolver",
- "optpy-std",
+ "optpy-runtime",
  "optpy-test-macro",
 ]
 
@@ -1033,7 +1033,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "optpy-std"
+name = "optpy-runtime"
 version = "0.1.0"
 
 [[package]]
