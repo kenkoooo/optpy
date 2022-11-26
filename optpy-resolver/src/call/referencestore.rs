@@ -18,13 +18,6 @@ impl ReferenceStore {
             .insert(variable_name.to_string());
     }
 
-    pub(super) fn list_variables(&self) -> Vec<String> {
-        self.variable_functions
-            .keys()
-            .map(|key| key.to_string())
-            .collect()
-    }
-
     pub(super) fn list_by_function(&self, function_name: &str) -> BTreeSet<String> {
         self.function_variables
             .get(function_name)

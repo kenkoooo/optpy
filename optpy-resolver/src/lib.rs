@@ -8,8 +8,14 @@ mod name;
 pub mod util;
 
 pub fn resolve(statements: &[Statement]) -> (Vec<Statement>, BTreeMap<String, BTreeSet<String>>) {
-    let statements = name::resolve_names(statements);
-    let statements = builtin::resolve_builtin_functions(&statements);
-    let (statements, definitions) = call::resolve_function_calls(&statements);
-    (statements, definitions)
+    let mut statements = statements.to_vec();
+    loop {
+        let new_statements = name::resolve_names(&statements);
+        let new_statements = builtin::resolve_builtin_functions(&new_statements);
+        let (new_statements, definitions) = call::resolve_function_calls(&new_statements);
+        if new_statements == statements {
+            return (new_statements, definitions);
+        }
+        statements = new_statements;
+    }
 }
