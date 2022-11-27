@@ -12,7 +12,7 @@ pub use expression::{
 mod statement;
 pub(crate) use statement::For;
 use statement::RawStmt;
-pub use statement::{Assign, Func, If, Import, Statement, While};
+pub use statement::{Assign, FromImport, Func, If, Import, Statement, While};
 
 use rustpython_parser::error::ParseError;
 

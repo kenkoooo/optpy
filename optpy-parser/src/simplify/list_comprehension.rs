@@ -1,7 +1,7 @@
 use crate::{
     expression::{Dict, ListComprehension, RawExpr},
     hash,
-    statement::{Assign, RawStmt},
+    statement::{Assign, FromImport, RawStmt},
     BinaryOperation, BoolOperation, BoolOperator, CallFunction, CallMethod, Compare, Expr, For,
     Func, If, Import, Index, UnaryOperation, While,
 };
@@ -61,6 +61,17 @@ fn stmt(stmt: RawStmt<RawExpr>) -> Vec<RawStmt<Expr>> {
         }
         RawStmt::Import(Import { import, alias }) => {
             vec![RawStmt::Import(Import { import, alias })]
+        }
+        RawStmt::FromImport(FromImport {
+            from,
+            import,
+            alias,
+        }) => {
+            vec![RawStmt::FromImport(FromImport {
+                from,
+                import,
+                alias,
+            })]
         }
     }
 }
