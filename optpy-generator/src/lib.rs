@@ -119,7 +119,7 @@ fn format_statement(
         }
         Statement::Break => quote! { break; },
         Statement::Continue => quote! { continue; },
-        Statement::Import(_) => unreachable!(),
+        Statement::Import(_) | Statement::FromImport(_) => unreachable!(),
     }
 }
 

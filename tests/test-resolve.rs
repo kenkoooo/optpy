@@ -29,3 +29,50 @@ return f2(v1)";
 
     assert_eq!(dump(code), dump(expected));
 }
+
+#[test]
+fn test_import() {
+    let code = r"
+import math
+x = math.gcd()
+";
+    let expected = r"
+x = __math__gcd()
+";
+    assert_eq!(dump(code), dump(expected));
+    let code = r"
+import math as m
+x = m.gcd()
+";
+    let expected = r"
+x = __math__gcd()
+";
+    assert_eq!(dump(code), dump(expected));
+
+    let code = r"
+from math import gcd
+x = gcd()
+";
+    let expected = r"
+x = __math__gcd()
+";
+    assert_eq!(dump(code), dump(expected));
+
+    let code = r"
+from math import *
+x = gcd()
+";
+    let expected = r"
+x = __math__gcd()
+";
+    assert_eq!(dump(code), dump(expected));
+
+    let code = r"
+from math import gcd as g
+x = g()
+";
+    let expected = r"
+x = __math__gcd()
+";
+    assert_eq!(dump(code), dump(expected));
+}

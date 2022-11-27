@@ -40,8 +40,9 @@ fn simplify_stmt(stmt: Statement) -> Vec<Statement> {
             let body = simplify_tuple_assignments(body);
             vec![Statement::While(While { test, body })]
         }
-        Statement::Import(_) => vec![stmt],
-        Statement::Return(_)
+        Statement::Import(_)
+        | Statement::FromImport(_)
+        | Statement::Return(_)
         | Statement::Expression(_)
         | Statement::Break
         | Statement::Continue => vec![stmt],

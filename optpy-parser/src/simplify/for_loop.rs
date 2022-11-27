@@ -1,6 +1,6 @@
 use crate::{
     hash,
-    statement::{Assign, RawStmt},
+    statement::{Assign, FromImport, RawStmt},
     CallFunction, CallMethod, Compare, CompareOperator, Expr, For, Func, If, Import, Number,
     Statement, While,
 };
@@ -73,6 +73,17 @@ fn simplify_statement(stmt: RawStmt<Expr>) -> Vec<Statement> {
         }
         RawStmt::Import(Import { import, alias }) => {
             vec![Statement::Import(Import { import, alias })]
+        }
+        RawStmt::FromImport(FromImport {
+            import,
+            alias,
+            from,
+        }) => {
+            vec![Statement::FromImport(FromImport {
+                import,
+                alias,
+                from,
+            })]
         }
     }
 }

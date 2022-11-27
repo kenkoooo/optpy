@@ -1,16 +1,20 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use module::ModuleMap;
 use optpy_parser::Statement;
 
 mod builtin;
 mod call;
+mod module;
 mod name;
+
 pub mod util;
 
 pub fn resolve(statements: &[Statement]) -> (Vec<Statement>, BTreeMap<String, BTreeSet<String>>) {
     let mut statements = statements.to_vec();
     loop {
         let new_statements = name::resolve_names(&statements);
+        let new_statements = module::resolve_modules(new_statements, &mut ModuleMap::default());
         let new_statements = builtin::resolve_builtin_functions(&new_statements);
         let (new_statements, definitions) = call::resolve_function_calls(&new_statements);
         if new_statements == statements {
