@@ -7,7 +7,11 @@ pub(crate) struct ModuleMap {
 impl Default for ModuleMap {
     fn default() -> Self {
         Self {
-            modules: BTreeMap::from([("math.gcd".into(), "__math__gcd".into())]),
+            modules: BTreeMap::from([
+                ("math.gcd".into(), "__math__gcd".into()),
+                ("math.log".into(), "__math__log".into()),
+                ("math.exp".into(), "__math__exp".into()),
+            ]),
         }
     }
 }
