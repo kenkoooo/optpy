@@ -1,21 +1,6 @@
 use std::{collections::VecDeque, iter::FromIterator, rc::Rc};
 
-use crate::{cell::UnsafeRefCell, number::Number, Value};
-
-#[allow(non_snake_case)]
-pub fn __math__gcd(a: &Value, b: &Value) -> Value {
-    let a = a.__number();
-    let b = b.__number();
-
-    fn gcd(a: Number, b: Number) -> Number {
-        if b == Number::Int64(0) {
-            a
-        } else {
-            gcd(b, a % b)
-        }
-    }
-    Value::Number(gcd(a, b))
-}
+use crate::{cell::UnsafeRefCell, Value};
 
 #[allow(non_snake_case)]
 pub fn __collections__deque0() -> Value {
@@ -30,12 +15,6 @@ pub fn __collections__deque1(value: &Value) -> Value {
         )))),
         _ => todo!(),
     }
-}
-
-/// It does nothing, just for pass the compile.
-#[allow(non_snake_case)]
-pub fn __sys__setrecursionlimit(_: &Value) -> Value {
-    Value::None
 }
 
 #[macro_export]
