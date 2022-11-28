@@ -16,8 +16,9 @@ macro_rules! include_optpy_runtime_module {
 /// The compiler will bundle the following string to the generated code.
 /// Please add your module into not only this lib.rs file but also the following string when you add a new module.
 pub const OPTPY_STD_STR: &str = concat!(
-    include_optpy_runtime_module!(builtin, cell, dict, macros, number, value),
+    include_optpy_runtime_module!(builtin, cell, dict, macros, number, stdlib, value),
     "pub use builtin::*;",
+    "pub use stdlib::*;",
     "pub use value::*;"
 );
 
@@ -26,7 +27,9 @@ mod cell;
 mod dict;
 mod macros;
 mod number;
+mod stdlib;
 mod value;
 
 pub use builtin::*;
+pub use stdlib::*;
 pub use value::*;
