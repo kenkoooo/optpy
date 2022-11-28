@@ -571,3 +571,18 @@ def test(a):
     assert_eq!(test(&Value::from(-1)), Value::from(1));
     assert_eq!(test(&Value::from(1.5)), Value::from(1.5));
 }
+
+#[test]
+fn test_dict_keys() {
+    python_function! {r#"
+def test():
+    a={}
+    a["a"] = 1
+    a["b"] = 2
+    return sorted(list(a.keys()))"#}
+
+    assert_eq!(
+        test(),
+        Value::from(vec![Value::from("a"), Value::from("b")])
+    );
+}
