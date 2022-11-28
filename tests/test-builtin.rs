@@ -600,3 +600,13 @@ def test():
 
     assert_eq!(test(), Value::from(vec![Value::from(1), Value::from(2)]));
 }
+
+#[test]
+fn test_float() {
+    python_function! {r"
+def test():
+    a = float('inf')
+    return a"
+    }
+    assert_eq!(test(), Value::from(f64::INFINITY))
+}
