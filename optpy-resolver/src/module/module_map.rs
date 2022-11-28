@@ -12,6 +12,10 @@ impl Default for ModuleMap {
                 ("math.log".into(), "__math__log".into()),
                 ("math.exp".into(), "__math__exp".into()),
                 (
+                    "sys.setrecursionlimit".into(),
+                    "__sys__setrecursionlimit".into(),
+                ),
+                (
                     "collections.deque".into(),
                     "__collections__deque__macro__".into(),
                 ),

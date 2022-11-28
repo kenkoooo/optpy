@@ -586,3 +586,17 @@ def test():
         Value::from(vec![Value::from("a"), Value::from("b")])
     );
 }
+
+#[test]
+fn test_setdefault() {
+    python_function! {r#"
+def test():
+    a = {}
+    a.setdefault("b", [])
+    a["b"].append(1)
+    a.setdefault("b", [])
+    a["b"].append(2)
+    return a["b"]"#}
+
+    assert_eq!(test(), Value::from(vec![Value::from(1), Value::from(2)]));
+}
