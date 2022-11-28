@@ -4,13 +4,13 @@ use std::{
     rc::Rc,
 };
 
-use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number};
+use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number, List};
 
 type RefCell<T> = crate::cell::UnsafeRefCell<T>;
 
 #[derive(Debug, Clone)]
 pub enum Value {
-    List(Rc<RefCell<Vec<Rc<RefCell<Value>>>>>),
+    List(List),
     String(Rc<String>),
     Number(Number),
     Boolean(bool),
@@ -34,11 +34,7 @@ impl PartialEq for Value {
             (Self::String(l0), Self::String(r0)) => l0 == r0,
             (Self::Number(l0), Self::Number(r0)) => l0 == r0,
             (Self::Boolean(l0), Self::Boolean(r0)) => l0 == r0,
-            (Self::List(l0), Self::List(r0)) => l0
-                .borrow()
-                .iter()
-                .zip(r0.borrow().iter())
-                .all(|(l, r)| l.borrow().eq(&r.borrow())),
+            (Self::List(l0), Self::List(r0)) => l0.eq(r0),
             (Self::Dict(l0), Self::Dict(r0)) => {
                 let l = l0
                     .borrow()
@@ -86,15 +82,7 @@ impl_binop!(__pow, pow);
 impl Value {
     pub fn __mul(&self, rhs: &Value) -> Value {
         match (self, rhs) {
-            (Value::List(list), Value::Number(Number::Int64(n))) => {
-                let mut result = vec![];
-                for _ in 0..(*n) {
-                    for element in list.borrow().iter() {
-                        result.push(Rc::new(RefCell::new(element.borrow().clone())));
-                    }
-                }
-                Value::List(Rc::new(RefCell::new(result)))
-            }
+            (Value::List(list), rhs) => list.__mul(rhs),
             (Value::Number(a), Value::Number(b)) => Value::Number(*a * *b),
             _ => todo!(),
         }
@@ -119,7 +107,7 @@ impl_compare!(__ne, ne);
 impl Value {
     fn includes(&self, value: &Value) -> bool {
         match self {
-            Value::List(list) => list.borrow().iter().any(|e| e.borrow().eq(value)),
+            Value::List(list) => list.includes(value),
             Value::Dict(map) => map.borrow().contains_key(&value.__as_dict_key()),
             _ => todo!(),
         }
@@ -139,16 +127,9 @@ impl Value {
     }
 
     pub fn __delete(&self, index: &Value) {
-        match (self, index) {
-            (Value::List(list), Value::Number(Number::Int64(i))) => {
-                if *i < 0 {
-                    let i = list.borrow().len() as i64 + *i;
-                    list.borrow_mut().remove(i as usize);
-                } else {
-                    list.borrow_mut().remove(*i as usize);
-                }
-            }
-            (Value::Dict(dict), index) => {
+        match self {
+            Value::List(list) => list.__delete(index),
+            Value::Dict(dict) => {
                 let key = index.__as_dict_key();
                 dict.borrow_mut().remove(&key);
             }
@@ -183,23 +164,16 @@ impl Value {
                     .map(|s| Value::String(Rc::new(s.to_string())))
                     .map(|v| Rc::new(RefCell::new(v)))
                     .collect();
-                Value::List(Rc::new(RefCell::new(list)))
+                Value::List(List(Rc::new(RefCell::new(list))))
             }
             _ => unreachable!(),
         }
     }
 
     pub fn __index_ref(&self, index: &Value) -> UnsafeRefMut<Value> {
-        match (self, index) {
-            (Value::List(list), Value::Number(Number::Int64(i))) => {
-                if *i < 0 {
-                    let i = list.borrow().len() as i64 + *i;
-                    list.borrow_mut()[i as usize].borrow_mut()
-                } else {
-                    list.borrow_mut()[*i as usize].borrow_mut()
-                }
-            }
-            (Value::Dict(dict), _) => {
+        match self {
+            Value::List(list) => list.__index_ref(index),
+            Value::Dict(dict) => {
                 let key = index.__as_dict_key();
                 dict.borrow_mut()
                     .entry(key)
@@ -210,16 +184,9 @@ impl Value {
         }
     }
     pub fn __index_value(&self, index: &Value) -> Value {
-        match (self, index) {
-            (Value::List(list), Value::Number(Number::Int64(i))) => {
-                if *i < 0 {
-                    let i = list.borrow().len() as i64 + *i;
-                    list.borrow_mut()[i as usize].borrow().clone()
-                } else {
-                    list.borrow_mut()[*i as usize].borrow().clone()
-                }
-            }
-            (Value::Dict(dict), _) => {
+        match self {
+            Value::List(list) => list.__index_value(index),
+            Value::Dict(dict) => {
                 let key = index.__as_dict_key();
                 dict.borrow_mut()
                     .entry(key)
@@ -247,7 +214,7 @@ impl Value {
                     .keys()
                     .map(|s| Rc::new(RefCell::new(s.clone().into())))
                     .collect();
-                Value::List(Rc::new(RefCell::new(list)))
+                Value::List(List(Rc::new(RefCell::new(list))))
             }
             _ => todo!(),
         }
@@ -259,19 +226,14 @@ impl Value {
 
     pub fn reverse(&self) {
         match self {
-            Value::List(list) => {
-                list.borrow_mut().reverse();
-            }
+            Value::List(list) => list.reverse(),
             _ => unreachable!(),
         }
     }
 
     pub fn pop(&self) -> Value {
         match self {
-            Value::List(list) => {
-                let last = list.borrow_mut().pop().expect("empty list");
-                last.borrow().clone()
-            }
+            Value::List(list) => list.pop(),
             _ => unreachable!(),
         }
     }
@@ -292,9 +254,7 @@ impl Value {
     }
     pub fn append(&self, value: &Value) {
         match self {
-            Value::List(list) => {
-                list.borrow_mut().push(Rc::new(RefCell::new(value.clone())));
-            }
+            Value::List(list) => list.append(value),
             Value::Deque(deque) => {
                 deque.borrow_mut().push_back(value.clone());
             }
@@ -354,7 +314,7 @@ impl Value {
     }
     pub fn __len(&self) -> Value {
         match self {
-            Value::List(list) => Value::Number(Number::Int64(list.borrow().len() as i64)),
+            Value::List(list) => list.__len(),
             Value::String(s) => Value::Number(Number::Int64(s.chars().count() as i64)),
             Value::Dict(d) => Value::Number(Number::Int64(d.borrow().len() as i64)),
             _ => unreachable!(),
@@ -362,11 +322,7 @@ impl Value {
     }
     pub fn sort(&self) {
         match self {
-            Value::List(list) => list.borrow_mut().sort_by(|a, b| {
-                let a = a.borrow();
-                let b = b.borrow();
-                a.partial_cmp(&b).unwrap()
-            }),
+            Value::List(list) => list.sort(),
             _ => unreachable!(),
         }
     }
@@ -387,14 +343,7 @@ impl Value {
 
     pub fn count(&self, value: &Value) -> Value {
         match (self, value) {
-            (Value::List(list), value) => {
-                let count = list
-                    .borrow()
-                    .iter()
-                    .filter(|v| v.borrow().eq(value))
-                    .count();
-                Value::Number(Number::Int64(count as i64))
-            }
+            (Value::List(list), value) => list.count(value),
             (Value::String(lhs), Value::String(rhs)) => {
                 let lhs = lhs.as_str();
                 let rhs = rhs.as_str();
@@ -422,8 +371,7 @@ impl From<f64> for Value {
 }
 impl From<Vec<Value>> for Value {
     fn from(list: Vec<Value>) -> Self {
-        let list = list.into_iter().map(|v| Rc::new(RefCell::new(v))).collect();
-        Value::List(Rc::new(RefCell::new(list)))
+        Value::List(List::from(list))
     }
 }
 impl From<bool> for Value {

@@ -4,23 +4,30 @@ macro_rules! include_module {
     };
 }
 
+macro_rules! include_nested_modules {
+    ($parent:ident, $($name:ident),+) => {
+        concat!("mod ", stringify!($parent), "{",$(concat!(
+            "mod ",
+            stringify!($name),
+            "{",
+            include_str!(concat!("./", stringify!($parent), "/", stringify!($name), ".rs")),
+            "}",
+            "pub use self::",
+            stringify!($name),
+            "::*;"
+        )),+, "}")
+    };
+}
+
 /// The compiler will bundle the following string to the generated code.
 /// Please add your module into not only this lib.rs file but also the following string when you add a new module.
 pub const OPTPY_STD_STR: &str = concat!(
     include_module!("./builtin.rs", builtin),
     include_module!("./cell.rs", cell),
     include_module!("./dict.rs", dict),
-    include_module!("./macros.rs", macros),
     include_module!("./number.rs", number),
-    include_module!("./value.rs", value),
-    "mod stdlib {",
-    include_module!("./stdlib/collections.rs", collections),
-    include_module!("./stdlib/math.rs", math),
-    include_module!("./stdlib/sys.rs", sys),
-    "pub use self::collections::*;",
-    "pub use self::math::*;",
-    "pub use self::sys::*;",
-    "}",
+    include_nested_modules!(stdlib, collections, math, sys),
+    include_nested_modules!(value, value, list),
     "pub use builtin::*;",
     "pub use stdlib::*;",
     "pub use value::*;"
@@ -29,7 +36,6 @@ pub const OPTPY_STD_STR: &str = concat!(
 mod builtin;
 mod cell;
 mod dict;
-mod macros;
 mod number;
 mod stdlib;
 mod value;
