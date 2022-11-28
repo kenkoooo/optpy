@@ -301,6 +301,13 @@ impl Value {
             _ => unreachable!(),
         }
     }
+    pub fn appendleft(&self, value: &Value) {
+        match self {
+            Value::Deque(deque) => deque.borrow_mut().push_front(value.clone()),
+            _ => unreachable!(),
+        }
+    }
+
     pub fn setdefault(&self, key: &Value, value: &Value) {
         match self {
             Value::Dict(dict) => {
