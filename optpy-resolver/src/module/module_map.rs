@@ -11,6 +11,10 @@ impl Default for ModuleMap {
                 ("math.gcd".into(), "__math__gcd".into()),
                 ("math.log".into(), "__math__log".into()),
                 ("math.exp".into(), "__math__exp".into()),
+                (
+                    "collections.deque".into(),
+                    "__collections__deque__macro__".into(),
+                ),
             ]),
         }
     }

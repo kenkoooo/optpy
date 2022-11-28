@@ -76,3 +76,16 @@ x = __math__gcd()
 ";
     assert_eq!(dump(code), dump(expected));
 }
+
+#[test]
+fn test_nested_modules() {
+    let code = r"
+import sys
+
+x = g()
+";
+    let expected = r"
+x = __math__gcd()
+";
+    assert_eq!(dump(code), dump(expected));
+}

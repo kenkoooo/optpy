@@ -195,11 +195,11 @@ fn format_expr(expr: &Expr, assign_lhs: bool) -> TokenStream {
             let index = format_expr(index, false);
             if assign_lhs {
                 quote! {
-                    #value .index_ref(& #index )
+                    #value .__index_ref(& #index )
                 }
             } else {
                 quote! {
-                    #value .index_value(& #index )
+                    #value .__index_value(& #index )
                 }
             }
         }
