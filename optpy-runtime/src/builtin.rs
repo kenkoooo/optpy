@@ -32,6 +32,13 @@ pub fn int(value: &Value) -> Value {
         _ => unreachable!(),
     }
 }
+pub fn float(value: &Value) -> Value {
+    match value {
+        Value::String(s) => Value::Number(Number::Float(s.parse::<f64>().expect("non-float"))),
+        Value::Number(Number::Int64(i)) => Value::Number(Number::Float(*i as f64)),
+        _ => unreachable!(),
+    }
+}
 pub fn str(value: &Value) -> Value {
     match value {
         Value::String(_) => value.clone(),
