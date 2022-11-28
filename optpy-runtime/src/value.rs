@@ -23,6 +23,7 @@ impl PartialOrd for Value {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
             (Value::Number(lhs), Value::Number(rhs)) => lhs.partial_cmp(rhs),
+            (Value::String(lhs), Value::String(rhs)) => lhs.partial_cmp(rhs),
             _ => todo!(),
         }
     }
@@ -235,6 +236,20 @@ impl Value {
             Value::String(s) => DictKey::String(s.to_string()),
             Value::Number(n) => DictKey::Number(*n),
             _ => unreachable!(),
+        }
+    }
+
+    pub fn keys(&self) -> Value {
+        match self {
+            Value::Dict(dict) => {
+                let list = dict
+                    .borrow()
+                    .keys()
+                    .map(|s| Rc::new(RefCell::new(s.clone().into())))
+                    .collect();
+                Value::List(Rc::new(RefCell::new(list)))
+            }
+            _ => todo!(),
         }
     }
 
