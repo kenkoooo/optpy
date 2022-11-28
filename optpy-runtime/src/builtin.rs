@@ -16,6 +16,7 @@ pub fn map_int(value: &Value) -> Value {
     match value {
         Value::List(list) => {
             let list = list
+                .0
                 .borrow()
                 .iter()
                 .map(|v| int(&v.borrow()))
@@ -72,9 +73,10 @@ pub fn __range2(start: &Value, stop: &Value) -> Value {
         _ => unreachable!(),
     }
 }
-pub fn __min1(a: &Value) -> Value {
-    match a {
+pub fn __min1(list: &Value) -> Value {
+    match list {
         Value::List(list) => list
+            .0
             .borrow()
             .iter()
             .min_by(|a, b| a.borrow().partial_cmp(&b.borrow()).unwrap())
@@ -94,6 +96,7 @@ pub fn __min2(a: &Value, b: &Value) -> Value {
 pub fn __max1(a: &Value) -> Value {
     match a {
         Value::List(list) => list
+            .0
             .borrow()
             .iter()
             .max_by(|a, b| a.borrow().partial_cmp(&b.borrow()).unwrap())
@@ -113,6 +116,7 @@ pub fn __max2(a: &Value, b: &Value) -> Value {
 pub fn __sum1(a: &Value) -> Value {
     match a {
         Value::List(list) => list
+            .0
             .borrow()
             .iter()
             .fold(Value::from(0), |a, b| a.__add(&b.borrow())),
@@ -133,13 +137,13 @@ pub fn len(value: &Value) -> Value {
 }
 pub fn any(value: &Value) -> Value {
     match value {
-        Value::List(list) => Value::Boolean(list.borrow().iter().any(|v| v.borrow().test())),
+        Value::List(list) => Value::Boolean(list.0.borrow().iter().any(|v| v.borrow().test())),
         _ => todo!(),
     }
 }
 pub fn all(value: &Value) -> Value {
     match value {
-        Value::List(list) => Value::Boolean(list.borrow().iter().all(|v| v.borrow().test())),
+        Value::List(list) => Value::Boolean(list.0.borrow().iter().all(|v| v.borrow().test())),
         _ => todo!(),
     }
 }
@@ -147,6 +151,7 @@ pub fn __set1(iter: &Value) -> Value {
     match iter {
         Value::List(list) => {
             let map = list
+                .0
                 .borrow()
                 .iter()
                 .map(|v| (v.borrow().__as_dict_key(), rc_unsafe_ref_cell(Value::None)))
@@ -170,14 +175,13 @@ pub fn enumerate(iter: &Value) -> Value {
     match iter {
         Value::List(list) => {
             let list = list
+                .0
                 .borrow()
                 .iter()
                 .enumerate()
-                .map(|(i, v)| {
-                    rc_unsafe_ref_cell(Value::from(vec![Value::from(i as i64), v.borrow().clone()]))
-                })
-                .collect();
-            Value::List(rc_unsafe_ref_cell(list))
+                .map(|(i, v)| Value::from(vec![Value::from(i as i64), v.borrow().clone()]))
+                .collect::<Vec<_>>();
+            Value::from(list)
         }
         iter => enumerate(&list(iter)),
     }
@@ -185,7 +189,7 @@ pub fn enumerate(iter: &Value) -> Value {
 pub fn next(iter: &Value) -> Value {
     match iter {
         Value::List(list) => {
-            let head = list.borrow_mut().remove(0);
+            let head = list.0.borrow_mut().remove(0);
             head.borrow().clone()
         }
         _ => todo!(),
@@ -238,4 +242,86 @@ pub fn abs(v: &Value) -> Value {
         Value::Number(n) => Value::Number(n.abs()),
         _ => unreachable!(),
     }
+}
+#[macro_export]
+macro_rules! range {
+    ($stop:expr) => {
+        __range1($stop)
+    };
+    ($start:expr, $stop:expr) => {
+        __range2($start, $stop)
+    };
+}
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:expr),+) => {
+        let s = [$($arg),+].iter().map(|v| v.to_string()).collect::<Vec<_>>();
+        println!("{}", s.join(" "));
+    };
+}
+
+#[macro_export]
+macro_rules! pow {
+    ($number:expr, $power:expr, $modulus:expr) => {
+        __pow3($number, $power, $modulus)
+    };
+}
+#[macro_export]
+macro_rules! set {
+    () => {
+        __set0()
+    };
+    ($iter:expr) => {
+        __set1($iter)
+    };
+}
+
+#[macro_export]
+macro_rules! exit {
+    () => {
+        __exit0()
+    };
+    ($code:expr) => {
+        __exit1($code)
+    };
+}
+
+#[macro_export]
+macro_rules! max {
+    ($e:expr) => {
+        __max1($e)
+    };
+    ($a:expr, $b:expr) => {
+        __max2($a, $b)
+    };
+    ($a:expr, $($arg:expr),+) => {
+        __max2($a, &max!($($arg),+))
+    };
+}
+
+#[macro_export]
+macro_rules! min {
+    ($e:expr) => {
+        __min1($e)
+    };
+    ($a:expr, $b:expr) => {
+        __min2($a, $b)
+    };
+    ($a:expr, $($arg:expr),+) => {
+        __min2($a, &min!($($arg),+))
+    };
+}
+
+#[macro_export]
+macro_rules! sum {
+    ($e:expr) => {
+        __sum1($e)
+    };
+    ($a:expr, $b:expr) => {
+        __sum2($a, $b)
+    };
+    ($a:expr, $($arg:expr),+) => {
+        __sum2($a, &sum!($($arg),+))
+    };
 }
