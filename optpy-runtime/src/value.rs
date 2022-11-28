@@ -1,4 +1,8 @@
-use std::{collections::HashMap, ops::Mul, rc::Rc};
+use std::{
+    collections::{HashMap, VecDeque},
+    ops::Mul,
+    rc::Rc,
+};
 
 use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number};
 
@@ -11,6 +15,7 @@ pub enum Value {
     Number(Number),
     Boolean(bool),
     Dict(Rc<RefCell<HashMap<DictKey, Rc<RefCell<Value>>>>>),
+    Deque(Rc<RefCell<VecDeque<Value>>>),
     None,
 }
 
@@ -183,7 +188,7 @@ impl Value {
         }
     }
 
-    pub fn index_ref(&self, index: &Value) -> UnsafeRefMut<Value> {
+    pub fn __index_ref(&self, index: &Value) -> UnsafeRefMut<Value> {
         match (self, index) {
             (Value::List(list), Value::Number(Number::Int64(i))) => {
                 if *i < 0 {
@@ -203,7 +208,7 @@ impl Value {
             _ => todo!(),
         }
     }
-    pub fn index_value(&self, index: &Value) -> Value {
+    pub fn __index_value(&self, index: &Value) -> Value {
         match (self, index) {
             (Value::List(list), Value::Number(Number::Int64(i))) => {
                 if *i < 0 {
@@ -255,6 +260,15 @@ impl Value {
             _ => unreachable!(),
         }
     }
+    pub fn popleft(&self) -> Value {
+        match self {
+            Value::Deque(deque) => deque
+                .borrow_mut()
+                .pop_front()
+                .expect("pop from an empty deque"),
+            _ => todo!(),
+        }
+    }
     pub fn strip(&self) -> Value {
         match self {
             Value::String(s) => Value::from(s.trim()),
@@ -265,6 +279,9 @@ impl Value {
         match self {
             Value::List(list) => {
                 list.borrow_mut().push(Rc::new(RefCell::new(value.clone())));
+            }
+            Value::Deque(deque) => {
+                deque.borrow_mut().push_back(value.clone());
             }
             _ => unreachable!(),
         }
