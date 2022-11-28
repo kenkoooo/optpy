@@ -34,3 +34,13 @@ def test():
         assert_eq!(test(), Value::from(vec![Value::from(1), Value::from(2)]))
     }
 }
+
+#[test]
+fn test_sys_setrecursionlimit() {
+    python_function! {r"
+def test():
+    import sys
+    sys.setrecursionlimit(1)
+    return"}
+    test();
+}

@@ -301,6 +301,17 @@ impl Value {
             _ => unreachable!(),
         }
     }
+    pub fn setdefault(&self, key: &Value, value: &Value) {
+        match self {
+            Value::Dict(dict) => {
+                let key = key.__as_dict_key();
+                dict.borrow_mut()
+                    .entry(key)
+                    .or_insert_with(|| Rc::new(RefCell::new(value.clone())));
+            }
+            _ => todo!(),
+        }
+    }
     pub fn add(&self, value: &Value) {
         match self {
             Value::Dict(map) => {
