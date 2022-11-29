@@ -1,9 +1,23 @@
-use crate::Value;
+use crate::{cell::UnsafeRefCell, Value};
 
 #[allow(non_snake_case)]
 pub fn __heapq__heapify(x: &Value) {
     match x {
         Value::List(list) => heapify(&mut *list.0.borrow_mut()),
+        _ => todo!(),
+    }
+}
+#[allow(non_snake_case)]
+pub fn __heapq__heappush(heap: &Value, item: &Value) {
+    match heap {
+        Value::List(list) => heap_push(&mut *list.0.borrow_mut(), UnsafeRefCell::rc(item.clone())),
+        _ => todo!(),
+    }
+}
+#[allow(non_snake_case)]
+pub fn __heapq__heappop(heap: &Value) -> Value {
+    match heap {
+        Value::List(list) => heap_pop(&mut *list.0.borrow_mut()).borrow().clone(),
         _ => todo!(),
     }
 }
@@ -42,5 +56,23 @@ fn heapify<T: PartialOrd>(x: &mut [T]) {
     let n = x.len();
     for i in (0..(n / 2)).rev() {
         shift_up(x, i);
+    }
+}
+
+fn heap_push<T: PartialOrd>(heap: &mut Vec<T>, item: T) {
+    heap.push(item);
+    let n = heap.len();
+    shift_down(heap, 0, n - 1);
+}
+
+fn heap_pop<T: PartialOrd>(heap: &mut Vec<T>) -> T {
+    if heap.len() >= 2 {
+        let n = heap.len();
+        heap.swap(n - 1, 0);
+        let response = heap.pop().expect("empty heap");
+        shift_up(heap, 0);
+        response
+    } else {
+        heap.pop().expect("empty heap")
     }
 }
