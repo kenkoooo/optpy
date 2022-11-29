@@ -1,4 +1,4 @@
-use optpy_generator::generate_function_body;
+use optpy_generator::CodeGenerator;
 use optpy_parser::{parse, Func};
 use optpy_resolver::resolve;
 use proc_macro::TokenStream;
@@ -25,7 +25,8 @@ pub fn python_function(tokens: TokenStream) -> TokenStream {
         _ => panic!(),
     };
 
-    let code = generate_function_body(&ast, "", &definitions);
+    let generator = CodeGenerator::default();
+    let code = generator.generate_function_body(&ast, "", &definitions);
     let function_name = format_ident!("{}", function_name);
     let args = args
         .into_iter()
