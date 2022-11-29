@@ -1,9 +1,8 @@
 use crate::{
     expression::{Dict, ListComprehension, RawExpr},
-    hash,
     statement::{Assign, FromImport, RawStmt},
-    BinaryOperation, BoolOperation, BoolOperator, CallFunction, CallMethod, Compare, Expr, For,
-    Func, If, Import, Index, UnaryOperation, While,
+    unixtime_nano, BinaryOperation, BoolOperation, BoolOperator, CallFunction, CallMethod, Compare,
+    Expr, For, Func, If, Import, Index, UnaryOperation, While,
 };
 
 pub(crate) fn simplify_list_comprehensions(stmts: Vec<RawStmt<RawExpr>>) -> Vec<RawStmt<Expr>> {
@@ -213,8 +212,7 @@ fn eval_expr(expr: RawExpr) -> (Expr, Vec<RawStmt<Expr>>) {
             function_body.extend(generation_body);
             function_body.push(RawStmt::Return(Some(tmp_list)));
 
-            let hash = hash(&function_body);
-            let function_name = format!("__f{}", hash);
+            let function_name = format!("__f{}", unixtime_nano());
 
             (
                 Expr::CallFunction(CallFunction {
