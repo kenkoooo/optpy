@@ -1,18 +1,14 @@
-use std::{collections::VecDeque, iter::FromIterator};
-
-use crate::{cell::UnsafeRefCell, Value};
+use crate::{Deque, Value};
 
 #[allow(non_snake_case)]
 pub fn __collections__deque0() -> Value {
-    Value::Deque(UnsafeRefCell::rc(VecDeque::new()))
+    Value::Deque(Default::default())
 }
 
 #[allow(non_snake_case)]
 pub fn __collections__deque1(value: &Value) -> Value {
     match value {
-        Value::List(list) => Value::Deque(UnsafeRefCell::rc(VecDeque::from_iter(
-            list.0.borrow().iter().map(|v| v.borrow().clone()),
-        ))),
+        Value::List(list) => Value::Deque(Deque::from(list)),
         _ => todo!(),
     }
 }
