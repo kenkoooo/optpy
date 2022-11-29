@@ -58,6 +58,12 @@ impl Number {
             Number::Float(f) => Number::Float(f.abs()),
         }
     }
+    pub fn test(&self) -> bool {
+        match self {
+            Number::Int64(i) => *i != 0,
+            Number::Float(f) => *f != 0.0,
+        }
+    }
 }
 impl ToString for Number {
     fn to_string(&self) -> String {

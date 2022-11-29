@@ -35,3 +35,17 @@ def test():
     return d.popleft()"}
     assert_eq!(test(), Value::from(2));
 }
+
+#[test]
+fn test_bool() {
+    python_function! {r"
+def test(a):
+    from collections import deque
+    d = deque(a)
+    if d:
+        return 1
+    else:
+        return 2"}
+    assert_eq!(test(&Value::from(vec![Value::from(0)])), Value::from(1));
+    assert_eq!(test(&Value::from(vec![])), Value::from(2));
+}

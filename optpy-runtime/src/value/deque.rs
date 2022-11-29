@@ -24,6 +24,9 @@ impl Deque {
     pub fn appendleft(&self, value: &Value) {
         self.0.borrow_mut().push_front(value.clone());
     }
+    pub fn test(&self) -> bool {
+        !self.0.borrow().is_empty()
+    }
 }
 
 impl From<&List> for Deque {

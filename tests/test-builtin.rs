@@ -610,3 +610,23 @@ def test():
     }
     assert_eq!(test(), Value::from(f64::INFINITY))
 }
+
+#[test]
+fn test_bool() {
+    python_function! {r#"
+def test(x):
+    if x:
+        return "OK"
+    else:
+        return "NO"
+"#}
+
+    assert_eq!(test(&Value::from("")), Value::from("NO"));
+    assert_eq!(test(&Value::from("s")), Value::from("OK"));
+
+    assert_eq!(test(&Value::from(vec![])), Value::from("NO"));
+    assert_eq!(
+        test(&Value::from(vec![Value::from("a")])),
+        Value::from("OK")
+    );
+}

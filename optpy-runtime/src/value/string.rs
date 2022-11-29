@@ -43,6 +43,9 @@ impl ImmutableString {
             _ => todo!(),
         }
     }
+    pub fn test(&self) -> bool {
+        !self.0.is_empty()
+    }
 }
 
 impl From<&str> for ImmutableString {

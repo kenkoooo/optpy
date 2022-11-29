@@ -105,6 +105,9 @@ impl List {
             .count();
         Value::Number(Number::Int64(count as i64))
     }
+    pub fn test(&self) -> bool {
+        self.0.borrow().len() > 0
+    }
 }
 
 impl From<Vec<Value>> for List {
