@@ -25,7 +25,7 @@ pub const OPTPY_STD_STR: &str = concat!(
     include_module!("./builtin.rs", builtin),
     include_module!("./cell.rs", cell),
     include_module!("./number.rs", number),
-    include_nested_modules!(stdlib, collections, math, sys),
+    include_nested_modules!(stdlib, collections, math, sys, heapq),
     include_nested_modules!(value, value, list, dict, deque, string),
     "pub use builtin::*;",
     "pub use stdlib::*;",

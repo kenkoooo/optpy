@@ -52,6 +52,18 @@ impl<T: Debug> Debug for UnsafeRefCell<T> {
     }
 }
 
+impl<T: PartialOrd> PartialOrd for UnsafeRefCell<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.borrow().partial_cmp(&other.borrow())
+    }
+}
+
+impl<T: PartialEq> PartialEq for UnsafeRefCell<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.borrow().eq(&other.borrow())
+    }
+}
+
 impl<T> UnsafeRefCell<T> {
     pub fn new(value: T) -> UnsafeRefCell<T> {
         Self {

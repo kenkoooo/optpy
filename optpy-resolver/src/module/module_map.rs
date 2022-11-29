@@ -11,6 +11,7 @@ impl Default for ModuleMap {
                 ("math.gcd".into(), "__math__gcd".into()),
                 ("math.log".into(), "__math__log".into()),
                 ("math.exp".into(), "__math__exp".into()),
+                ("heapq.heapify".into(), "__heapq__heapify".into()),
                 (
                     "sys.setrecursionlimit".into(),
                     "__sys__setrecursionlimit".into(),
