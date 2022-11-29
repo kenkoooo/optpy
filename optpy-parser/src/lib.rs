@@ -1,8 +1,5 @@
 mod expression;
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub use expression::{
     BinaryOperation, BinaryOperator, BoolOperation, BoolOperator, CallFunction, CallMethod,
@@ -30,10 +27,11 @@ pub fn parse<S: AsRef<str>>(code: S) -> Result<Vec<Statement>, ParseError> {
     Ok(statements)
 }
 
-pub(crate) fn hash<T: Hash>(x: &T) -> u64 {
-    let mut hasher = DefaultHasher::new();
-    x.hash(&mut hasher);
-    hasher.finish()
+pub(crate) fn unixtime_nano() -> u128 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos()
 }
 
 #[cfg(test)]
@@ -72,22 +70,6 @@ if a<=c and c<b:
 else:
     result = 2
 print(result)
-";
-        assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
-    }
-
-    #[test]
-    fn test_for_loop() {
-        let code = r"
-for i in range(N):
-    print(i)
-";
-        let expected = r"
-__tmp_for_loop_iter_14800386153579835208 = list(range(N))
-__tmp_for_loop_iter_14800386153579835208.reverse()
-while len(__tmp_for_loop_iter_14800386153579835208) > 0:
-    i = __tmp_for_loop_iter_14800386153579835208.pop()
-    print(i)
 ";
         assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
     }

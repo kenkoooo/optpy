@@ -7,7 +7,7 @@ pub use types::{
 
 use rustpython_parser::ast::ExprKind;
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Expr {
     CallFunction(CallFunction<Expr>),
     CallMethod(CallMethod<Expr>),

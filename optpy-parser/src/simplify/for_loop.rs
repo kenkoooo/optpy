@@ -1,8 +1,7 @@
 use crate::{
-    hash,
     statement::{Assign, FromImport, RawStmt},
-    CallFunction, CallMethod, Compare, CompareOperator, Expr, For, Func, If, Import, Number,
-    Statement, While,
+    unixtime_nano, CallFunction, CallMethod, Compare, CompareOperator, Expr, For, Func, If, Import,
+    Number, Statement, While,
 };
 
 pub(crate) fn simplify_for_loops(stmts: Vec<RawStmt<Expr>>) -> Vec<Statement> {
@@ -32,8 +31,7 @@ fn simplify_statement(stmt: RawStmt<Expr>) -> Vec<Statement> {
         RawStmt::Break => vec![Statement::Break],
         RawStmt::Continue => vec![Statement::Continue],
         RawStmt::For(For { target, iter, body }) => {
-            let hash = hash(&body);
-            let tmp_target = Expr::VariableName(format!("__tmp_for_loop_iter_{}", hash));
+            let tmp_target = Expr::VariableName(format!("__tmp_for_loop_iter_{}", unixtime_nano()));
 
             let mut while_body = vec![Statement::Assign(Assign {
                 target,

@@ -2,10 +2,10 @@ use rustpython_parser::ast::{Stmt, StmtKind};
 
 use crate::{
     expression::{Expr, RawExpr},
-    hash, BinaryOperation, BinaryOperator, CallMethod, Index,
+    unixtime_nano, BinaryOperation, BinaryOperator, CallMethod, Index,
 };
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Statement {
     Assign(Assign<Expr>),
     Expression(Expr),
@@ -18,13 +18,13 @@ pub enum Statement {
     Import(Import),
     FromImport(FromImport),
 }
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 
 pub struct Assign<E> {
     pub target: E,
     pub value: E,
 }
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 
 pub struct If<S, E> {
     pub test: E,
@@ -32,33 +32,33 @@ pub struct If<S, E> {
     pub orelse: Vec<S>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Func<S> {
     pub name: String,
     pub args: Vec<String>,
     pub body: Vec<S>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct While<S, E> {
     pub test: E,
     pub body: Vec<S>,
 }
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 
 pub struct For<S, E> {
     pub(crate) target: E,
     pub(crate) iter: E,
     pub(crate) body: Vec<S>,
 }
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 
 pub struct Import {
     pub import: String,
     pub alias: String,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 
 pub struct FromImport {
     pub from: String,
@@ -79,10 +79,8 @@ impl RawStmt<RawExpr> {
                     let target = RawExpr::parse(&targets[0].node);
                     vec![Self::Assign(Assign { target, value })]
                 } else {
-                    let first_target = RawExpr::VariableName(format!(
-                        "__assign_tmp_{}",
-                        hash(&format!("{:?}", statement))
-                    ));
+                    let first_target =
+                        RawExpr::VariableName(format!("__assign_tmp_{}", unixtime_nano()));
                     let mut result = vec![Self::Assign(Assign {
                         target: first_target.clone(),
                         value,
@@ -225,7 +223,6 @@ fn parse_statements(statements: &[Stmt]) -> Vec<RawStmt<RawExpr>> {
         .collect()
 }
 
-#[derive(Hash)]
 pub(crate) enum RawStmt<E> {
     Assign(Assign<E>),
     Expression(E),
