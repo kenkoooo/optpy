@@ -26,10 +26,10 @@ impl List {
                 let mut result = vec![];
                 for _ in 0..(*n) {
                     for element in self.0.borrow().iter() {
-                        result.push(Rc::new(UnsafeRefCell::new(element.borrow().clone())));
+                        result.push(UnsafeRefCell::rc(element.borrow().clone()));
                     }
                 }
-                Value::List(List(Rc::new(UnsafeRefCell::new(result))))
+                Value::List(List(UnsafeRefCell::rc(result)))
             }
             _ => todo!(),
         }
@@ -84,9 +84,7 @@ impl List {
         last.borrow().clone()
     }
     pub fn append(&self, value: &Value) {
-        self.0
-            .borrow_mut()
-            .push(Rc::new(UnsafeRefCell::new(value.clone())));
+        self.0.borrow_mut().push(UnsafeRefCell::rc(value.clone()));
     }
     pub fn __len(&self) -> Value {
         Value::Number(Number::Int64(self.0.borrow().len() as i64))
@@ -111,10 +109,7 @@ impl List {
 
 impl From<Vec<Value>> for List {
     fn from(list: Vec<Value>) -> Self {
-        let list = list
-            .into_iter()
-            .map(|v| Rc::new(UnsafeRefCell::new(v)))
-            .collect();
-        Self(Rc::new(UnsafeRefCell::new(list)))
+        let list = list.into_iter().map(|v| UnsafeRefCell::rc(v)).collect();
+        Self(UnsafeRefCell::rc(list))
     }
 }

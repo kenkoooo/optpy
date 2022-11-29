@@ -1,10 +1,6 @@
-use std::{collections::HashMap, io::stdin, rc::Rc};
+use std::{io::stdin, rc::Rc};
 
-use crate::{cell::UnsafeRefCell, number::Number, value::Value};
-
-fn rc_unsafe_ref_cell<T>(v: T) -> Rc<UnsafeRefCell<T>> {
-    Rc::new(UnsafeRefCell::new(v))
-}
+use crate::{number::Number, value::Value};
 
 pub fn input() -> Value {
     let mut buf = String::new();
@@ -150,22 +146,15 @@ pub fn all(value: &Value) -> Value {
 pub fn __set1(iter: &Value) -> Value {
     match iter {
         Value::List(list) => {
-            let map = list
+            let pairs = list
                 .0
                 .borrow()
                 .iter()
-                .map(|v| (v.borrow().__as_dict_key(), rc_unsafe_ref_cell(Value::None)))
-                .collect::<HashMap<_, _>>();
-            Value::Dict(rc_unsafe_ref_cell(map))
+                .map(|v| (v.borrow().clone(), Value::None))
+                .collect::<Vec<_>>();
+            Value::dict(pairs)
         }
-        Value::Dict(map) => {
-            let map = map
-                .borrow()
-                .keys()
-                .map(|key| (key.clone(), rc_unsafe_ref_cell(Value::None)))
-                .collect::<HashMap<_, _>>();
-            Value::Dict(rc_unsafe_ref_cell(map))
-        }
+        Value::Dict(dict) => __set1(&dict.keys()),
         Value::String(_) => todo!(),
         _ => unreachable!(),
     }
@@ -230,11 +219,11 @@ pub fn __exit0() -> ! {
 }
 
 pub fn __set0() -> Value {
-    Value::Dict(rc_unsafe_ref_cell(HashMap::new()))
+    Value::Dict(Default::default())
 }
 
 pub fn dict() -> Value {
-    Value::Dict(rc_unsafe_ref_cell(HashMap::new()))
+    Value::Dict(Default::default())
 }
 
 pub fn abs(v: &Value) -> Value {
