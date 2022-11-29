@@ -24,10 +24,9 @@ macro_rules! include_nested_modules {
 pub const OPTPY_STD_STR: &str = concat!(
     include_module!("./builtin.rs", builtin),
     include_module!("./cell.rs", cell),
-    include_module!("./dict.rs", dict),
     include_module!("./number.rs", number),
     include_nested_modules!(stdlib, collections, math, sys),
-    include_nested_modules!(value, value, list, dict, deque),
+    include_nested_modules!(value, value, list, dict, deque, string),
     "pub use builtin::*;",
     "pub use stdlib::*;",
     "pub use value::*;"
@@ -35,7 +34,6 @@ pub const OPTPY_STD_STR: &str = concat!(
 
 mod builtin;
 mod cell;
-mod dict;
 mod number;
 mod stdlib;
 mod value;

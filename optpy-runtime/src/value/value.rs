@@ -1,13 +1,11 @@
-use std::{ops::Mul, rc::Rc};
+use std::ops::Mul;
 
-use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number, Deque, Dict, List};
-
-type RefCell<T> = crate::cell::UnsafeRefCell<T>;
+use crate::{cell::UnsafeRefMut, number::Number, Deque, Dict, ImmutableString, List};
 
 #[derive(Debug, Clone)]
 pub enum Value {
     List(List),
-    String(Rc<String>),
+    String(ImmutableString),
     Number(Number),
     Boolean(bool),
     Dict(Dict),
@@ -126,14 +124,7 @@ impl Value {
 
     pub fn split(&self) -> Self {
         match self {
-            Value::String(s) => {
-                let list = s
-                    .split_ascii_whitespace()
-                    .map(|s| Value::String(Rc::new(s.to_string())))
-                    .map(|v| Rc::new(RefCell::new(v)))
-                    .collect();
-                Value::List(List(Rc::new(RefCell::new(list))))
-            }
+            Value::String(s) => s.split(),
             _ => unreachable!(),
         }
     }
@@ -150,14 +141,6 @@ impl Value {
             Value::List(list) => list.__index_value(index),
             Value::Dict(dict) => dict.__index_value(index),
             _ => todo!(),
-        }
-    }
-
-    pub fn __as_dict_key(&self) -> DictKey {
-        match self {
-            Value::String(s) => DictKey::String(s.to_string()),
-            Value::Number(n) => DictKey::Number(*n),
-            _ => unreachable!(),
         }
     }
 
@@ -193,7 +176,7 @@ impl Value {
     }
     pub fn strip(&self) -> Value {
         match self {
-            Value::String(s) => Value::from(s.trim()),
+            Value::String(s) => s.strip(),
             _ => unreachable!(),
         }
     }
@@ -250,7 +233,7 @@ impl Value {
         match self {
             Value::List(list) => list.__len(),
             Value::Dict(dict) => dict.__len(),
-            Value::String(s) => Value::Number(Number::Int64(s.chars().count() as i64)),
+            Value::String(s) => s.__len(),
             _ => unreachable!(),
         }
     }
@@ -276,13 +259,9 @@ impl Value {
     }
 
     pub fn count(&self, value: &Value) -> Value {
-        match (self, value) {
-            (Value::List(list), value) => list.count(value),
-            (Value::String(lhs), Value::String(rhs)) => {
-                let lhs = lhs.as_str();
-                let rhs = rhs.as_str();
-                Value::Number(Number::Int64(lhs.split(rhs).count() as i64 - 1))
-            }
+        match self {
+            Value::List(list) => list.count(value),
+            Value::String(s) => s.count(value),
             _ => todo!(),
         }
     }
@@ -290,7 +269,7 @@ impl Value {
 
 impl From<&str> for Value {
     fn from(s: &str) -> Self {
-        Value::String(Rc::new(s.to_string()))
+        Value::String(ImmutableString::from(s))
     }
 }
 impl From<i64> for Value {
