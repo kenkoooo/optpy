@@ -21,3 +21,33 @@ def test():
         ])
     );
 }
+
+#[test]
+fn test_heap_push_pop() {
+    python_function! {r"
+def test():
+    from heapq import heapify, heappop, heappush
+    a = [1, 4, 7]
+    heapify(a)
+    heappush(a, 2)
+    heappush(a, 6)
+    heappush(a, 5)
+    heappush(a, 3)
+    x = []
+    for _ in range(7):
+        x.append(heappop(a))
+    return x"}
+
+    assert_eq!(
+        test(),
+        Value::from(vec![
+            Value::from(1),
+            Value::from(2),
+            Value::from(3),
+            Value::from(4),
+            Value::from(5),
+            Value::from(6),
+            Value::from(7)
+        ]),
+    );
+}
