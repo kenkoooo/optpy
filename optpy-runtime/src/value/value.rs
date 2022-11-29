@@ -1,10 +1,6 @@
-use std::{
-    collections::{HashMap, VecDeque},
-    ops::Mul,
-    rc::Rc,
-};
+use std::{collections::VecDeque, ops::Mul, rc::Rc};
 
-use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number, List};
+use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number, Dict, List};
 
 type RefCell<T> = crate::cell::UnsafeRefCell<T>;
 
@@ -14,7 +10,7 @@ pub enum Value {
     String(Rc<String>),
     Number(Number),
     Boolean(bool),
-    Dict(Rc<RefCell<HashMap<DictKey, Rc<RefCell<Value>>>>>),
+    Dict(Dict),
     Deque(Rc<RefCell<VecDeque<Value>>>),
     None,
 }
@@ -35,24 +31,7 @@ impl PartialEq for Value {
             (Self::Number(l0), Self::Number(r0)) => l0 == r0,
             (Self::Boolean(l0), Self::Boolean(r0)) => l0 == r0,
             (Self::List(l0), Self::List(r0)) => l0.eq(r0),
-            (Self::Dict(l0), Self::Dict(r0)) => {
-                let l = l0
-                    .borrow()
-                    .iter()
-                    .all(|(key, value)| match r0.borrow().get(key) {
-                        Some(r) => value.borrow().eq(&r.borrow()),
-                        None => false,
-                    });
-
-                let r = r0
-                    .borrow()
-                    .iter()
-                    .all(|(key, value)| match l0.borrow().get(key) {
-                        Some(l) => value.borrow().eq(&l.borrow()),
-                        None => false,
-                    });
-                r && l
-            }
+            (Self::Dict(l0), Self::Dict(r0)) => l0.eq(r0),
             (Self::None, Self::None) => true,
             _ => false,
         }
@@ -108,7 +87,7 @@ impl Value {
     fn includes(&self, value: &Value) -> bool {
         match self {
             Value::List(list) => list.includes(value),
-            Value::Dict(map) => map.borrow().contains_key(&value.__as_dict_key()),
+            Value::Dict(map) => map.includes(value),
             _ => todo!(),
         }
     }
@@ -129,10 +108,7 @@ impl Value {
     pub fn __delete(&self, index: &Value) {
         match self {
             Value::List(list) => list.__delete(index),
-            Value::Dict(dict) => {
-                let key = index.__as_dict_key();
-                dict.borrow_mut().remove(&key);
-            }
+            Value::Dict(dict) => dict.__delete(index),
             _ => todo!(),
         }
     }
@@ -141,15 +117,7 @@ impl Value {
         Value::None
     }
     pub fn dict(pairs: Vec<(Value, Value)>) -> Value {
-        let map = pairs
-            .into_iter()
-            .map(|(key, value)| {
-                let key = key.__as_dict_key();
-                let value = Rc::new(RefCell::new(value));
-                (key, value)
-            })
-            .collect::<HashMap<_, _>>();
-        Value::Dict(Rc::new(RefCell::new(map)))
+        Value::Dict(Dict::from(pairs))
     }
 
     pub fn __shallow_copy(&self) -> Value {
@@ -173,27 +141,14 @@ impl Value {
     pub fn __index_ref(&self, index: &Value) -> UnsafeRefMut<Value> {
         match self {
             Value::List(list) => list.__index_ref(index),
-            Value::Dict(dict) => {
-                let key = index.__as_dict_key();
-                dict.borrow_mut()
-                    .entry(key)
-                    .or_insert_with(|| Rc::new(RefCell::new(Value::none())))
-                    .borrow_mut()
-            }
+            Value::Dict(dict) => dict.__index_ref(index),
             _ => todo!(),
         }
     }
     pub fn __index_value(&self, index: &Value) -> Value {
         match self {
             Value::List(list) => list.__index_value(index),
-            Value::Dict(dict) => {
-                let key = index.__as_dict_key();
-                dict.borrow_mut()
-                    .entry(key)
-                    .or_insert_with(|| Rc::new(RefCell::new(Value::none())))
-                    .borrow()
-                    .clone()
-            }
+            Value::Dict(dict) => dict.__index_value(index),
             _ => todo!(),
         }
     }
@@ -208,14 +163,7 @@ impl Value {
 
     pub fn keys(&self) -> Value {
         match self {
-            Value::Dict(dict) => {
-                let list = dict
-                    .borrow()
-                    .keys()
-                    .map(|s| Rc::new(RefCell::new(s.clone().into())))
-                    .collect();
-                Value::List(List(Rc::new(RefCell::new(list))))
-            }
+            Value::Dict(dict) => dict.keys(),
             _ => todo!(),
         }
     }
@@ -270,22 +218,13 @@ impl Value {
 
     pub fn setdefault(&self, key: &Value, value: &Value) {
         match self {
-            Value::Dict(dict) => {
-                let key = key.__as_dict_key();
-                dict.borrow_mut()
-                    .entry(key)
-                    .or_insert_with(|| Rc::new(RefCell::new(value.clone())));
-            }
+            Value::Dict(dict) => dict.setdefault(key, value),
             _ => todo!(),
         }
     }
     pub fn add(&self, value: &Value) {
         match self {
-            Value::Dict(map) => {
-                let key = value.__as_dict_key();
-                map.borrow_mut()
-                    .insert(key, Rc::new(RefCell::new(Value::None)));
-            }
+            Value::Dict(dict) => dict.add(value),
             _ => unreachable!(),
         }
     }
@@ -315,8 +254,8 @@ impl Value {
     pub fn __len(&self) -> Value {
         match self {
             Value::List(list) => list.__len(),
+            Value::Dict(dict) => dict.__len(),
             Value::String(s) => Value::Number(Number::Int64(s.chars().count() as i64)),
-            Value::Dict(d) => Value::Number(Number::Int64(d.borrow().len() as i64)),
             _ => unreachable!(),
         }
     }

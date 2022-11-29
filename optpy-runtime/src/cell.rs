@@ -3,6 +3,7 @@ use std::{
     fmt::Debug,
     ops::{Deref, DerefMut},
     ptr::NonNull,
+    rc::Rc,
 };
 
 pub struct UnsafeRef<T: ?Sized> {
@@ -56,6 +57,9 @@ impl<T> UnsafeRefCell<T> {
         Self {
             cell: UnsafeCell::new(value),
         }
+    }
+    pub fn rc(value: T) -> Rc<UnsafeRefCell<T>> {
+        Rc::new(Self::new(value))
     }
     pub fn borrow(&self) -> UnsafeRef<T> {
         let value = unsafe { NonNull::new_unchecked(self.cell.get()) };
