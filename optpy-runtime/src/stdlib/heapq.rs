@@ -8,25 +8,21 @@ pub fn __heapq__heapify(x: &Value) {
     }
 }
 
-fn shift_down<T: PartialOrd + Clone>(heap: &mut [T], start: usize, mut pos: usize) {
-    let new_item = heap[pos].clone();
+fn shift_down<T: PartialOrd>(heap: &mut [T], start: usize, mut pos: usize) {
     while pos > start {
         let parent_pos = (pos - 1) >> 1;
-        let parent = heap[parent_pos].clone();
-        if new_item < parent {
-            heap[pos] = parent;
+        if heap[pos] < heap[parent_pos] {
+            heap.swap(pos, parent_pos);
             pos = parent_pos;
         } else {
             break;
         }
     }
-    heap[pos] = new_item;
 }
 
-fn shift_up<T: PartialOrd + Clone>(heap: &mut [T], mut pos: usize) {
+fn shift_up<T: PartialOrd>(heap: &mut [T], mut pos: usize) {
     let end = heap.len();
     let start = pos;
-    let new_item = heap[pos].clone();
 
     let mut child = 2 * pos + 1;
     while child < end {
@@ -39,11 +35,10 @@ fn shift_up<T: PartialOrd + Clone>(heap: &mut [T], mut pos: usize) {
         pos = child;
         child = 2 * pos + 1;
     }
-    heap[pos] = new_item;
     shift_down(heap, start, pos);
 }
 
-fn heapify<T: PartialOrd + Clone>(x: &mut [T]) {
+fn heapify<T: PartialOrd>(x: &mut [T]) {
     let n = x.len();
     for i in (0..(n / 2)).rev() {
         shift_up(x, i);
