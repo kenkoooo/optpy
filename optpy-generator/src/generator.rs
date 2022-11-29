@@ -8,15 +8,52 @@ use optpy_parser::{
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
 
-pub struct CodeGenerator {}
+pub struct CodeGenerator<F, B> {
+    pub function_formatter: F,
+    pub constant_boolean_formatter: B,
+}
 
-impl Default for CodeGenerator {
-    fn default() -> Self {
-        Self {}
+pub fn default_code_generator(
+) -> CodeGenerator<impl Fn(&str, &[String], TokenStream) -> TokenStream, impl Fn(bool) -> TokenStream>
+{
+    CodeGenerator {
+        function_formatter: format_function,
+        constant_boolean_formatter: format_constant_boolean,
     }
 }
 
-impl CodeGenerator {
+fn format_function(name: &str, args: &[String], body: TokenStream) -> TokenStream {
+    let args = args
+        .iter()
+        .map(|arg| format_ident!("{}", arg))
+        .collect::<Vec<_>>();
+    let name = format_ident!("{}", name);
+    quote! {
+        fn #name( #(#args: &Value),*  ) -> Value {
+            #(let mut #args = #args.__shallow_copy();)*
+            #body
+            return Value::none();
+        }
+    }
+}
+
+fn format_constant_boolean(b: bool) -> TokenStream {
+    if b {
+        quote! {
+            Value::from(true)
+        }
+    } else {
+        quote! {
+            Value::from(false)
+        }
+    }
+}
+
+impl<F, B> CodeGenerator<F, B>
+where
+    F: Fn(&str, &[String], TokenStream) -> TokenStream,
+    B: Fn(bool) -> TokenStream,
+{
     pub fn generate_function_body(
         &self,
         body: &[Statement],
@@ -77,19 +114,8 @@ impl CodeGenerator {
                 }
             }
             Statement::Func(Func { name, args, body }) => {
-                let args = args
-                    .iter()
-                    .map(|arg| format_ident!("{}", arg))
-                    .collect::<Vec<_>>();
                 let body = self.generate_function_body(body, name, definitions);
-                let name = format_ident!("{}", name);
-                quote! {
-                    fn #name( #(#args: &Value),*  ) -> Value {
-                        #(let mut #args = #args.__shallow_copy();)*
-                        #body
-                        return Value::none();
-                    }
-                }
+                (self.function_formatter)(name, args, body)
             }
             Statement::Return(value) => match value {
                 Some(value) => {
@@ -228,17 +254,7 @@ impl CodeGenerator {
                     Value::from(#value)
                 }
             }
-            Expr::ConstantBoolean(b) => {
-                if *b {
-                    quote! {
-                        Value::from(true)
-                    }
-                } else {
-                    quote! {
-                        Value::from(false)
-                    }
-                }
-            }
+            Expr::ConstantBoolean(b) => (self.constant_boolean_formatter)(*b),
             Expr::UnaryOperation(UnaryOperation { value, op }) => {
                 let value = self.format_expr(value, false);
                 let op = self.format_unary_ident(op);
