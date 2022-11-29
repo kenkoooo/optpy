@@ -16,24 +16,7 @@ impl Default for Dict {
 }
 impl PartialEq for Dict {
     fn eq(&self, other: &Self) -> bool {
-        let l = self
-            .0
-            .borrow()
-            .iter()
-            .all(|(key, value)| match other.0.borrow().get(key) {
-                Some(r) => value.borrow().eq(&r.borrow()),
-                None => false,
-            });
-
-        let r = other
-            .0
-            .borrow()
-            .iter()
-            .all(|(key, value)| match self.0.borrow().get(key) {
-                Some(l) => value.borrow().eq(&l.borrow()),
-                None => false,
-            });
-        r && l
+        self.0.borrow().eq(&other.0.borrow())
     }
 }
 

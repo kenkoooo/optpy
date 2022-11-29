@@ -630,3 +630,27 @@ def test(x):
         Value::from("OK")
     );
 }
+
+#[test]
+fn test_list_iteration() {
+    python_function! {r#"
+def test():
+    a = [[0, 1]]
+    result = []
+    for i in a[0]:
+        result.append(i)
+    for i in a[0]:
+        result.append(i)
+    return result
+    "#}
+
+    assert_eq!(
+        test(),
+        Value::from(vec![
+            Value::from(0),
+            Value::from(1),
+            Value::from(0),
+            Value::from(1)
+        ])
+    );
+}

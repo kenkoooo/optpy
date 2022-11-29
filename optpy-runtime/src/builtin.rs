@@ -1,6 +1,6 @@
 use std::{io::stdin, rc::Rc};
 
-use crate::{number::Number, value::Value, ImmutableString};
+use crate::{cell::UnsafeRefCell, number::Number, value::Value, ImmutableString, List};
 
 pub fn input() -> Value {
     let mut buf = String::new();
@@ -46,7 +46,10 @@ pub fn str(value: &Value) -> Value {
 
 pub fn list(value: &Value) -> Value {
     match value {
-        Value::List(_) => value.clone(),
+        Value::List(list) => {
+            let vec = list.0.borrow().clone();
+            Value::List(List(UnsafeRefCell::rc(vec)))
+        }
         _ => todo!(),
     }
 }
@@ -243,7 +246,7 @@ macro_rules! range {
 }
 
 #[macro_export]
-macro_rules! print {
+macro_rules! print_values {
     ($($arg:expr),+) => {
         let s = [$($arg),+].iter().map(|v| v.to_string()).collect::<Vec<_>>();
         println!("{}", s.join(" "));

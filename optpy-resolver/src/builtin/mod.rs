@@ -67,12 +67,16 @@ impl ExprResolve for Expr {
                     })
                 } else {
                     match name.as_str() {
-                        "range" | "print" | "pow" | "set" | "exit" | "max" | "min" | "sum" => {
+                        "range" | "pow" | "set" | "exit" | "max" | "min" | "sum" => {
                             Expr::CallFunction(CallFunction {
                                 name: format!("{name}__macro__"),
                                 args: args.resolve(),
                             })
                         }
+                        "print" => Expr::CallFunction(CallFunction {
+                            name: "print_values__macro__".into(),
+                            args: args.resolve(),
+                        }),
                         _ => Expr::CallFunction(CallFunction {
                             name: name.to_string(),
                             args: args.resolve(),

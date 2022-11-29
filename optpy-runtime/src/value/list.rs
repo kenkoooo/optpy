@@ -11,11 +11,7 @@ pub struct List(pub Rc<UnsafeRefCell<Vec<Rc<UnsafeRefCell<Value>>>>>);
 
 impl PartialEq for List {
     fn eq(&self, other: &Self) -> bool {
-        self.0
-            .borrow()
-            .iter()
-            .zip(other.0.borrow().iter())
-            .all(|(l, r)| l.borrow().eq(&r.borrow()))
+        self.0.borrow().eq(&other.0.borrow())
     }
 }
 
@@ -107,6 +103,20 @@ impl List {
     }
     pub fn test(&self) -> bool {
         self.0.borrow().len() > 0
+    }
+}
+
+impl ToString for List {
+    fn to_string(&self) -> String {
+        let mut result = String::from("[");
+        for (i, v) in self.0.borrow().iter().enumerate() {
+            if i > 0 {
+                result.push_str(", ");
+            }
+            result.push_str(&v.borrow().to_string());
+        }
+        result.push_str("]");
+        result
     }
 }
 

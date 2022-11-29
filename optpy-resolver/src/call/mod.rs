@@ -360,7 +360,7 @@ mod tests {
                     ))))]
                 }),
                 Statement::Expression(Expr::CallFunction(CallFunction {
-                    name: "print__macro__".into(),
+                    name: "print_values__macro__".into(),
                     args: vec![Expr::CallFunction(CallFunction {
                         name: "__f0".into(),
                         args: vec![]

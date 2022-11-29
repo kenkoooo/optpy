@@ -307,6 +307,7 @@ impl ToString for Value {
         match self {
             Value::String(s) => s.to_string(),
             Value::Number(n) => n.to_string(),
+            Value::List(list) => list.to_string(),
             _ => todo!(),
         }
     }
