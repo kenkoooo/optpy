@@ -1,6 +1,6 @@
-use std::{collections::VecDeque, ops::Mul, rc::Rc};
+use std::{ops::Mul, rc::Rc};
 
-use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number, Dict, List};
+use crate::{cell::UnsafeRefMut, dict::DictKey, number::Number, Deque, Dict, List};
 
 type RefCell<T> = crate::cell::UnsafeRefCell<T>;
 
@@ -11,7 +11,7 @@ pub enum Value {
     Number(Number),
     Boolean(bool),
     Dict(Dict),
-    Deque(Rc<RefCell<VecDeque<Value>>>),
+    Deque(Deque),
     None,
 }
 
@@ -30,8 +30,8 @@ impl PartialEq for Value {
             (Self::String(l0), Self::String(r0)) => l0 == r0,
             (Self::Number(l0), Self::Number(r0)) => l0 == r0,
             (Self::Boolean(l0), Self::Boolean(r0)) => l0 == r0,
-            (Self::List(l0), Self::List(r0)) => l0.eq(r0),
-            (Self::Dict(l0), Self::Dict(r0)) => l0.eq(r0),
+            (Self::List(l0), Self::List(r0)) => l0 == r0,
+            (Self::Dict(l0), Self::Dict(r0)) => l0 == r0,
             (Self::None, Self::None) => true,
             _ => false,
         }
@@ -187,10 +187,7 @@ impl Value {
     }
     pub fn popleft(&self) -> Value {
         match self {
-            Value::Deque(deque) => deque
-                .borrow_mut()
-                .pop_front()
-                .expect("pop from an empty deque"),
+            Value::Deque(deque) => deque.popleft(),
             _ => todo!(),
         }
     }
@@ -203,15 +200,13 @@ impl Value {
     pub fn append(&self, value: &Value) {
         match self {
             Value::List(list) => list.append(value),
-            Value::Deque(deque) => {
-                deque.borrow_mut().push_back(value.clone());
-            }
+            Value::Deque(deque) => deque.append(value),
             _ => unreachable!(),
         }
     }
     pub fn appendleft(&self, value: &Value) {
         match self {
-            Value::Deque(deque) => deque.borrow_mut().push_front(value.clone()),
+            Value::Deque(deque) => deque.appendleft(value),
             _ => unreachable!(),
         }
     }
