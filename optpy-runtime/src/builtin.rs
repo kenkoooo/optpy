@@ -1,6 +1,6 @@
 use std::{io::stdin, rc::Rc};
 
-use crate::{number::Number, value::Value};
+use crate::{number::Number, value::Value, ImmutableString};
 
 pub fn input() -> Value {
     let mut buf = String::new();
@@ -24,14 +24,14 @@ pub fn map_int(value: &Value) -> Value {
 }
 pub fn int(value: &Value) -> Value {
     match value {
-        Value::String(s) => Value::Number(Number::Int64(s.parse::<i64>().expect("non-integer"))),
+        Value::String(s) => Value::Number(Number::Int64(s.0.parse::<i64>().expect("non-integer"))),
         Value::Number(Number::Int64(i)) => Value::Number(Number::Int64(*i)),
         _ => unreachable!(),
     }
 }
 pub fn float(value: &Value) -> Value {
     match value {
-        Value::String(s) => Value::Number(Number::Float(s.parse::<f64>().expect("non-float"))),
+        Value::String(s) => Value::Number(Number::Float(s.0.parse::<f64>().expect("non-float"))),
         Value::Number(Number::Int64(i)) => Value::Number(Number::Float(*i as f64)),
         _ => unreachable!(),
     }
@@ -39,7 +39,7 @@ pub fn float(value: &Value) -> Value {
 pub fn str(value: &Value) -> Value {
     match value {
         Value::String(_) => value.clone(),
-        Value::Number(n) => Value::String(Rc::new(n.to_string())),
+        Value::Number(n) => Value::String(ImmutableString(Rc::new(n.to_string()))),
         _ => todo!(),
     }
 }
