@@ -247,7 +247,12 @@ impl Value {
     pub fn test(&self) -> bool {
         match self {
             Value::Boolean(b) => *b,
-            _ => unreachable!(),
+            Value::List(list) => list.test(),
+            Value::String(s) => s.test(),
+            Value::Number(n) => n.test(),
+            Value::Dict(dict) => dict.test(),
+            Value::Deque(deque) => deque.test(),
+            Value::None => false,
         }
     }
 

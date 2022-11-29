@@ -88,6 +88,9 @@ impl Dict {
     pub fn __len(&self) -> Value {
         Value::Number(Number::Int64(self.0.borrow().len() as i64))
     }
+    pub fn test(&self) -> bool {
+        !self.0.borrow().is_empty()
+    }
 }
 
 impl From<Vec<(Value, Value)>> for Dict {
