@@ -654,3 +654,17 @@ def test():
         ])
     );
 }
+
+#[test]
+fn test_compare_tuple() {
+    python_function! {r"
+def test(a, b):
+    return a < b"}
+    assert_eq!(
+        test(
+            &Value::from(vec![Value::from(1), Value::from(3)]),
+            &Value::from(vec![Value::from(2), Value::from(1)])
+        ),
+        Value::from(true)
+    )
+}

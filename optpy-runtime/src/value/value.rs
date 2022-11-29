@@ -18,6 +18,7 @@ impl PartialOrd for Value {
         match (self, other) {
             (Value::Number(lhs), Value::Number(rhs)) => lhs.partial_cmp(rhs),
             (Value::String(lhs), Value::String(rhs)) => lhs.partial_cmp(rhs),
+            (Value::List(lhs), Value::List(rhs)) => lhs.partial_cmp(rhs),
             _ => todo!(),
         }
     }

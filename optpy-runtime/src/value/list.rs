@@ -14,6 +14,11 @@ impl PartialEq for List {
         self.0.borrow().eq(&other.0.borrow())
     }
 }
+impl PartialOrd for List {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.0.borrow().partial_cmp(&other.0.borrow())
+    }
+}
 
 impl List {
     pub fn __mul(&self, rhs: &Value) -> Value {

@@ -221,12 +221,12 @@ def test_short_circuit_evaluation(N):
         return eval
     else:
         return eval
-    "#};
+        "#};
     let result = test_short_circuit_evaluation(&Value::from(0));
-    assert_eq!(result, Value::from(vec![Value::from(1)]));
+    assert_eq!(result, Value::from(vec![]));
 
     let result = test_short_circuit_evaluation(&Value::from(1));
-    assert_eq!(result, Value::from(vec![]));
+    assert_eq!(result, Value::from(vec![Value::from(1)]));
 }
 
 #[test]
