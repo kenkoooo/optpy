@@ -37,6 +37,12 @@ impl PartialEq for Value {
     }
 }
 
+impl Default for Value {
+    fn default() -> Self {
+        Value::None
+    }
+}
+
 macro_rules! impl_binop {
     ($name:ident, $op:ident) => {
         impl Value {
@@ -112,9 +118,6 @@ impl Value {
         }
     }
 
-    pub fn none() -> Value {
-        Value::None
-    }
     pub fn dict(pairs: Vec<(Value, Value)>) -> Value {
         Value::Dict(Dict::from(pairs))
     }

@@ -33,7 +33,7 @@ impl Dict {
         self.0
             .borrow_mut()
             .entry(key)
-            .or_insert_with(|| UnsafeRefCell::rc(Value::none()))
+            .or_insert_with(|| UnsafeRefCell::rc(Default::default()))
             .borrow_mut()
     }
     pub fn __index_value(&self, index: &Value) -> Value {
@@ -41,7 +41,7 @@ impl Dict {
         self.0
             .borrow_mut()
             .entry(key)
-            .or_insert_with(|| UnsafeRefCell::rc(Value::none()))
+            .or_insert_with(|| UnsafeRefCell::rc(Default::default()))
             .borrow()
             .clone()
     }

@@ -32,7 +32,7 @@ fn format_function(name: &str, args: &[String], body: TokenStream) -> TokenStrea
         fn #name( #(#args: &Value),*  ) -> Value {
             #(let mut #args = #args.__shallow_copy();)*
             #body
-            return Value::none();
+            return Default::default();
         }
     }
 }
@@ -61,7 +61,7 @@ impl CodeGenerator {
             for variable in definitions {
                 let variable = format_ident!("{}", variable);
                 result.append_all(quote! {
-                    let mut #variable = Value::none();
+                    let mut #variable = Value::default();
                 });
             }
         }
@@ -122,7 +122,7 @@ impl CodeGenerator {
                 }
                 None => {
                     quote! {
-                        return Value::none();
+                        return Default::default();
                     }
                 }
             },
@@ -208,7 +208,7 @@ impl CodeGenerator {
             Expr::ConstantNumber(number) => self.format_number(number),
             Expr::None => {
                 quote! {
-                    Value::none()
+                    Value::default()
                 }
             }
             Expr::Index(Index { value, index }) => {
