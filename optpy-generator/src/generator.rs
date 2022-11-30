@@ -8,17 +8,17 @@ use optpy_parser::{
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
 
-pub struct CodeGenerator<F, B> {
-    pub function_formatter: F,
-    pub constant_boolean_formatter: B,
+pub struct CodeGenerator {
+    pub function_formatter: fn(&str, args: &[String], body: TokenStream) -> TokenStream,
+    pub constant_boolean_formatter: fn(bool) -> TokenStream,
 }
 
-pub fn default_code_generator(
-) -> CodeGenerator<impl Fn(&str, &[String], TokenStream) -> TokenStream, impl Fn(bool) -> TokenStream>
-{
-    CodeGenerator {
-        function_formatter: format_function,
-        constant_boolean_formatter: format_constant_boolean,
+impl Default for CodeGenerator {
+    fn default() -> Self {
+        Self {
+            function_formatter: format_function,
+            constant_boolean_formatter: format_constant_boolean,
+        }
     }
 }
 
@@ -49,11 +49,7 @@ fn format_constant_boolean(b: bool) -> TokenStream {
     }
 }
 
-impl<F, B> CodeGenerator<F, B>
-where
-    F: Fn(&str, &[String], TokenStream) -> TokenStream,
-    B: Fn(bool) -> TokenStream,
-{
+impl CodeGenerator {
     pub fn generate_function_body(
         &self,
         body: &[Statement],
