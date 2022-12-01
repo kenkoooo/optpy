@@ -350,7 +350,7 @@ def test():
     a = None
     return a"
     }
-    assert_eq!(test(), Value::none());
+    assert_eq!(test(), Value::None);
 }
 
 #[test]
@@ -362,7 +362,7 @@ def test():
     del a
     return a"
     }
-    assert_eq!(test(), Value::none());
+    assert_eq!(test(), Value::None);
 }
 
 #[test]
