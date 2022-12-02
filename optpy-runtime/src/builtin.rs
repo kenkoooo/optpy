@@ -132,8 +132,9 @@ pub fn __sum2(a: &Value, b: &Value) -> Value {
 }
 
 pub fn sorted(value: &Value) -> Value {
-    value.sort();
-    value.clone()
+    let cloned_value = list(value);
+    cloned_value.sort();
+    cloned_value
 }
 
 pub fn len(value: &Value) -> Value {

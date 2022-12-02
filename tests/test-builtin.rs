@@ -25,6 +25,14 @@ def test():
     return x"}
 
     assert_eq!(test(), Value::from(vec![Value::from(1), Value::from(2)]));
+
+    python_function! {r"
+def test2():
+    x = [2, 1]
+    y = sorted(x)
+    return x"}
+
+    assert_eq!(test2(), Value::from(vec![Value::from(2), Value::from(1)]));
 }
 
 #[test]
