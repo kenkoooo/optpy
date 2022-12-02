@@ -1,6 +1,6 @@
 use std::{io::stdin, rc::Rc};
 
-use crate::{cell::UnsafeRefCell, number::Number, value::Value, ImmutableString, List};
+use crate::{number::Number, value::Value, ImmutableString};
 
 pub fn input() -> Value {
     let mut buf = String::new();
@@ -47,8 +47,13 @@ pub fn str(value: &Value) -> Value {
 pub fn list(value: &Value) -> Value {
     match value {
         Value::List(list) => {
-            let vec = list.0.borrow().clone();
-            Value::List(List(UnsafeRefCell::rc(vec)))
+            let vec = list
+                .0
+                .borrow()
+                .iter()
+                .map(|v| v.borrow().clone())
+                .collect::<Vec<_>>();
+            Value::from(vec)
         }
         _ => todo!(),
     }
