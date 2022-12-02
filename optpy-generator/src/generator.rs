@@ -11,6 +11,11 @@ use quote::{format_ident, quote, TokenStreamExt};
 pub struct CodeGenerator {
     pub function_formatter: fn(&str, args: &[String], body: TokenStream) -> TokenStream,
     pub constant_boolean_formatter: fn(bool) -> TokenStream,
+    pub declaration_formatter: fn(&str) -> TokenStream,
+    pub tuple_formatter: fn(&[TokenStream]) -> TokenStream,
+    pub list_formatter: fn(&[TokenStream]) -> TokenStream,
+    pub string_formatter: fn(&str) -> TokenStream,
+    pub dict_formatter: fn(&[(TokenStream, TokenStream)]) -> TokenStream,
 }
 
 impl Default for CodeGenerator {
@@ -18,6 +23,11 @@ impl Default for CodeGenerator {
         Self {
             function_formatter: format_function,
             constant_boolean_formatter: format_constant_boolean,
+            declaration_formatter: format_declaration,
+            tuple_formatter: format_tuple,
+            list_formatter: format_list,
+            string_formatter: format_string,
+            dict_formatter: format_dict,
         }
     }
 }
@@ -49,6 +59,44 @@ fn format_constant_boolean(b: bool) -> TokenStream {
     }
 }
 
+fn format_declaration(variable: &str) -> TokenStream {
+    let variable = format_ident!("{}", variable);
+    quote! {
+        let mut #variable = Value::default();
+    }
+}
+
+fn format_tuple(tuple: &[TokenStream]) -> TokenStream {
+    quote! {
+       Value::from(vec![ #(Value::from(&#tuple)),* ])
+    }
+}
+fn format_list(tuple: &[TokenStream]) -> TokenStream {
+    quote! {
+       Value::from(vec![ #(Value::from(&#tuple)),* ])
+    }
+}
+fn format_string(s: &str) -> TokenStream {
+    quote! {
+        Value::from(#s)
+    }
+}
+
+fn format_dict(pairs: &[(TokenStream, TokenStream)]) -> TokenStream {
+    let pairs = pairs
+        .iter()
+        .map(|(key, value)| {
+            quote! {
+                (Value::from(&#key), Value::from(&#value))
+            }
+        })
+        .collect::<Vec<_>>();
+
+    quote! {
+        Value::dict(vec![ #(#pairs),* ])
+    }
+}
+
 impl CodeGenerator {
     pub fn generate_function_body(
         &self,
@@ -59,10 +107,7 @@ impl CodeGenerator {
         let mut result = TokenStream::new();
         if let Some(definitions) = definitions.get(function_name) {
             for variable in definitions {
-                let variable = format_ident!("{}", variable);
-                result.append_all(quote! {
-                    let mut #variable = Value::default();
-                });
+                result.append_all((self.declaration_formatter)(variable));
             }
         }
         for statement in body {
@@ -117,7 +162,7 @@ impl CodeGenerator {
                 Some(value) => {
                     let value = self.format_expr(value, false);
                     quote! {
-                        return Value::from(#value);
+                        return #value;
                     }
                 }
                 None => {
@@ -170,9 +215,7 @@ impl CodeGenerator {
             }
             Expr::Tuple(values) => {
                 let list = self.format_exprs(values);
-                quote! {
-                   Value::from(vec![ #(Value::from(&#list)),* ])
-                }
+                (self.tuple_formatter)(&list)
             }
             Expr::VariableName(name) => {
                 let name = format_ident!("{}", name);
@@ -226,9 +269,7 @@ impl CodeGenerator {
             }
             Expr::List(list) => {
                 let list = self.format_exprs(list);
-                quote! {
-                    Value::from(vec![#(Value::from(&#list)),*])
-                }
+                (self.list_formatter)(&list)
             }
             Expr::Dict(Dict { pairs }) => {
                 let pairs = pairs
@@ -236,20 +277,12 @@ impl CodeGenerator {
                     .map(|(key, value)| {
                         let key = self.format_expr(key, false);
                         let value = self.format_expr(value, false);
-                        quote! {
-                            (Value::from(&#key), Value::from(&#value))
-                        }
+                        (key, value)
                     })
                     .collect::<Vec<_>>();
-                quote! {
-                    Value::dict(vec![ #(#pairs),* ])
-                }
+                (self.dict_formatter)(&pairs)
             }
-            Expr::ConstantString(value) => {
-                quote! {
-                    Value::from(#value)
-                }
-            }
+            Expr::ConstantString(value) => (self.string_formatter)(value),
             Expr::ConstantBoolean(b) => (self.constant_boolean_formatter)(*b),
             Expr::UnaryOperation(UnaryOperation { value, op }) => {
                 let value = self.format_expr(value, false);
