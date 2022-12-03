@@ -2,6 +2,21 @@ use optpy_runtime::Value;
 use optpy_test_macro::python_function;
 
 #[test]
+fn test_list() {
+    python_function! {r"
+def test():
+    x = [1, 2, 3]
+    y = list(x)
+    x[0] = 200
+    return y"}
+
+    assert_eq!(
+        test(),
+        Value::from(vec![Value::from(1), Value::from(2), Value::from(3)])
+    );
+}
+
+#[test]
 fn test_sorted() {
     python_function! {r"
 def test():
@@ -10,6 +25,14 @@ def test():
     return x"}
 
     assert_eq!(test(), Value::from(vec![Value::from(1), Value::from(2)]));
+
+    python_function! {r"
+def test2():
+    x = [2, 1]
+    y = sorted(x)
+    return x"}
+
+    assert_eq!(test2(), Value::from(vec![Value::from(2), Value::from(1)]));
 }
 
 #[test]
