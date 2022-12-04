@@ -10,24 +10,28 @@ use quote::{format_ident, quote, TokenStreamExt};
 
 pub struct CodeGenerator {
     pub function_formatter: fn(&str, args: &[String], body: TokenStream) -> TokenStream,
-    pub constant_boolean_formatter: fn(bool) -> TokenStream,
+    pub boolean_formatter: fn(TokenStream) -> TokenStream,
     pub declaration_formatter: fn(&str) -> TokenStream,
     pub tuple_formatter: fn(&[TokenStream]) -> TokenStream,
     pub list_formatter: fn(&[TokenStream]) -> TokenStream,
     pub string_formatter: fn(&str) -> TokenStream,
     pub dict_formatter: fn(&[(TokenStream, TokenStream)]) -> TokenStream,
+    pub number_formatter: fn(&Number) -> TokenStream,
+    pub function_call_formatter: fn(&[TokenStream], &str) -> TokenStream,
 }
 
 impl Default for CodeGenerator {
     fn default() -> Self {
         Self {
             function_formatter: format_function,
-            constant_boolean_formatter: format_constant_boolean,
+            boolean_formatter: format_constant_boolean,
             declaration_formatter: format_declaration,
             tuple_formatter: format_tuple,
             list_formatter: format_list,
             string_formatter: format_string,
             dict_formatter: format_dict,
+            number_formatter: format_number,
+            function_call_formatter: format_function_call,
         }
     }
 }
@@ -47,15 +51,9 @@ fn format_function(name: &str, args: &[String], body: TokenStream) -> TokenStrea
     }
 }
 
-fn format_constant_boolean(b: bool) -> TokenStream {
-    if b {
-        quote! {
-            Value::from(true)
-        }
-    } else {
-        quote! {
-            Value::from(false)
-        }
+fn format_constant_boolean(b: TokenStream) -> TokenStream {
+    quote! {
+        Value::from(#b)
     }
 }
 
@@ -97,6 +95,45 @@ fn format_dict(pairs: &[(TokenStream, TokenStream)]) -> TokenStream {
     }
 }
 
+fn format_number(number: &Number) -> TokenStream {
+    match number {
+        Number::Int(int) => match int.parse::<i64>() {
+            Ok(int) => {
+                quote! {
+                    Value::from(#int)
+                }
+            }
+            Err(_) => {
+                todo!("bigint is not supported");
+            }
+        },
+        Number::Float(float) => match float.parse::<f64>() {
+            Ok(float) => {
+                quote! {
+                    Value::from(#float)
+                }
+            }
+            Err(e) => {
+                panic!("unsupported float value: {} {:?}", float, e);
+            }
+        },
+    }
+}
+
+fn format_function_call(args: &[TokenStream], name: &str) -> TokenStream {
+    if let Some(macro_name) = name.strip_suffix("__macro__") {
+        let name = format_ident!("{}", macro_name);
+        quote! {
+            #name !( #(&#args),* )
+        }
+    } else {
+        let name = format_ident!("{}", name);
+        quote! {
+            #name ( #(&#args),* )
+        }
+    }
+}
+
 impl CodeGenerator {
     pub fn generate_function_body(
         &self,
@@ -123,13 +160,22 @@ impl CodeGenerator {
         definitions: &BTreeMap<String, BTreeSet<String>>,
     ) -> TokenStream {
         match statement {
-            Statement::Assign(Assign { target, value }) => {
-                let target = self.format_expr(target, true);
-                let value = self.format_expr(value, false);
-                quote! {
-                    #target.assign(& #value);
+            Statement::Assign(Assign { target, value }) => match target {
+                Expr::VariableName(name) => {
+                    let value = self.format_expr(value, false);
+                    let target = format_ident!("{}", name);
+                    quote! {
+                        #target = (#value).__shallow_copy();
+                    }
                 }
-            }
+                target => {
+                    let target = self.format_expr(target, true);
+                    let value = self.format_expr(value, false);
+                    quote! {
+                        #target.assign(& #value);
+                    }
+                }
+            },
             Statement::Expression(expr) => {
                 let value = self.format_expr(expr, false);
                 quote! {
@@ -193,17 +239,7 @@ impl CodeGenerator {
         match expr {
             Expr::CallFunction(CallFunction { name, args }) => {
                 let args = self.format_exprs(args);
-                if let Some(macro_name) = name.strip_suffix("__macro__") {
-                    let name = format_ident!("{}", macro_name);
-                    quote! {
-                        #name !( #(&#args),* )
-                    }
-                } else {
-                    let name = format_ident!("{}", name);
-                    quote! {
-                        #name ( #(&#args),* )
-                    }
-                }
+                (self.function_call_formatter)(&args, name)
             }
             Expr::CallMethod(CallMethod { value, name, args }) => {
                 let value = self.format_expr(value, false);
@@ -234,7 +270,7 @@ impl CodeGenerator {
                     }
                     result.append_all(quote! { #condition .test() });
                 }
-                quote! { Value::from(#result) }
+                (self.boolean_formatter)(result)
             }
             Expr::Compare(Compare { left, right, op }) => {
                 let left = self.format_expr(left, false);
@@ -248,7 +284,7 @@ impl CodeGenerator {
                 let op = self.format_binary_ident(op);
                 quote! { #left . #op (&#right) }
             }
-            Expr::ConstantNumber(number) => self.format_number(number),
+            Expr::ConstantNumber(number) => (self.number_formatter)(number),
             Expr::None => {
                 quote! {
                     Value::default()
@@ -283,7 +319,7 @@ impl CodeGenerator {
                 (self.dict_formatter)(&pairs)
             }
             Expr::ConstantString(value) => (self.string_formatter)(value),
-            Expr::ConstantBoolean(b) => (self.constant_boolean_formatter)(*b),
+            Expr::ConstantBoolean(b) => (self.boolean_formatter)(quote! { #b }),
             Expr::UnaryOperation(UnaryOperation { value, op }) => {
                 let value = self.format_expr(value, false);
                 let op = self.format_unary_ident(op);
@@ -333,31 +369,6 @@ impl CodeGenerator {
             UnaryOperator::Add => format_ident!("__unary_add"),
             UnaryOperator::Sub => format_ident!("__unary_sub"),
             UnaryOperator::Not => format_ident!("__unary_not"),
-        }
-    }
-
-    fn format_number(&self, number: &Number) -> TokenStream {
-        match number {
-            Number::Int(int) => match int.parse::<i64>() {
-                Ok(int) => {
-                    quote! {
-                        Value::from(#int)
-                    }
-                }
-                Err(_) => {
-                    todo!("bigint is not supported");
-                }
-            },
-            Number::Float(float) => match float.parse::<f64>() {
-                Ok(float) => {
-                    quote! {
-                        Value::from(#float)
-                    }
-                }
-                Err(e) => {
-                    panic!("unsupported float value: {} {:?}", float, e);
-                }
-            },
         }
     }
 }
