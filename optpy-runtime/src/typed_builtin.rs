@@ -3,20 +3,19 @@ use crate::{
     typed_value::{TypedList, TypedString, TypedValue},
 };
 
-pub fn len<T: TypedValue>(x: &T) -> Number {
+pub fn len<T>(x: TypedList<T>) -> Number {
     x.__len()
 }
 
-pub fn list<T: TypedValue>(x: &TypedList<T>) -> TypedList<T> {
+pub fn list<T: TypedValue>(x: TypedList<T>) -> TypedList<T> {
     x.__list()
 }
 
-pub fn abs<T: TypedValue>(x: &T) -> Number {
-    x.__abs()
+pub fn abs(x: Number) -> Number {
+    x.abs()
 }
-pub fn __range1<T: TypedValue>(x: &T) -> TypedList<Number> {
-    let to = x.__as_number();
-    match to {
+pub fn __range1(x: Number) -> TypedList<Number> {
+    match x {
         Number::Int64(i) => {
             let list = (0..i).map(|i| Number::from(i)).collect::<Vec<_>>();
             TypedList::from(list)
@@ -25,9 +24,7 @@ pub fn __range1<T: TypedValue>(x: &T) -> TypedList<Number> {
     }
 }
 
-pub fn __range2<T: TypedValue, U: TypedValue>(from: &T, to: &U) -> TypedList<Number> {
-    let from = from.__as_number();
-    let to = to.__as_number();
+pub fn __range2(from: Number, to: Number) -> TypedList<Number> {
     match (from, to) {
         (Number::Int64(from), Number::Int64(to)) => {
             let list = (from..to).map(|i| Number::from(i)).collect::<Vec<_>>();
@@ -37,11 +34,11 @@ pub fn __range2<T: TypedValue, U: TypedValue>(from: &T, to: &U) -> TypedList<Num
     }
 }
 
-pub fn __min2<T: TypedValue, U: TypedValue>(a: &T, b: &U) -> impl TypedValue {
+pub fn __min2(a: Number, b: Number) -> Number {
     a.__min(b)
 }
 
-pub fn map_int<T: TypedValue>(_: &T) -> TypedList<Number> {
+pub fn map_int(_: TypedList<TypedString>) -> TypedList<Number> {
     todo!()
 }
 

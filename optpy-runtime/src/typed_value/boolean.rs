@@ -1,16 +1,12 @@
-use super::{AsValue, BinOps, IndexOps, TypedValue, UnaryOps};
-
 pub struct Bool(pub bool);
-impl TypedValue for Bool {
-    fn test(&self) -> bool {
+impl Bool {
+    pub fn test(&self) -> bool {
         self.0
     }
-}
-impl AsValue for Bool {}
-impl BinOps for Bool {}
-impl UnaryOps for Bool {}
-impl IndexOps for Bool {
-    type Item = Self;
+
+    pub fn __unary_not(&self) -> Self {
+        Self(!self.0)
+    }
 }
 
 impl Default for Bool {

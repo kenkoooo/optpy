@@ -1,26 +1,54 @@
 use crate::number::Number;
 
-use super::{AsValue, BinOps, IndexOps, TypedValue, UnaryOps};
+use super::{Bool, IndexValue, TypedValue};
 
-impl TypedValue for Number {}
-impl AsValue for Number {}
-impl BinOps for Number {
-    fn __min<T: TypedValue>(&self, rhs: &T) -> Self {
-        let rhs = rhs.__as_number();
+impl Number {
+    pub fn __min(&self, rhs: Self) -> Self {
         if self < &rhs {
             *self
         } else {
             rhs
         }
     }
+
+    pub fn __sub(&self, rhs: Self) -> Self {
+        *self - rhs
+    }
+
+    pub fn __add(&self, rhs: Self) -> Self {
+        *self + rhs
+    }
+    pub fn __mul(&self, rhs: Self) -> Self {
+        *self * rhs
+    }
+
+    pub fn __gt(&self, rhs: Self) -> Bool {
+        Bool::from(*self > rhs)
+    }
+    pub fn __eq(&self, rhs: Self) -> Bool {
+        Bool::from(*self == rhs)
+    }
+    pub fn __unary_sub(&self) -> Self {
+        match self {
+            Number::Int64(i) => Number::Int64(-i),
+            Number::Float(f) => Number::Float(-f),
+        }
+    }
 }
-impl UnaryOps for Number {}
-impl IndexOps for Number {
-    type Item = Self;
+
+impl TypedValue for Number {
+    fn __shallow_copy(&self) -> Self {
+        *self
+    }
 }
 
 impl Default for Number {
     fn default() -> Self {
         Number::Int64(0)
+    }
+}
+impl IndexValue for Number {
+    fn __as_number(&self) -> Number {
+        *self
     }
 }

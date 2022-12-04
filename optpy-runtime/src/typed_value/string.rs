@@ -1,13 +1,19 @@
-use super::{AsValue, BinOps, IndexOps, TypedValue, UnaryOps};
+use super::{TypedList, TypedValue};
 
 pub struct TypedString();
-impl TypedValue for TypedString {}
-impl IndexOps for TypedString {
-    type Item = Self;
+
+impl TypedString {
+    pub fn split(&self) -> TypedList<TypedString> {
+        todo!()
+    }
 }
-impl UnaryOps for TypedString {}
-impl BinOps for TypedString {}
-impl AsValue for TypedString {}
+
+impl TypedValue for TypedString {
+    fn __shallow_copy(&self) -> Self {
+        todo!()
+    }
+}
+
 impl Default for TypedString {
     fn default() -> Self {
         Self()
