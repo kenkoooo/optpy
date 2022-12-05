@@ -185,9 +185,13 @@ fn indent_code(code: &str) -> String {
 
 impl DumpPython for Vec<Statement> {
     fn to_python_code(&self) -> String {
-        self.iter()
-            .map(|s| s.to_python_code())
-            .collect::<Vec<_>>()
-            .join("\n")
+        if self.is_empty() {
+            "pass".into()
+        } else {
+            self.iter()
+                .map(|s| s.to_python_code())
+                .collect::<Vec<_>>()
+                .join("\n")
+        }
     }
 }
