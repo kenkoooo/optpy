@@ -31,6 +31,11 @@ enum Command {
         /// Input Python file
         input: PathBuf,
     },
+    /// Type inference (experimental)
+    Type {
+        /// Input Python file
+        input: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
@@ -55,6 +60,12 @@ fn main() -> Result<()> {
             let (ast, _) = resolve(&ast);
             let python_code = ast.to_python_code();
             println!("{}", python_code);
+        }
+        Command::Type { input } => {
+            let code = read_to_string(&input)?;
+            let ast = parse(code)?;
+            let (ast, _) = resolve(&ast);
+            optpy_type_inference::resolve_types(&ast);
         }
     }
 

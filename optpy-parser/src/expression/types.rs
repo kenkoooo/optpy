@@ -1,56 +1,56 @@
 use rustpython_parser::ast::{Boolop, Cmpop, Unaryop};
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub struct CallFunction<E> {
     pub name: String,
     pub args: Vec<E>,
 }
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub struct CallMethod<E> {
     pub value: Box<E>,
     pub name: String,
     pub args: Vec<E>,
 }
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub struct BoolOperation<E> {
     pub op: BoolOperator,
     pub conditions: Vec<E>,
 }
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub struct Compare<E> {
     pub left: Box<E>,
     pub right: Box<E>,
     pub op: CompareOperator,
 }
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub struct UnaryOperation<E> {
     pub value: Box<E>,
     pub op: UnaryOperator,
 }
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub struct BinaryOperation<E> {
     pub left: Box<E>,
     pub right: Box<E>,
     pub op: BinaryOperator,
 }
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub struct Index<E> {
     pub value: Box<E>,
     pub index: Box<E>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub struct Dict<E> {
     pub pairs: Vec<(E, E)>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub(crate) struct ListComprehension<E> {
     pub(crate) value: Box<E>,
     pub(crate) generators: Vec<Comprehension<E>>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 pub enum BoolOperator {
     And,
     Or,
@@ -64,7 +64,7 @@ impl BoolOperator {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 pub enum CompareOperator {
     Less,
     LessOrEqual,
@@ -92,13 +92,13 @@ impl CompareOperator {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub enum Number {
     Int(String),
     Float(String),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 pub enum BinaryOperator {
     Add,
     Sub,
@@ -126,14 +126,14 @@ impl BinaryOperator {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub struct Comprehension<E> {
     pub target: Box<E>,
     pub iter: Box<E>,
     pub ifs: Vec<E>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 pub enum UnaryOperator {
     Add,
     Sub,

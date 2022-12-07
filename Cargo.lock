@@ -1008,6 +1008,7 @@ dependencies = [
  "optpy-resolver",
  "optpy-runtime",
  "optpy-test-macro",
+ "optpy-type-inference",
 ]
 
 [[package]]
@@ -1053,6 +1054,13 @@ dependencies = [
  "optpy-resolver",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "optpy-type-inference"
+version = "0.1.0"
+dependencies = [
+ "optpy-parser",
 ]
 
 [[package]]
