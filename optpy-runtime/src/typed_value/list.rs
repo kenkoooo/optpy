@@ -21,24 +21,47 @@ impl<T> Default for TypedList<T> {
     }
 }
 
-impl<T> TypedList<T> {
-    pub fn __len(&self) -> Number {
-        todo!()
-    }
-    pub fn reverse(&self) {
-        todo!()
-    }
-    pub fn __index_value<I: IndexValue>(&self, _: I) -> T {
-        todo!()
-    }
-    pub fn append(&self, x: T) {
-        todo!()
+impl<T: TypedValue> TypedList<T> {
+    pub fn __index_value(&self, index: Number) -> T {
+        match index {
+            Number::Int64(i) => {
+                if i < 0 {
+                    let i = self.0.borrow().len() as i64 + i;
+                    self.0.borrow()[i as usize].borrow().__shallow_copy()
+                } else {
+                    self.0.borrow()[i as usize].borrow().__shallow_copy()
+                }
+            }
+            _ => todo!(),
+        }
     }
     pub fn pop(&self) -> T {
-        todo!()
+        self.0.borrow_mut().pop().unwrap().borrow().__shallow_copy()
     }
-    pub fn __mul(&self, _: Number) -> Self {
-        todo!()
+    pub fn __mul(&self, x: Number) -> Self {
+        let mut list = vec![];
+        let x = match x {
+            Number::Int64(x) => x,
+            Number::Float(_) => unreachable!(),
+        };
+        for _ in 0..x {
+            for element in self.0.borrow().iter() {
+                list.push(element.borrow().__shallow_copy());
+            }
+        }
+        Self::from(list)
+    }
+}
+
+impl<T> TypedList<T> {
+    pub fn __len(&self) -> Number {
+        Number::Int64(self.0.borrow().len() as i64)
+    }
+    pub fn reverse(&self) {
+        self.0.borrow_mut().reverse();
+    }
+    pub fn append(&self, x: T) {
+        self.0.borrow_mut().push(UnsafeRefCell::rc(x))
     }
     pub fn __index_ref(&self, index: Number) -> UnsafeRefMut<T> {
         match index {

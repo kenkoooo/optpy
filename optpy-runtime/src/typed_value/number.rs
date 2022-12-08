@@ -28,6 +28,9 @@ impl Number {
     pub fn __eq(&self, rhs: Self) -> Bool {
         Bool::from(*self == rhs)
     }
+    pub fn __ne(&self, rhs: Self) -> Bool {
+        Bool::from(*self != rhs)
+    }
     pub fn __unary_sub(&self) -> Self {
         match self {
             Number::Int64(i) => Number::Int64(-i),

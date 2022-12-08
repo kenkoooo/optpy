@@ -39,12 +39,19 @@ mod typed_builtin {
         a.__min(b)
     }
 
-    pub fn map_int(_: TypedList<TypedString>) -> TypedList<Number> {
-        todo!()
+    pub fn map_int(v: TypedList<TypedString>) -> TypedList<Number> {
+        let list =
+            v.0.borrow()
+                .iter()
+                .map(|v| Number::from(v.borrow().0.parse::<i64>().unwrap()))
+                .collect::<Vec<_>>();
+        TypedList::from(list)
     }
 
     pub fn input() -> TypedString {
-        todo!()
+        let mut buf = String::new();
+        std::io::stdin().read_line(&mut buf).unwrap();
+        TypedString::from(buf.as_str())
     }
 
     #[macro_export]
@@ -259,6 +266,12 @@ mod number {
     }
 
     impl Number {
+        pub fn int(&self) -> i64 {
+            match self {
+                Number::Int64(i) => *i,
+                Number::Float(_) => todo!(),
+            }
+        }
         pub fn floor_div(&self, rhs: &Number) -> Number {
             match (self, rhs) {
                 (Number::Int64(l0), Number::Int64(r0)) => Number::Int64(l0 / r0),
@@ -392,24 +405,44 @@ mod typed_value {
             }
         }
 
+        impl<T: TypedValue> TypedList<T> {
+            pub fn __index_value(&self, index: Number) -> T {
+                let i = index.int();
+                if i < 0 {
+                    let i = self.0.borrow().len() as i64 + i;
+                    self.0.borrow()[i as usize].borrow().__shallow_copy()
+                } else {
+                    self.0.borrow()[i as usize].borrow().__shallow_copy()
+                }
+            }
+
+            pub fn pop(&self) -> T {
+                self.0.borrow_mut().pop().unwrap().borrow().__shallow_copy()
+            }
+            pub fn __mul(&self, x: Number) -> Self {
+                let mut list = vec![];
+                let x = match x {
+                    Number::Int64(x) => x,
+                    Number::Float(_) => unreachable!(),
+                };
+                for _ in 0..x {
+                    for element in self.0.borrow().iter() {
+                        list.push(element.borrow().__shallow_copy());
+                    }
+                }
+                Self::from(list)
+            }
+        }
+
         impl<T> TypedList<T> {
             pub fn __len(&self) -> Number {
-                todo!()
+                Number::Int64(self.0.borrow().len() as i64)
             }
             pub fn reverse(&self) {
-                todo!()
-            }
-            pub fn __index_value<I: IndexValue>(&self, _: I) -> T {
-                todo!()
+                self.0.borrow_mut().reverse();
             }
             pub fn append(&self, x: T) {
-                todo!()
-            }
-            pub fn pop(&self) -> T {
-                todo!()
-            }
-            pub fn __mul(&self, _: Number) -> Self {
-                todo!()
+                self.0.borrow_mut().push(UnsafeRefCell::rc(x))
             }
             pub fn __index_ref(&self, index: Number) -> UnsafeRefMut<T> {
                 match index {
@@ -475,6 +508,9 @@ mod typed_value {
             pub fn __eq(&self, rhs: Self) -> Bool {
                 Bool::from(*self == rhs)
             }
+            pub fn __ne(&self, rhs: Self) -> Bool {
+                Bool::from(*self != rhs)
+            }
             pub fn __unary_sub(&self) -> Self {
                 match self {
                     Number::Int64(i) => Number::Int64(-i),
@@ -502,13 +538,20 @@ mod typed_value {
     }
     pub use self::number::*;
     mod string {
+        use std::rc::Rc;
+
         use super::{TypedList, TypedValue};
 
-        pub struct TypedString();
+        pub struct TypedString(pub Rc<String>);
 
         impl TypedString {
             pub fn split(&self) -> TypedList<TypedString> {
-                todo!()
+                let list = self
+                    .0
+                    .split_ascii_whitespace()
+                    .map(|s| TypedString::from(s))
+                    .collect::<Vec<_>>();
+                TypedList::from(list)
             }
         }
 
@@ -520,7 +563,12 @@ mod typed_value {
 
         impl Default for TypedString {
             fn default() -> Self {
-                Self()
+                Self(Rc::new(String::new()))
+            }
+        }
+        impl From<&str> for TypedString {
+            fn from(v: &str) -> Self {
+                Self(Rc::new(v.to_string()))
             }
         }
     }
@@ -547,7 +595,7 @@ pub use typed_value::*;
 fn main() {
     let mut __v0 = Default::default();
     let mut __v1 = Default::default();
-    let mut __v12 = Default::default();
+    let mut __v12: TypedList<TypedList<TypedList<Number>>> = Default::default();
     let mut __v2 = Default::default();
     let mut __v3 = Default::default();
     let mut __v4 = Default::default();
@@ -573,7 +621,7 @@ fn main() {
     __v7 = __v2
         .__mul(Number::from(2i64).__shallow_copy())
         .__add(Number::from(1i64).__shallow_copy());
-    let __f0 = |mut __v8| {
+    let __f0 = |mut __v8: Number| {
         let mut __v10 = Default::default();
         let mut __v11 = Default::default();
         let mut __v9 = Default::default();
@@ -588,7 +636,11 @@ fn main() {
         return Default::default();
     };
     __v12 = __f0(__v5.__shallow_copy());
-    let __f1 = |mut __v13, mut __v14, mut __v15, mut __v16, mut __v17| {
+    let __f1 = |mut __v13: Number,
+                mut __v14: Number,
+                mut __v15: Number,
+                mut __v16: Number,
+                mut __v17: TypedList<TypedList<TypedList<Number>>>| {
         __v17.__index_value(__v13.__shallow_copy()).append(
             TypedList::from(vec![
                 __v14.__shallow_copy(),
@@ -611,7 +663,10 @@ fn main() {
         );
         return Default::default();
     };
-    let __f2 = |mut __v18, mut __v19, mut __v20, mut __v21| {
+    let __f2 = |mut __v18: Number,
+                mut __v19: Number,
+                mut __v20: TypedList<TypedList<TypedList<Number>>>,
+                mut __v21: Number| {
         let mut __v22 = Default::default();
         let mut __v23 = Default::default();
         let mut __v24 = Default::default();
@@ -709,7 +764,12 @@ fn main() {
         .__shallow_copy();
         return Default::default();
     };
-    let __f3 = |mut __v35, mut __v36, mut __v37, mut __v38, mut __v39, mut __v40| {
+    let __f3 = |mut __v35: Number,
+                mut __v36: Number,
+                mut __v37: Number,
+                mut __v38: Number,
+                mut __v39: TypedList<TypedList<TypedList<Number>>>,
+                mut __v40: Number| {
         let mut __v41 = Default::default();
         let mut __v42 = Default::default();
         let mut __v43 = Default::default();

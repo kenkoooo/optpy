@@ -38,12 +38,19 @@ pub fn __min2(a: Number, b: Number) -> Number {
     a.__min(b)
 }
 
-pub fn map_int(_: TypedList<TypedString>) -> TypedList<Number> {
-    todo!()
+pub fn map_int(v: TypedList<TypedString>) -> TypedList<Number> {
+    let list =
+        v.0.borrow()
+            .iter()
+            .map(|v| Number::from(v.borrow().0.parse::<i64>().unwrap()))
+            .collect::<Vec<_>>();
+    TypedList::from(list)
 }
 
 pub fn input() -> TypedString {
-    todo!()
+    let mut buf = String::new();
+    std::io::stdin().read_line(&mut buf).unwrap();
+    TypedString::from(buf.as_str())
 }
 
 #[macro_export]
