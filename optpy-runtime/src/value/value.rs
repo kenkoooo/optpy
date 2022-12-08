@@ -1,13 +1,13 @@
 use std::ops::Mul;
 
-use crate::{cell::UnsafeRefMut, number::Number, Deque, Dict, ImmutableString, List};
+use crate::{cell::UnsafeRefMut, number::Number, Boolean, Deque, Dict, ImmutableString, List};
 
 #[derive(Debug, Clone)]
 pub enum Value {
     List(List),
     String(ImmutableString),
     Number(Number),
-    Boolean(bool),
+    Boolean(Boolean),
     Dict(Dict),
     Deque(Deque),
     None,
@@ -77,7 +77,8 @@ macro_rules! impl_compare {
     ($name:ident, $op:ident) => {
         impl Value {
             pub fn $name(&self, rhs: &Value) -> Value {
-                Value::Boolean(self.$op(rhs))
+                let b = self.$op(rhs);
+                Value::Boolean(Boolean::from(b))
             }
         }
     };
@@ -97,15 +98,15 @@ impl Value {
         }
     }
     pub fn __in(&self, rhs: &Value) -> Value {
-        Value::Boolean(rhs.includes(self))
+        Value::from(rhs.includes(self))
     }
     pub fn __not_in(&self, rhs: &Value) -> Value {
-        Value::Boolean(!rhs.includes(self))
+        Value::from(!rhs.includes(self))
     }
 
     pub fn __bit_and(&self, rhs: &Value) -> Value {
         match (self, rhs) {
-            (Value::Boolean(a), Value::Boolean(b)) => Value::Boolean(*a && *b),
+            (Value::Boolean(a), Value::Boolean(b)) => Value::Boolean(a.__bit_and(b)),
             _ => todo!(),
         }
     }
@@ -229,7 +230,7 @@ impl Value {
     }
     pub fn __unary_not(&self) -> Value {
         match self {
-            Value::Boolean(b) => Value::Boolean(!*b),
+            Value::Boolean(b) => Value::from(!b.__test()),
             _ => unreachable!(),
         }
     }
@@ -250,7 +251,7 @@ impl Value {
 
     pub fn test(&self) -> bool {
         match self {
-            Value::Boolean(b) => *b,
+            Value::Boolean(b) => b.__test(),
             Value::List(list) => list.test(),
             Value::String(s) => s.test(),
             Value::Number(n) => n.test(),
@@ -298,7 +299,7 @@ impl From<Vec<Value>> for Value {
 }
 impl From<bool> for Value {
     fn from(b: bool) -> Self {
-        Value::Boolean(b)
+        Value::Boolean(Boolean::from(b))
     }
 }
 impl From<&Value> for Value {
