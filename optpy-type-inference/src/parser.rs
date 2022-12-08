@@ -1,9 +1,11 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use optpy_parser::{
     Assign, BinaryOperation, CallFunction, CallMethod, Dict, Expr, Func, If, Index,
     Statement as Stmt, While,
 };
+
+use crate::unionfind::UnionFind;
 
 pub(super) struct Parser {
     level: u64,
@@ -203,13 +205,62 @@ impl Parser {
     }
 
     fn resolve(&mut self, args: &[Variable], statements: &[Statement]) -> Type {
-        let args = args.iter().map(|arg| arg.to_string()).collect::<Vec<_>>();
-        println!("args={}", args.join(", "));
-        for s in statements {
-            println!("{}", s.to_string());
+        let groups = group(statements);
+        for group in groups {
+            let group = group.iter().map(|v| v.to_string()).collect::<Vec<_>>();
+            eprintln!("{}", group.join(", "));
         }
+
         todo!()
     }
+}
+
+fn group(statements: &[Statement]) -> Vec<Vec<Type>> {
+    let mut graph = BTreeMap::new();
+    for statement in statements {
+        match statement {
+            Statement::Let(v, t) => {
+                let v = Type::Typing(v.clone());
+                graph
+                    .entry(v.clone())
+                    .or_insert_with(BTreeSet::new)
+                    .insert(t.clone());
+                graph
+                    .entry(t.clone())
+                    .or_insert_with(BTreeSet::new)
+                    .insert(v.clone());
+            }
+            Statement::Return(_) => {}
+        }
+    }
+
+    let mut vis: BTreeSet<&Type> = BTreeSet::new();
+    let mut groups = vec![];
+    for v in graph.keys() {
+        if vis.contains(v) {
+            continue;
+        }
+
+        let mut group = vec![];
+        let mut q = VecDeque::new();
+        q.push_back(v);
+        vis.insert(v);
+        group.push(v.clone());
+        while let Some(v) = q.pop_front() {
+            if let Some(graph) = graph.get(v) {
+                for next in graph {
+                    if !vis.contains(next) {
+                        vis.insert(next);
+                        q.push_back(next);
+                        group.push(next.clone());
+                    }
+                }
+            }
+        }
+
+        groups.push(group);
+    }
+    groups
 }
 
 pub(super) enum Statement {
@@ -225,7 +276,7 @@ impl ToString for Statement {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub(super) struct Variable {
     name: String,
     level: u64,
@@ -236,7 +287,7 @@ impl ToString for Variable {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub(super) enum Type {
     String,
     Int,
@@ -269,4 +320,80 @@ impl ToString for Type {
             }
         }
     }
+}
+fn merge(s: Type, t: Type) -> Type {
+    match (s, t) {
+        (Type::Apply(_, _), t) => t,
+        (s, Type::Apply(_, _)) => s,
+        (Type::Typing(_), t) => t,
+        (s, Type::Typing(_)) => s,
+        (Type::TypeParam(_), t) => t,
+        (s, Type::TypeParam(_)) => s,
+        (Type::String, Type::String) => Type::String,
+        (Type::Int, Type::Int) => Type::Int,
+        (Type::Float, Type::Float) => Type::Float,
+        (Type::Bool, Type::Bool) => Type::Bool,
+        (Type::None, Type::None) => Type::None,
+        (Type::String, _)
+        | (_, Type::String)
+        | (Type::Int, _)
+        | (_, Type::Int)
+        | (Type::Float, _)
+        | (_, Type::Float)
+        | (Type::Bool, _)
+        | (_, Type::Bool)
+        | (Type::None, _)
+        | (_, Type::None) => unreachable!(),
+        (Type::Fun(arg0, ret0), Type::Fun(arg1, ret1)) => {
+            assert_eq!(arg0.len(), arg1.len());
+            let args = arg0
+                .into_iter()
+                .zip(arg1)
+                .map(|(a1, a2)| merge(a1, a2))
+                .collect::<Vec<_>>();
+            let ret = merge(*ret0, *ret1);
+            Type::Fun(args, Box::new(ret))
+        }
+    }
+}
+
+struct UnificationPool {
+    map: BTreeMap<Variable, Type>,
+}
+
+impl UnificationPool {
+    fn set(&mut self, v: Variable, t: Type) {}
+    fn get(&mut self, v: &Variable) -> Type {
+        match self.map.get(v) {
+            Some(t) => self.resolve(t),
+            None => Type::Typing(v.clone()),
+        }
+    }
+    fn resolve(&mut self, t: &Type) -> Type {
+        match t {
+            Type::String
+            | Type::Int
+            | Type::Float
+            | Type::Bool
+            | Type::None
+            | Type::TypeParam(_) => t.clone(),
+            Type::Fun(_, _) => todo!(),
+            Type::Apply(f, args) => {
+                let args = args.iter().map(|arg| self.resolve(arg)).collect();
+                let f = self.resolve(&Type::Typing(f.clone()));
+                match f {
+                    Type::Fun(a, r) => {}
+                    _ => unreachable!("{}", f.to_string()),
+                }
+            }
+            Type::Typing(v) => self.get(&v),
+        }
+    }
+    fn declare(&mut self, name: &str) -> Variable {}
+}
+
+fn apply(args: &[Type], ret: &Type, pass: &[Type]) -> Type {
+    assert_eq!(args.len(), pass.len());
+    let mut param_map = BTreeMap::new();
+    for (arg, pass) in args.iter().zip(pass) {}
 }
