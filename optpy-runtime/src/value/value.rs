@@ -274,6 +274,12 @@ impl Value {
             _ => todo!(),
         }
     }
+    pub fn index(&self, value: &Value) -> Value {
+        match self {
+            Value::List(list) => list.index(value),
+            _ => todo!(),
+        }
+    }
 }
 
 impl From<&str> for Value {
