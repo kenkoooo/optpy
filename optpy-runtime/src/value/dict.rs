@@ -3,7 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 use crate::{
     cell::{UnsafeRefCell, UnsafeRefMut},
     number::Number,
-    ImmutableString, Value,
+    Value,
 };
 
 #[derive(Debug, Clone)]
@@ -100,7 +100,7 @@ impl Into<Value> for DictKey {
     fn into(self) -> Value {
         match self {
             DictKey::Number(n) => Value::Number(n),
-            DictKey::String(s) => Value::String(ImmutableString(Rc::new(s))),
+            DictKey::String(s) => Value::String(Rc::new(s)),
         }
     }
 }

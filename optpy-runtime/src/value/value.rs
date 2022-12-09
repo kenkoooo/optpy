@@ -9,7 +9,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub enum Value {
     List(List),
-    String(ImmutableString),
+    String(Rc<String>),
     Number(Number),
     Boolean(Boolean),
     Dict(Dict),
@@ -283,7 +283,7 @@ impl Value {
 
 impl From<&str> for Value {
     fn from(s: &str) -> Self {
-        Value::String(ImmutableString::from(s))
+        Value::String(Rc::new(s.to_string()))
     }
 }
 impl From<i64> for Value {
