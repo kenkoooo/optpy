@@ -18,3 +18,13 @@ def test(x):
     assert_eq!(test(&Value::from(0.0)), Value::from("NO"));
     assert_eq!(test(&Value::from(-0.1)), Value::from("OK"));
 }
+
+#[test]
+fn test_shift() {
+    python_function! {r"
+def test():
+    return [1 << 2, 4 >> 1]"
+    }
+
+    assert_eq!(test(), Value::from(vec![Value::from(4), Value::from(2)]))
+}

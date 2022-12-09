@@ -326,6 +326,8 @@ impl CodeGenerator {
             BinaryOperator::FloorDiv => format_ident!("__floor_div"),
             BinaryOperator::Pow => format_ident!("__pow"),
             BinaryOperator::BitAnd => format_ident!("__bit_and"),
+            BinaryOperator::LeftShift => format_ident!("__left_shift"),
+            BinaryOperator::RightShift => format_ident!("__right_shift"),
         }
     }
     fn format_unary_ident(&self, op: &UnaryOperator) -> Ident {

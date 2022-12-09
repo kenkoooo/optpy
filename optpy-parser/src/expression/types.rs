@@ -108,6 +108,8 @@ pub enum BinaryOperator {
     FloorDiv,
     Pow,
     BitAnd,
+    LeftShift,
+    RightShift,
 }
 
 impl BinaryOperator {
@@ -121,6 +123,8 @@ impl BinaryOperator {
             rustpython_parser::ast::Operator::FloorDiv => Self::FloorDiv,
             rustpython_parser::ast::Operator::Pow => Self::Pow,
             rustpython_parser::ast::Operator::BitAnd => Self::BitAnd,
+            rustpython_parser::ast::Operator::LShift => Self::LeftShift,
+            rustpython_parser::ast::Operator::RShift => Self::RightShift,
             op => todo!("{:?}", op),
         }
     }
