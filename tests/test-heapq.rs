@@ -1,4 +1,4 @@
-use optpy_runtime::Value;
+use optpy_runtime::ToValue;
 use optpy_test_macro::python_function;
 
 #[test]
@@ -12,13 +12,14 @@ def test():
 
     assert_eq!(
         test(),
-        Value::from(vec![
-            Value::from(-1),
-            Value::from(0),
-            Value::from(8),
-            Value::from(1),
-            Value::from(6)
-        ])
+        vec![
+            (-1).to_value(),
+            0.to_value(),
+            8.to_value(),
+            1.to_value(),
+            6.to_value()
+        ]
+        .to_value()
     );
 }
 
@@ -40,14 +41,15 @@ def test():
 
     assert_eq!(
         test(),
-        Value::from(vec![
-            Value::from(1),
-            Value::from(2),
-            Value::from(3),
-            Value::from(4),
-            Value::from(5),
-            Value::from(6),
-            Value::from(7)
-        ]),
+        vec![
+            1.to_value(),
+            2.to_value(),
+            3.to_value(),
+            4.to_value(),
+            5.to_value(),
+            6.to_value(),
+            7.to_value()
+        ]
+        .to_value(),
     );
 }

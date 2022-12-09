@@ -38,11 +38,23 @@ fn format_function(name: &str, args: &[String], body: TokenStream) -> TokenStrea
         .map(|arg| format_ident!("{}", arg))
         .collect::<Vec<_>>();
     let name = format_ident!("{}", name);
-    quote! {
-        fn #name( #(#args: &Value),*  ) -> Value {
-            #(let mut #args = #args.__shallow_copy();)*
-            #body
-            return Default::default();
+    if args.is_empty() {
+        quote! {
+            fn #name() -> Value {
+                #body
+                return Default::default();
+            }
+        }
+    } else {
+        quote! {
+            fn #name<#(#args),*>( #(#args: &#args),*  ) -> Value
+            where
+                #(#args: ToValue),*
+            {
+                #(let mut #args = #args.to_value();)*
+                #body
+                return Default::default();
+            }
         }
     }
 }
@@ -50,11 +62,11 @@ fn format_function(name: &str, args: &[String], body: TokenStream) -> TokenStrea
 fn format_constant_boolean(b: bool) -> TokenStream {
     if b {
         quote! {
-            Value::from(true)
+            true.to_value()
         }
     } else {
         quote! {
-            Value::from(false)
+            false.to_value()
         }
     }
 }
@@ -68,17 +80,17 @@ fn format_declaration(variable: &str) -> TokenStream {
 
 fn format_tuple(tuple: &[TokenStream]) -> TokenStream {
     quote! {
-       Value::from(vec![ #(Value::from(&#tuple)),* ])
+        vec![ #((#tuple).to_value()),* ].to_value()
     }
 }
 fn format_list(tuple: &[TokenStream]) -> TokenStream {
     quote! {
-       Value::from(vec![ #(Value::from(&#tuple)),* ])
+        vec![ #((#tuple).to_value()),* ].to_value()
     }
 }
 fn format_string(s: &str) -> TokenStream {
     quote! {
-        Value::from(#s)
+        #s.to_value()
     }
 }
 
@@ -87,7 +99,7 @@ fn format_dict(pairs: &[(TokenStream, TokenStream)]) -> TokenStream {
         .iter()
         .map(|(key, value)| {
             quote! {
-                (Value::from(&#key), Value::from(&#value))
+                (#key.to_value(), #value.to_value())
             }
         })
         .collect::<Vec<_>>();
@@ -234,7 +246,7 @@ impl CodeGenerator {
                     }
                     result.append_all(quote! { #condition .test() });
                 }
-                quote! { Value::from(#result) }
+                quote! { (#result).to_value() }
             }
             Expr::Compare(Compare { left, right, op }) => {
                 let left = self.format_expr(left, false);

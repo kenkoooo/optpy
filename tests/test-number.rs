@@ -1,4 +1,4 @@
-use optpy_runtime::Value;
+use optpy_runtime::ToValue;
 use optpy_test_macro::python_function;
 
 #[test]
@@ -11,10 +11,10 @@ def test(x):
         return "NO"
 "#}
 
-    assert_eq!(test(&Value::from(1)), Value::from("OK"));
-    assert_eq!(test(&Value::from(0)), Value::from("NO"));
-    assert_eq!(test(&Value::from(-1)), Value::from("OK"));
-    assert_eq!(test(&Value::from(0.1)), Value::from("OK"));
-    assert_eq!(test(&Value::from(0.0)), Value::from("NO"));
-    assert_eq!(test(&Value::from(-0.1)), Value::from("OK"));
+    assert_eq!(test(&1.to_value()), "OK".to_value());
+    assert_eq!(test(&0.to_value()), "NO".to_value());
+    assert_eq!(test(&(-1).to_value()), "OK".to_value());
+    assert_eq!(test(&0.1.to_value()), "OK".to_value());
+    assert_eq!(test(&0.0.to_value()), "NO".to_value());
+    assert_eq!(test(&(-0.1).to_value()), "OK".to_value());
 }

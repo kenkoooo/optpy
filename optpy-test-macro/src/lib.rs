@@ -34,13 +34,28 @@ pub fn python_function(tokens: TokenStream) -> TokenStream {
         .collect::<Vec<_>>();
     let resolved_name = format_ident!("{}", name);
 
-    let result = quote! {
-        #[allow(unreachable_code)]
-        fn #function_name(#(#args: &optpy_runtime::Value),*) -> optpy_runtime::Value {
-            use optpy_runtime::*;
-            #code
+    let result = if args.is_empty() {
+        quote! {
+            #[allow(unreachable_code)]
+            fn #function_name() -> optpy_runtime::Value {
+                use optpy_runtime::*;
+                #code
 
-            #resolved_name( #(#args),* )
+                #resolved_name( #(#args),* )
+            }
+        }
+    } else {
+        quote! {
+            #[allow(unreachable_code)]
+            fn #function_name<#(#args),*>(#(#args: &#args),*) -> optpy_runtime::Value
+            where
+                #(#args: optpy_runtime::ToValue),*
+            {
+                use optpy_runtime::*;
+                #code
+
+                #resolved_name( #(#args),* )
+            }
         }
     };
 

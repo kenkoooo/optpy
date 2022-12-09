@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::{
     cell::{UnsafeRefCell, UnsafeRefMut},
     number::Number,
-    DictKey, Value,
+    DictKey, ToValue, Value,
 };
 
 #[derive(Debug, Clone)]
@@ -37,12 +37,12 @@ impl List {
     }
     pub fn includes<'a, T>(&self, value: &'a T) -> bool
     where
-        Value: From<&'a T>,
+        T: ToValue,
     {
         self.0
             .borrow()
             .iter()
-            .any(|e| e.borrow().eq(&Value::from(value)))
+            .any(|e| e.borrow().eq(&value.to_value()))
     }
     pub fn __delete<'a, T>(&self, index: &'a T)
     where
@@ -101,11 +101,11 @@ impl List {
     }
     pub fn append<'a, T>(&self, value: &'a T)
     where
-        Value: From<&'a T>,
+        T: ToValue,
     {
         self.0
             .borrow_mut()
-            .push(UnsafeRefCell::rc(Value::from(value)));
+            .push(UnsafeRefCell::rc(value.to_value()));
     }
     pub fn __len(&self) -> Value {
         Value::Number(Number::Int64(self.0.borrow().len() as i64))

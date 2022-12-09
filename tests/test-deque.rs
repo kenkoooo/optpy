@@ -1,4 +1,4 @@
-use optpy_runtime::Value;
+use optpy_runtime::ToValue;
 use optpy_test_macro::python_function;
 
 #[test]
@@ -12,7 +12,7 @@ def test():
     x.append(2)
     return [x.popleft(), x.popleft()]
     "}
-        assert_eq!(test(), Value::from(vec![Value::from(1), Value::from(2)]))
+        assert_eq!(test(), vec![1.to_value(), 2.to_value()].to_value())
     }
     {
         python_function! {r"
@@ -21,7 +21,7 @@ def test():
     x = collections.deque([1, 2])
     return [x.popleft(), x.popleft()]
     "}
-        assert_eq!(test(), Value::from(vec![Value::from(1), Value::from(2)]))
+        assert_eq!(test(), vec![1.to_value(), 2.to_value()].to_value())
     }
 }
 #[test]
@@ -33,7 +33,7 @@ def test():
     d.append(1)
     d.appendleft(2)
     return d.popleft()"}
-    assert_eq!(test(), Value::from(2));
+    assert_eq!(test(), 2.to_value());
 }
 
 #[test]
@@ -46,6 +46,6 @@ def test(a):
         return 1
     else:
         return 2"}
-    assert_eq!(test(&Value::from(vec![Value::from(0)])), Value::from(1));
-    assert_eq!(test(&Value::from(vec![])), Value::from(2));
+    assert_eq!(test(&vec![0.to_value()].to_value()), 1.to_value());
+    assert_eq!(test(&vec![].to_value()), 2.to_value());
 }

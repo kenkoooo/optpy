@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, iter::FromIterator, rc::Rc};
 
-use crate::{cell::UnsafeRefCell, List, Value};
+use crate::{cell::UnsafeRefCell, List, ToValue, Value};
 
 #[derive(Debug, Clone)]
 pub struct Deque(Rc<UnsafeRefCell<VecDeque<Value>>>);
@@ -20,15 +20,15 @@ impl Deque {
     }
     pub fn append<'a, T>(&self, value: &'a T)
     where
-        Value: From<&'a T>,
+        T: ToValue,
     {
-        self.0.borrow_mut().push_back(Value::from(value));
+        self.0.borrow_mut().push_back(value.to_value());
     }
     pub fn appendleft<'a, T>(&self, value: &'a T)
     where
-        Value: From<&'a T>,
+        T: ToValue,
     {
-        self.0.borrow_mut().push_front(Value::from(value));
+        self.0.borrow_mut().push_front(value.to_value());
     }
     pub fn test(&self) -> bool {
         !self.0.borrow().is_empty()

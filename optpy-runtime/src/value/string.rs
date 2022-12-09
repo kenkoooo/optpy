@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{number::Number, Value};
+use crate::{number::Number, ToValue, Value};
 
 #[derive(Debug, Clone)]
 pub struct ImmutableString(pub Rc<String>);
@@ -25,7 +25,7 @@ impl ImmutableString {
             .map(|s| Self(Rc::new(s.to_string())))
             .map(|s| Value::String(s))
             .collect::<Vec<Value>>();
-        Value::from(list)
+        list.to_value()
     }
     pub fn strip(&self) -> Value {
         Value::String(Self(Rc::new(self.0.trim().to_string())))

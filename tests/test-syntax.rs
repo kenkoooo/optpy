@@ -1,4 +1,4 @@
-use optpy_runtime::Value;
+use optpy_runtime::{ToValue, Value};
 use optpy_test_macro::python_function;
 
 #[test]
@@ -12,11 +12,11 @@ def test(a, b):
         return "Odd"
     "#}
 
-    let result = test(&Value::from(3), &Value::from(4));
-    assert_eq!(result, Value::from("Even"));
+    let result = test(&3.to_value(), &4.to_value());
+    assert_eq!(result, "Even".to_value());
 
-    let result = test(&Value::from(3), &Value::from(5));
-    assert_eq!(result, Value::from("Odd"));
+    let result = test(&3.to_value(), &5.to_value());
+    assert_eq!(result, "Odd".to_value());
 }
 
 #[test]
@@ -30,11 +30,11 @@ def test(a, b, c):
         return "OUT"
     "#}
 
-    let result = test(&Value::from(3), &Value::from(4), &Value::from(5));
-    assert_eq!(result, Value::from("IN"));
+    let result = test(&3.to_value(), &4.to_value(), &5.to_value());
+    assert_eq!(result, "IN".to_value());
 
-    let result = test(&Value::from(3), &Value::from(5), &Value::from(4));
-    assert_eq!(result, Value::from("OUT"));
+    let result = test(&3.to_value(), &5.to_value(), &4.to_value());
+    assert_eq!(result, "OUT".to_value());
 }
 
 #[test]
@@ -45,12 +45,8 @@ def test(A):
     return A[0]
     "}
     assert_eq!(
-        test(&Value::from(vec![
-            Value::from(1),
-            Value::from(2),
-            Value::from(3)
-        ])),
-        Value::from(2)
+        test(&vec![1.to_value(), 2.to_value(), 3.to_value()].to_value()),
+        2.to_value()
     );
 }
 
@@ -74,21 +70,16 @@ def solve(N, A):
 "}
 
     let result = solve(
-        &Value::from(3),
-        &Value::from(vec![Value::from(8), Value::from(12), Value::from(40)]),
+        &3.to_value(),
+        &vec![8.to_value(), 12.to_value(), 40.to_value()].to_value(),
     );
-    assert_eq!(result, Value::from(2));
+    assert_eq!(result, 2.to_value());
 
     let result = solve(
-        &Value::from(4),
-        &Value::from(vec![
-            Value::from(5),
-            Value::from(6),
-            Value::from(8),
-            Value::from(10),
-        ]),
+        &4.to_value(),
+        &vec![5.to_value(), 6.to_value(), 8.to_value(), 10.to_value()].to_value(),
     );
-    assert_eq!(result, Value::from(0));
+    assert_eq!(result, 0.to_value());
 }
 
 #[test]
@@ -101,11 +92,11 @@ def test(N):
     return ans
     "#}
 
-    let result = test(&Value::from(5));
-    assert_eq!(result, Value::from(10));
+    let result = test(&5.to_value());
+    assert_eq!(result, 10.to_value());
 
-    let result = test(&Value::from(10));
-    assert_eq!(result, Value::from(45));
+    let result = test(&10.to_value());
+    assert_eq!(result, 45.to_value());
 }
 
 #[test]
@@ -120,11 +111,11 @@ def test(n):
     return n
     "#}
 
-    assert_eq!(test(&Value::from(0)), Value::from(1));
-    assert_eq!(test(&Value::from(1)), Value::from(1));
-    assert_eq!(test(&Value::from(2)), Value::from(2));
-    assert_eq!(test(&Value::from(3)), Value::from(3));
-    assert_eq!(test(&Value::from(4)), Value::from(5));
+    assert_eq!(test(&0.to_value()), 1.to_value());
+    assert_eq!(test(&1.to_value()), 1.to_value());
+    assert_eq!(test(&2.to_value()), 2.to_value());
+    assert_eq!(test(&3.to_value()), 3.to_value());
+    assert_eq!(test(&4.to_value()), 5.to_value());
 }
 
 #[test]
@@ -136,10 +127,7 @@ def test():
     A.append("B")
     return [A[0], A[1]]
     "#}
-    assert_eq!(
-        test(),
-        Value::from(vec![Value::from("A"), Value::from("B")])
-    );
+    assert_eq!(test(), vec!["A".to_value(), "B".to_value()].to_value());
 }
 
 #[test]
@@ -155,10 +143,11 @@ def test():
 
     assert_eq!(
         test(),
-        Value::from(vec![
-            Value::from(vec![Value::from("B"), Value::from("A")]),
-            Value::from(vec![Value::from("D"), Value::from("C")])
-        ])
+        vec![
+            vec!["B".to_value(), "A".to_value()].to_value(),
+            vec!["D".to_value(), "C".to_value()].to_value()
+        ]
+        .to_value()
     );
 }
 
@@ -170,7 +159,7 @@ def test():
     x[0] = x[0]
     return x[0]
     "#}
-    assert_eq!(test(), Value::from(0));
+    assert_eq!(test(), 0.to_value());
 }
 
 #[test]
@@ -181,7 +170,7 @@ def test():
     x.append(x.pop()+200)
     return x[0]
     "#}
-    assert_eq!(test(), Value::from(200));
+    assert_eq!(test(), 200.to_value());
 }
 
 #[test]
@@ -192,7 +181,7 @@ def test():
         x = i
     return x
     "#}
-    assert_eq!(test(), Value::from(2));
+    assert_eq!(test(), 2.to_value());
 }
 
 #[test]
@@ -206,7 +195,7 @@ def test_mutate_argument():
     return arr[0]
 "};
     let result = test_mutate_argument();
-    assert_eq!(result, Value::from(200));
+    assert_eq!(result, 200.to_value());
 }
 
 #[test]
@@ -222,11 +211,11 @@ def test_short_circuit_evaluation(N):
     else:
         return eval
         "#};
-    let result = test_short_circuit_evaluation(&Value::from(0));
-    assert_eq!(result, Value::from(vec![]));
+    let result = test_short_circuit_evaluation(&0.to_value());
+    assert_eq!(result, vec![].to_value());
 
-    let result = test_short_circuit_evaluation(&Value::from(1));
-    assert_eq!(result, Value::from(vec![Value::from(1)]));
+    let result = test_short_circuit_evaluation(&1.to_value());
+    assert_eq!(result, vec![1.to_value()].to_value());
 }
 
 #[test]
@@ -243,7 +232,7 @@ def test_array_assignment():
     let result = test_array_assignment();
     assert_eq!(
         result,
-        Value::from(vec![Value::from(1), Value::from(2), Value::from(2)])
+        vec![1.to_value(), 2.to_value(), 2.to_value()].to_value()
     );
 }
 #[test]
@@ -258,7 +247,7 @@ def test_return_list_ref():
     "
     };
     let result = test_return_list_ref();
-    assert_eq!(result, Value::from(2));
+    assert_eq!(result, 2.to_value());
 }
 
 #[test]
@@ -274,7 +263,7 @@ def test():
 "#}
     assert_eq!(
         test(),
-        Value::from(vec![Value::from(0), Value::from(2), Value::from(4)])
+        vec![0.to_value(), 2.to_value(), 4.to_value()].to_value()
     );
 }
 
@@ -287,12 +276,13 @@ def test(N, M):
     "#}
 
     assert_eq!(
-        test(&Value::from(3), &Value::from(2)),
-        Value::from(vec![
-            Value::from(vec![Value::from(0), Value::from(0)]),
-            Value::from(vec![Value::from(0), Value::from(1)]),
-            Value::from(vec![Value::from(0), Value::from(2)])
-        ])
+        test(&3.to_value(), &2.to_value()),
+        vec![
+            vec![0.to_value(), 0.to_value()].to_value(),
+            vec![0.to_value(), 1.to_value()].to_value(),
+            vec![0.to_value(), 2.to_value()].to_value()
+        ]
+        .to_value()
     );
 }
 
@@ -308,7 +298,7 @@ def test():
 "}
     assert_eq!(
         test(),
-        Value::from(vec![Value::from(3), Value::from(3), Value::from(3)])
+        vec![3.to_value(), 3.to_value(), 3.to_value()].to_value()
     );
 }
 
@@ -371,8 +361,8 @@ fn test_set() {
 def test(b):
     a = {b}
     return 1 in a"}
-    assert_eq!(test(&Value::from("a")), Value::from(false));
-    assert_eq!(test(&Value::from(1)), Value::from(true));
+    assert_eq!(test(&"a".to_value()), false.to_value());
+    assert_eq!(test(&1.to_value()), true.to_value());
 }
 
 #[test]
@@ -387,7 +377,7 @@ def test():
     return x[0]+f(x)
     "}
 
-    assert_eq!(test(), Value::from(0));
+    assert_eq!(test(), 0.to_value());
 }
 
 #[test]
@@ -402,5 +392,15 @@ def test():
     return f2()
 "}
 
-    assert_eq!(test(), Value::from(3));
+    assert_eq!(test(), 3.to_value());
+}
+
+#[test]
+fn test_function_interface() {
+    python_function! {r#"
+def test():
+    def x(a, b, c):
+        pass
+    x(1, "s", True)
+    return"#}
 }

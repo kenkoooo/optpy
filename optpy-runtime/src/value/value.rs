@@ -84,9 +84,9 @@ macro_rules! impl_compare {
         impl Value {
             pub fn $name<'a, T>(&self, rhs: &'a T) -> Value
             where
-                Value: From<&'a T>,
+                T: ToValue,
             {
-                let rhs = Value::from(rhs);
+                let rhs = rhs.to_value();
                 Value::Boolean(self.$op(&rhs))
             }
         }
@@ -101,7 +101,7 @@ impl_compare!(__ne, ne);
 impl Value {
     pub fn __includes<'a, T>(&self, value: &'a T) -> bool
     where
-        Value: From<&'a T>,
+        T: ToValue,
     {
         match self {
             Value::List(list) => list.includes(value),
@@ -168,9 +168,9 @@ impl Value {
 
     pub fn assign<'a, T>(&mut self, value: &'a T)
     where
-        Value: From<&'a T>,
+        T: ToValue,
     {
-        *self = value.into();
+        *self = value.to_value();
     }
 
     pub fn reverse(&self) {
@@ -200,7 +200,7 @@ impl Value {
     }
     pub fn append<'a, T>(&self, value: &'a T)
     where
-        Value: From<&'a T>,
+        T: ToValue,
     {
         match self {
             Value::List(list) => list.append(value),
@@ -210,7 +210,7 @@ impl Value {
     }
     pub fn appendleft<'a, T>(&self, value: &'a T)
     where
-        Value: From<&'a T>,
+        T: ToValue,
     {
         match self {
             Value::Deque(deque) => deque.appendleft(value),
@@ -303,41 +303,6 @@ impl Value {
     }
 }
 
-impl From<&str> for Value {
-    fn from(s: &str) -> Self {
-        Value::String(ImmutableString::from(s))
-    }
-}
-impl From<i64> for Value {
-    fn from(v: i64) -> Self {
-        Value::Number(Number::Int64(v))
-    }
-}
-impl From<f64> for Value {
-    fn from(v: f64) -> Self {
-        Value::Number(Number::Float(v))
-    }
-}
-impl From<Vec<Value>> for Value {
-    fn from(list: Vec<Value>) -> Self {
-        Value::List(List::from(list))
-    }
-}
-impl From<bool> for Value {
-    fn from(b: bool) -> Self {
-        Value::Boolean(b)
-    }
-}
-impl From<&Value> for Value {
-    fn from(v: &Value) -> Self {
-        v.__shallow_copy()
-    }
-}
-impl From<&Number> for Value {
-    fn from(v: &Number) -> Self {
-        Value::Number(*v)
-    }
-}
 impl ToString for Value {
     fn to_string(&self) -> String {
         match self {
@@ -349,6 +314,45 @@ impl ToString for Value {
     }
 }
 
+pub trait ToValue {
+    fn to_value(&self) -> Value;
+}
+impl ToValue for Number {
+    fn to_value(&self) -> Value {
+        Value::Number(*self)
+    }
+}
+impl ToValue for Value {
+    fn to_value(&self) -> Value {
+        self.__shallow_copy()
+    }
+}
+impl ToValue for bool {
+    fn to_value(&self) -> Value {
+        Value::Boolean(*self)
+    }
+}
+impl ToValue for Vec<Value> {
+    fn to_value(&self) -> Value {
+        Value::List(List::from(self.clone()))
+    }
+}
+
+impl ToValue for f64 {
+    fn to_value(&self) -> Value {
+        Value::Number(Number::Float(*self))
+    }
+}
+impl ToValue for i64 {
+    fn to_value(&self) -> Value {
+        Value::Number(Number::Int64(*self))
+    }
+}
+impl ToValue for &str {
+    fn to_value(&self) -> Value {
+        Value::String(ImmutableString::from(*self))
+    }
+}
 pub trait ValueIndexDelete<K> {
     fn __delete<'a>(&self, index: &'a K);
 }

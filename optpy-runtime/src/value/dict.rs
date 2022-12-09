@@ -3,7 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 use crate::{
     cell::{UnsafeRefCell, UnsafeRefMut},
     number::Number,
-    ImmutableString, Value,
+    ImmutableString, ToValue, Value,
 };
 
 #[derive(Debug, Clone)]
@@ -23,11 +23,11 @@ impl PartialEq for Dict {
 impl Dict {
     pub fn includes<'a, T>(&self, value: &'a T) -> bool
     where
-        Value: From<&'a T>,
+        T: ToValue,
     {
         self.0
             .borrow()
-            .contains_key(&DictKey::from(&Value::from(value)))
+            .contains_key(&DictKey::from(&value.to_value()))
     }
     pub fn __delete<'a, T>(&self, index: &'a T)
     where
@@ -67,7 +67,7 @@ impl Dict {
             .keys()
             .map(|s| s.clone().into())
             .collect::<Vec<Value>>();
-        Value::from(list)
+        list.to_value()
     }
     pub fn setdefault(&self, key: &Value, value: &Value) {
         let key = DictKey::from(key);

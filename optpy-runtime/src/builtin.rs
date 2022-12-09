@@ -1,11 +1,11 @@
 use std::{io::stdin, rc::Rc};
 
-use crate::{number::Number, value::Value, ImmutableString};
+use crate::{number::Number, value::Value, ImmutableString, ToValue};
 
 pub fn input() -> Value {
     let mut buf = String::new();
     stdin().read_line(&mut buf).unwrap();
-    Value::from(buf.trim())
+    buf.trim().to_value()
 }
 
 pub fn map_int(value: &Value) -> Value {
@@ -17,7 +17,7 @@ pub fn map_int(value: &Value) -> Value {
                 .iter()
                 .map(|v| int(&v.borrow()))
                 .collect::<Vec<_>>();
-            Value::from(list)
+            list.to_value()
         }
         _ => unreachable!(),
     }
@@ -53,7 +53,7 @@ pub fn list(value: &Value) -> Value {
                 .iter()
                 .map(|v| v.borrow().clone())
                 .collect::<Vec<_>>();
-            Value::from(vec)
+            vec.to_value()
         }
         _ => todo!(),
     }
@@ -81,7 +81,7 @@ where
             let list = (start..stop)
                 .map(|i| Value::Number(Number::Int64(i)))
                 .collect::<Vec<_>>();
-            Value::from(list)
+            list.to_value()
         }
         _ => unreachable!(),
     }
@@ -193,9 +193,9 @@ pub fn enumerate(iter: &Value) -> Value {
                 .borrow()
                 .iter()
                 .enumerate()
-                .map(|(i, v)| Value::from(vec![Value::from(i as i64), v.borrow().clone()]))
+                .map(|(i, v)| vec![(i as i64).to_value(), v.borrow().clone()].to_value())
                 .collect::<Vec<_>>();
-            Value::from(list)
+            list.to_value()
         }
         iter => enumerate(&list(iter)),
     }

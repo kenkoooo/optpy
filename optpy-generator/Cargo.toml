@@ -9,3 +9,4 @@ quote = "1.0"
 proc-macro2 = "1.0"
 
 optpy-parser = { path = "../optpy-parser" }
+syn = "1.0.105"
