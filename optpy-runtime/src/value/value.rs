@@ -7,7 +7,7 @@ use std::{
 use crate::{
     cell::{UnsafeRefCell, UnsafeRefMut},
     number::Number,
-    Boolean, Deque, Dict, DictKey, ImmutableString, List,
+    Deque, Dict, DictKey, ImmutableString, List,
 };
 
 #[derive(Debug, Clone)]
@@ -15,7 +15,7 @@ pub enum Value {
     List(Rc<UnsafeRefCell<Vec<Rc<UnsafeRefCell<Value>>>>>),
     String(Rc<String>),
     Number(Number),
-    Boolean(Boolean),
+    Boolean(bool),
     Dict(Rc<UnsafeRefCell<HashMap<DictKey, Rc<UnsafeRefCell<Value>>>>>),
     Deque(Rc<UnsafeRefCell<VecDeque<Value>>>),
     None,
@@ -86,7 +86,7 @@ macro_rules! impl_compare {
         impl Value {
             pub fn $name(&self, rhs: &Value) -> Value {
                 let b = self.$op(rhs);
-                Value::Boolean(Boolean::from(b))
+                Value::Boolean(b)
             }
         }
     };
@@ -114,7 +114,7 @@ impl Value {
 
     pub fn __bit_and(&self, rhs: &Value) -> Value {
         match (self, rhs) {
-            (Value::Boolean(a), Value::Boolean(b)) => Value::Boolean(a.__bit_and(b)),
+            (Value::Boolean(a), Value::Boolean(b)) => Value::Boolean(*a && *b),
             _ => todo!(),
         }
     }
@@ -246,7 +246,7 @@ impl Value {
     }
     pub fn __unary_not(&self) -> Value {
         match self {
-            Value::Boolean(b) => Value::from(!b.__test()),
+            Value::Boolean(b) => Value::from(!b),
             _ => unreachable!(),
         }
     }
@@ -267,7 +267,7 @@ impl Value {
 
     pub fn test(&self) -> bool {
         match self {
-            Value::Boolean(b) => b.__test(),
+            Value::Boolean(b) => *b,
             Value::List(list) => list.test(),
             Value::String(s) => s.test(),
             Value::Number(n) => n.test(),
@@ -316,7 +316,7 @@ impl From<Vec<Value>> for Value {
 }
 impl From<bool> for Value {
     fn from(b: bool) -> Self {
-        Value::Boolean(Boolean::from(b))
+        Value::Boolean(b)
     }
 }
 impl From<&Value> for Value {
