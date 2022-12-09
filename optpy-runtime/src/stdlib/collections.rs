@@ -11,7 +11,7 @@ pub fn __collections__deque0() -> Value {
 pub fn __collections__deque1(value: &Value) -> Value {
     match value {
         Value::List(list) => {
-            let q = list.0.borrow().iter().map(|v| v.borrow().clone()).collect();
+            let q = list.borrow().iter().map(|v| v.borrow().clone()).collect();
             Value::Deque(UnsafeRefCell::rc(q))
         }
         _ => todo!(),

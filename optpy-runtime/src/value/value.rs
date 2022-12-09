@@ -12,7 +12,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub enum Value {
-    List(List),
+    List(Rc<UnsafeRefCell<Vec<Rc<UnsafeRefCell<Value>>>>>),
     String(Rc<String>),
     Number(Number),
     Boolean(Boolean),
@@ -310,7 +310,8 @@ impl From<f64> for Value {
 }
 impl From<Vec<Value>> for Value {
     fn from(list: Vec<Value>) -> Self {
-        Value::List(List::from(list))
+        let list = list.into_iter().map(UnsafeRefCell::rc).collect();
+        Value::List(UnsafeRefCell::rc(list))
     }
 }
 impl From<bool> for Value {
@@ -328,7 +329,7 @@ impl ToString for Value {
         match self {
             Value::String(s) => s.to_string(),
             Value::Number(n) => n.to_string(),
-            Value::List(list) => list.to_string(),
+            Value::List(list) => list.__to_string(),
             _ => todo!(),
         }
     }
