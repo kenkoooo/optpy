@@ -97,6 +97,17 @@ impl List {
             a.partial_cmp(&b).unwrap()
         })
     }
+    pub fn index(&self, value: &Value) -> Value {
+        let index = self
+            .0
+            .borrow()
+            .iter()
+            .enumerate()
+            .find(|(_, e)| e.borrow().eq(value))
+            .expect("not found")
+            .0;
+        Value::from(index as i64)
+    }
     pub fn count(&self, value: &Value) -> Value {
         let count = self
             .0
