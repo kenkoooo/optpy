@@ -1,9 +1,13 @@
-use std::{collections::VecDeque, ops::Mul, rc::Rc};
+use std::{
+    collections::{HashMap, VecDeque},
+    ops::Mul,
+    rc::Rc,
+};
 
 use crate::{
     cell::{UnsafeRefCell, UnsafeRefMut},
     number::Number,
-    Boolean, Deque, Dict, ImmutableString, List,
+    Boolean, Deque, Dict, DictKey, ImmutableString, List,
 };
 
 #[derive(Debug, Clone)]
@@ -12,7 +16,7 @@ pub enum Value {
     String(Rc<String>),
     Number(Number),
     Boolean(Boolean),
-    Dict(Dict),
+    Dict(Rc<UnsafeRefCell<HashMap<DictKey, Rc<UnsafeRefCell<Value>>>>>),
     Deque(Rc<UnsafeRefCell<VecDeque<Value>>>),
     None,
 }
@@ -124,7 +128,15 @@ impl Value {
     }
 
     pub fn dict(pairs: Vec<(Value, Value)>) -> Value {
-        Value::Dict(Dict::from(pairs))
+        let map = pairs
+            .into_iter()
+            .map(|(key, value)| {
+                let key = DictKey::from(&key);
+                let value = UnsafeRefCell::rc(value);
+                (key, value)
+            })
+            .collect::<HashMap<_, _>>();
+        Value::Dict(UnsafeRefCell::rc(map))
     }
 
     pub fn __shallow_copy(&self) -> Value {

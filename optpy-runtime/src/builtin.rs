@@ -1,6 +1,6 @@
 use std::{io::stdin, rc::Rc};
 
-use crate::{number::Number, value::Value};
+use crate::{cell::UnsafeRefCell, number::Number, value::Value, Dict};
 
 pub fn input() -> Value {
     let mut buf = String::new();
@@ -228,11 +228,11 @@ pub fn __exit0() -> ! {
 }
 
 pub fn __set0() -> Value {
-    Value::Dict(Default::default())
+    Value::Dict(UnsafeRefCell::rc(Default::default()))
 }
 
 pub fn dict() -> Value {
-    Value::Dict(Default::default())
+    Value::Dict(UnsafeRefCell::rc(Default::default()))
 }
 
 pub fn abs(v: &Value) -> Value {
