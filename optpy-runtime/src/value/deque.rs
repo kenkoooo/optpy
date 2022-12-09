@@ -18,11 +18,17 @@ impl Deque {
             .pop_front()
             .expect("pop from an empty deque")
     }
-    pub fn append(&self, value: &Value) {
-        self.0.borrow_mut().push_back(value.clone());
+    pub fn append<'a, T>(&self, value: &'a T)
+    where
+        Value: From<&'a T>,
+    {
+        self.0.borrow_mut().push_back(Value::from(value));
     }
-    pub fn appendleft(&self, value: &Value) {
-        self.0.borrow_mut().push_front(value.clone());
+    pub fn appendleft<'a, T>(&self, value: &'a T)
+    where
+        Value: From<&'a T>,
+    {
+        self.0.borrow_mut().push_front(Value::from(value));
     }
     pub fn test(&self) -> bool {
         !self.0.borrow().is_empty()

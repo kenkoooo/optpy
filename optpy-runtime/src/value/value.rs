@@ -1,12 +1,10 @@
-use std::ops::Mul;
-
-use crate::{cell::UnsafeRefMut, number::Number, Deque, Dict, ImmutableString, List};
+use crate::{cell::UnsafeRefMut, number::Number, Deque, Dict, DictKey, ImmutableString, List};
 
 #[derive(Debug, Clone)]
 pub enum Value {
+    Number(Number),
     List(List),
     String(ImmutableString),
-    Number(Number),
     Boolean(bool),
     Dict(Dict),
     Deque(Deque),
@@ -46,11 +44,15 @@ impl Default for Value {
 macro_rules! impl_binop {
     ($name:ident, $op:ident) => {
         impl Value {
-            pub fn $name(&self, rhs: &Value) -> Value {
+            pub fn $name<'a, I>(&self, rhs: &'a I) -> Value
+            where
+                Number: From<&'a I>,
+            {
                 #[allow(unused_imports)]
                 use std::ops::*;
-                match (self, rhs) {
-                    (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs.$op(*rhs)),
+                let rhs = Number::from(rhs);
+                match self {
+                    Value::Number(lhs) => Value::Number(lhs.$op(rhs)),
                     _ => unreachable!(),
                 }
             }
@@ -64,10 +66,14 @@ impl_binop!(__div, div);
 impl_binop!(__pow, pow);
 
 impl Value {
-    pub fn __mul(&self, rhs: &Value) -> Value {
-        match (self, rhs) {
-            (Value::List(list), rhs) => list.__mul(rhs),
-            (Value::Number(a), Value::Number(b)) => Value::Number(*a * *b),
+    pub fn __mul<'a, T>(&self, rhs: &'a T) -> Value
+    where
+        Number: From<&'a T>,
+    {
+        let rhs = Number::from(rhs);
+        match self {
+            Value::List(list) => list.__mul(rhs),
+            Value::Number(a) => Value::Number(*a * rhs),
             _ => todo!(),
         }
     }
@@ -76,8 +82,12 @@ impl Value {
 macro_rules! impl_compare {
     ($name:ident, $op:ident) => {
         impl Value {
-            pub fn $name(&self, rhs: &Value) -> Value {
-                Value::Boolean(self.$op(rhs))
+            pub fn $name<'a, T>(&self, rhs: &'a T) -> Value
+            where
+                Value: From<&'a T>,
+            {
+                let rhs = Value::from(rhs);
+                Value::Boolean(self.$op(&rhs))
             }
         }
     };
@@ -89,7 +99,10 @@ impl_compare!(__le, le);
 impl_compare!(__eq, eq);
 impl_compare!(__ne, ne);
 impl Value {
-    fn includes(&self, value: &Value) -> bool {
+    pub fn __includes<'a, T>(&self, value: &'a T) -> bool
+    where
+        Value: From<&'a T>,
+    {
         match self {
             Value::List(list) => list.includes(value),
             Value::Dict(map) => map.includes(value),
@@ -97,23 +110,15 @@ impl Value {
         }
     }
     pub fn __in(&self, rhs: &Value) -> Value {
-        Value::Boolean(rhs.includes(self))
+        Value::Boolean(rhs.__includes(self))
     }
     pub fn __not_in(&self, rhs: &Value) -> Value {
-        Value::Boolean(!rhs.includes(self))
+        Value::Boolean(!rhs.__includes(self))
     }
 
     pub fn __bit_and(&self, rhs: &Value) -> Value {
         match (self, rhs) {
             (Value::Boolean(a), Value::Boolean(b)) => Value::Boolean(*a && *b),
-            _ => todo!(),
-        }
-    }
-
-    pub fn __delete(&self, index: &Value) {
-        match self {
-            Value::List(list) => list.__delete(index),
-            Value::Dict(dict) => dict.__delete(index),
             _ => todo!(),
         }
     }
@@ -133,14 +138,20 @@ impl Value {
         }
     }
 
-    pub fn __index_ref(&self, index: &Value) -> UnsafeRefMut<Value> {
+    pub fn __index_ref<'a, I>(&self, index: &'a I) -> UnsafeRefMut<Value>
+    where
+        DictKey: From<&'a I>,
+    {
         match self {
             Value::List(list) => list.__index_ref(index),
             Value::Dict(dict) => dict.__index_ref(index),
             _ => todo!(),
         }
     }
-    pub fn __index_value(&self, index: &Value) -> Value {
+    pub fn __index_value<'a, I>(&self, index: &'a I) -> Value
+    where
+        DictKey: From<&'a I>,
+    {
         match self {
             Value::List(list) => list.__index_value(index),
             Value::Dict(dict) => dict.__index_value(index),
@@ -155,8 +166,11 @@ impl Value {
         }
     }
 
-    pub fn assign(&mut self, value: &Value) {
-        *self = value.clone();
+    pub fn assign<'a, T>(&mut self, value: &'a T)
+    where
+        Value: From<&'a T>,
+    {
+        *self = value.into();
     }
 
     pub fn reverse(&self) {
@@ -184,14 +198,20 @@ impl Value {
             _ => unreachable!(),
         }
     }
-    pub fn append(&self, value: &Value) {
+    pub fn append<'a, T>(&self, value: &'a T)
+    where
+        Value: From<&'a T>,
+    {
         match self {
             Value::List(list) => list.append(value),
             Value::Deque(deque) => deque.append(value),
             _ => unreachable!(),
         }
     }
-    pub fn appendleft(&self, value: &Value) {
+    pub fn appendleft<'a, T>(&self, value: &'a T)
+    where
+        Value: From<&'a T>,
+    {
         match self {
             Value::Deque(deque) => deque.appendleft(value),
             _ => unreachable!(),
@@ -204,16 +224,23 @@ impl Value {
             _ => todo!(),
         }
     }
-    pub fn add(&self, value: &Value) {
+    pub fn add<'a, T>(&self, value: &'a T)
+    where
+        DictKey: From<&'a T>,
+    {
         match self {
             Value::Dict(dict) => dict.add(value),
             _ => unreachable!(),
         }
     }
 
-    pub fn __floor_div(&self, rhs: &Value) -> Value {
-        match (self, rhs) {
-            (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs.floor_div(rhs)),
+    pub fn __floor_div<'a, T>(&self, rhs: &'a T) -> Value
+    where
+        Number: From<&'a T>,
+    {
+        let rhs = Number::from(rhs);
+        match self {
+            Value::Number(lhs) => Value::Number(lhs.floor_div(&rhs)),
             _ => unreachable!(),
         }
     }
@@ -223,7 +250,7 @@ impl Value {
     }
     pub fn __unary_sub(&self) -> Value {
         match self {
-            Value::Number(i) => Value::Number(i.mul(Number::Int64(-1))),
+            Value::Number(i) => Value::Number(i.__unary_sub()),
             _ => unreachable!(),
         }
     }
@@ -306,12 +333,41 @@ impl From<&Value> for Value {
         v.__shallow_copy()
     }
 }
+impl From<&Number> for Value {
+    fn from(v: &Number) -> Self {
+        Value::Number(*v)
+    }
+}
 impl ToString for Value {
     fn to_string(&self) -> String {
         match self {
             Value::String(s) => s.to_string(),
             Value::Number(n) => n.to_string(),
             Value::List(list) => list.to_string(),
+            _ => todo!(),
+        }
+    }
+}
+
+pub trait ValueIndexDelete<K> {
+    fn __delete<'a>(&self, index: &'a K);
+}
+
+impl ValueIndexDelete<Value> for Value {
+    fn __delete<'a>(&self, index: &'a Value) {
+        match self {
+            Value::List(list) => list.__delete(index),
+            Value::Dict(dict) => dict.__delete(index),
+            _ => todo!(),
+        }
+    }
+}
+
+impl ValueIndexDelete<Number> for Value {
+    fn __delete<'a>(&self, index: &'a Number) {
+        match self {
+            Value::List(list) => list.__delete(index),
+            Value::Dict(dict) => dict.__delete(index),
             _ => todo!(),
         }
     }

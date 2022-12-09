@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::{
     cell::{UnsafeRefCell, UnsafeRefMut},
     number::Number,
-    Value,
+    DictKey, Value,
 };
 
 #[derive(Debug, Clone)]
@@ -21,11 +21,11 @@ impl PartialOrd for List {
 }
 
 impl List {
-    pub fn __mul(&self, rhs: &Value) -> Value {
+    pub fn __mul(&self, rhs: Number) -> Value {
         match rhs {
-            Value::Number(Number::Int64(n)) => {
+            Number::Int64(n) => {
                 let mut result = vec![];
-                for _ in 0..(*n) {
+                for _ in 0..n {
                     for element in self.0.borrow().iter() {
                         result.push(UnsafeRefCell::rc(element.borrow().clone()));
                     }
@@ -35,43 +35,58 @@ impl List {
             _ => todo!(),
         }
     }
-    pub fn includes(&self, value: &Value) -> bool {
-        self.0.borrow().iter().any(|e| e.borrow().eq(value))
+    pub fn includes<'a, T>(&self, value: &'a T) -> bool
+    where
+        Value: From<&'a T>,
+    {
+        self.0
+            .borrow()
+            .iter()
+            .any(|e| e.borrow().eq(&Value::from(value)))
     }
-    pub fn __delete(&self, index: &Value) {
-        match index {
-            Value::Number(Number::Int64(i)) => {
-                if *i < 0 {
-                    let i = self.0.borrow().len() as i64 + *i;
+    pub fn __delete<'a, T>(&self, index: &'a T)
+    where
+        Number: From<&'a T>,
+    {
+        match Number::from(index) {
+            Number::Int64(i) => {
+                if i < 0 {
+                    let i = self.0.borrow().len() as i64 + i;
                     self.0.borrow_mut().remove(i as usize);
                 } else {
-                    self.0.borrow_mut().remove(*i as usize);
+                    self.0.borrow_mut().remove(i as usize);
                 }
             }
             _ => todo!(),
         }
     }
-    pub fn __index_ref(&self, index: &Value) -> UnsafeRefMut<Value> {
-        match index {
-            Value::Number(Number::Int64(i)) => {
-                if *i < 0 {
-                    let i = self.0.borrow().len() as i64 + *i;
+    pub fn __index_ref<'a, I>(&self, index: &'a I) -> UnsafeRefMut<Value>
+    where
+        DictKey: From<&'a I>,
+    {
+        match DictKey::from(index) {
+            DictKey::Number(Number::Int64(i)) => {
+                if i < 0 {
+                    let i = self.0.borrow().len() as i64 + i;
                     self.0.borrow_mut()[i as usize].borrow_mut()
                 } else {
-                    self.0.borrow_mut()[*i as usize].borrow_mut()
+                    self.0.borrow_mut()[i as usize].borrow_mut()
                 }
             }
-            _ => todo!(),
+            _ => unreachable!(),
         }
     }
-    pub fn __index_value(&self, index: &Value) -> Value {
-        match index {
-            Value::Number(Number::Int64(i)) => {
-                if *i < 0 {
-                    let i = self.0.borrow().len() as i64 + *i;
+    pub fn __index_value<'a, I>(&self, index: &'a I) -> Value
+    where
+        DictKey: From<&'a I>,
+    {
+        match DictKey::from(index) {
+            DictKey::Number(Number::Int64(i)) => {
+                if i < 0 {
+                    let i = self.0.borrow().len() as i64 + i;
                     self.0.borrow()[i as usize].borrow().clone()
                 } else {
-                    self.0.borrow()[*i as usize].borrow().clone()
+                    self.0.borrow()[i as usize].borrow().clone()
                 }
             }
             _ => todo!(),
@@ -84,8 +99,13 @@ impl List {
         let last = self.0.borrow_mut().pop().expect("empty list");
         last.borrow().clone()
     }
-    pub fn append(&self, value: &Value) {
-        self.0.borrow_mut().push(UnsafeRefCell::rc(value.clone()));
+    pub fn append<'a, T>(&self, value: &'a T)
+    where
+        Value: From<&'a T>,
+    {
+        self.0
+            .borrow_mut()
+            .push(UnsafeRefCell::rc(Value::from(value)));
     }
     pub fn __len(&self) -> Value {
         Value::Number(Number::Int64(self.0.borrow().len() as i64))

@@ -3,6 +3,8 @@ use std::{
     ops::{Add, Div, Mul, Rem, Sub},
 };
 
+use crate::Value;
+
 #[derive(Debug, Clone, Copy)]
 pub enum Number {
     Int64(i64),
@@ -64,6 +66,18 @@ impl Number {
             Number::Float(f) => *f != 0.0,
         }
     }
+    pub fn __unary_sub(&self) -> Self {
+        match self {
+            Number::Int64(i) => Number::Int64(-i),
+            Number::Float(f) => Number::Float(-f),
+        }
+    }
+    pub fn __in(&self, rhs: &Value) -> Value {
+        Value::Boolean(rhs.__includes(self))
+    }
+    pub fn __not_in(&self, rhs: &Value) -> Value {
+        Value::Boolean(!rhs.__includes(self))
+    }
 }
 impl ToString for Number {
     fn to_string(&self) -> String {
@@ -107,6 +121,39 @@ impl Div for Number {
             (Number::Int64(lhs), Number::Float(rhs)) => Number::Float(lhs as f64 / rhs),
             (Number::Float(lhs), Number::Int64(rhs)) => Number::Float(lhs / rhs as f64),
             (Number::Float(lhs), Number::Float(rhs)) => Number::Float(lhs / rhs),
+        }
+    }
+}
+
+impl From<i64> for Number {
+    fn from(v: i64) -> Self {
+        Number::Int64(v)
+    }
+}
+
+impl From<f64> for Number {
+    fn from(v: f64) -> Self {
+        Number::Float(v)
+    }
+}
+
+impl Into<Value> for Number {
+    fn into(self) -> Value {
+        Value::Number(self)
+    }
+}
+
+impl From<&Number> for Number {
+    fn from(x: &Number) -> Self {
+        *x
+    }
+}
+
+impl From<&Value> for Number {
+    fn from(v: &Value) -> Self {
+        match v {
+            Value::Number(n) => *n,
+            _ => unreachable!(),
         }
     }
 }

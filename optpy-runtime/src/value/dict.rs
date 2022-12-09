@@ -21,14 +21,25 @@ impl PartialEq for Dict {
 }
 
 impl Dict {
-    pub fn includes(&self, value: &Value) -> bool {
-        self.0.borrow().contains_key(&DictKey::from(value))
+    pub fn includes<'a, T>(&self, value: &'a T) -> bool
+    where
+        Value: From<&'a T>,
+    {
+        self.0
+            .borrow()
+            .contains_key(&DictKey::from(&Value::from(value)))
     }
-    pub fn __delete(&self, index: &Value) {
+    pub fn __delete<'a, T>(&self, index: &'a T)
+    where
+        DictKey: From<&'a T>,
+    {
         self.0.borrow_mut().remove(&DictKey::from(index));
     }
 
-    pub fn __index_ref(&self, index: &Value) -> UnsafeRefMut<Value> {
+    pub fn __index_ref<'a, I>(&self, index: &'a I) -> UnsafeRefMut<Value>
+    where
+        DictKey: From<&'a I>,
+    {
         let key = DictKey::from(index);
         self.0
             .borrow_mut()
@@ -36,7 +47,10 @@ impl Dict {
             .or_insert_with(|| UnsafeRefCell::rc(Default::default()))
             .borrow_mut()
     }
-    pub fn __index_value(&self, index: &Value) -> Value {
+    pub fn __index_value<'a, I>(&self, index: &'a I) -> Value
+    where
+        DictKey: From<&'a I>,
+    {
         let key = DictKey::from(index);
         self.0
             .borrow_mut()
@@ -62,7 +76,10 @@ impl Dict {
             .entry(key)
             .or_insert_with(|| UnsafeRefCell::rc(value.clone()));
     }
-    pub fn add(&self, value: &Value) {
+    pub fn add<'a, T>(&self, value: &'a T)
+    where
+        DictKey: From<&'a T>,
+    {
         let key = DictKey::from(value);
         self.0
             .borrow_mut()
@@ -112,5 +129,11 @@ impl From<&Value> for DictKey {
             Value::Number(n) => Self::Number(*n),
             _ => unreachable!(),
         }
+    }
+}
+
+impl From<&Number> for DictKey {
+    fn from(n: &Number) -> Self {
+        Self::Number(*n)
     }
 }

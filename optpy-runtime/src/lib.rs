@@ -29,7 +29,8 @@ pub const OPTPY_STD_STR: &str = concat!(
     include_nested_modules!(value, value, list, dict, deque, string),
     "pub use builtin::*;",
     "pub use stdlib::*;",
-    "pub use value::*;"
+    "pub use value::*;",
+    "pub use number::*;"
 );
 
 mod builtin;
@@ -39,5 +40,6 @@ mod stdlib;
 mod value;
 
 pub use builtin::*;
+pub use number::*;
 pub use stdlib::*;
 pub use value::*;

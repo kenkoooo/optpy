@@ -8,9 +8,15 @@ pub fn __heapq__heapify(x: &Value) {
     }
 }
 #[allow(non_snake_case)]
-pub fn __heapq__heappush(heap: &Value, item: &Value) {
+pub fn __heapq__heappush<'a, T>(heap: &Value, item: &'a T)
+where
+    Value: From<&'a T>,
+{
     match heap {
-        Value::List(list) => heap_push(&mut *list.0.borrow_mut(), UnsafeRefCell::rc(item.clone())),
+        Value::List(list) => heap_push(
+            &mut *list.0.borrow_mut(),
+            UnsafeRefCell::rc(Value::from(item)),
+        ),
         _ => todo!(),
     }
 }

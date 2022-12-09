@@ -162,7 +162,7 @@ impl CodeGenerator {
                 Some(value) => {
                     let value = self.format_expr(value, false);
                     quote! {
-                        return #value;
+                        return #value .into();
                     }
                 }
                 None => {
@@ -341,7 +341,7 @@ impl CodeGenerator {
             Number::Int(int) => match int.parse::<i64>() {
                 Ok(int) => {
                     quote! {
-                        Value::from(#int)
+                        Number::from(#int)
                     }
                 }
                 Err(_) => {
@@ -351,7 +351,7 @@ impl CodeGenerator {
             Number::Float(float) => match float.parse::<f64>() {
                 Ok(float) => {
                     quote! {
-                        Value::from(#float)
+                        Number::from(#float)
                     }
                 }
                 Err(e) => {

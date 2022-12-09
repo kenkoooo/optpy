@@ -62,14 +62,23 @@ pub fn tuple(value: &Value) -> Value {
     list(value)
 }
 
-pub fn __range1(value: &Value) -> Value {
-    __range2(&Value::Number(Number::Int64(0)), value)
+pub fn __range1<'a, T>(value: &'a T) -> Value
+where
+    Number: From<&'a T>,
+{
+    __range2::<'_, 'a, Number, T>(&Number::Int64(0), value)
 }
 
-pub fn __range2(start: &Value, stop: &Value) -> Value {
+pub fn __range2<'a, 'b, T, U>(start: &'a T, stop: &'b U) -> Value
+where
+    Number: From<&'a T>,
+    Number: From<&'b U>,
+{
+    let start = Number::from(start);
+    let stop = Number::from(stop);
     match (start, stop) {
-        (Value::Number(Number::Int64(start)), Value::Number(Number::Int64(stop))) => {
-            let list = (*start..*stop)
+        (Number::Int64(start), Number::Int64(stop)) => {
+            let list = (start..stop)
                 .map(|i| Value::Number(Number::Int64(i)))
                 .collect::<Vec<_>>();
             Value::from(list)
@@ -123,12 +132,19 @@ pub fn __sum1(a: &Value) -> Value {
             .0
             .borrow()
             .iter()
-            .fold(Value::from(0), |a, b| a.__add(&b.borrow())),
+            .fold(Number::from(0), |a, b| a + Number::from(&*b.borrow()))
+            .into(),
         _ => todo!(),
     }
 }
-pub fn __sum2(a: &Value, b: &Value) -> Value {
-    a.__add(b)
+pub fn __sum2<'a, 'b, T, U>(a: &'a T, b: &'b U) -> Value
+where
+    Number: From<&'a T>,
+    Number: From<&'b U>,
+{
+    let a = Number::from(a);
+    let b = Number::from(b);
+    (a + b).into()
 }
 
 pub fn sorted(value: &Value) -> Value {
@@ -217,8 +233,11 @@ pub fn __pow3(number: &Value, power: &Value, modulus: &Value) -> Value {
     Value::Number(Number::Int64(result))
 }
 
-pub fn __exit1(code: &Value) -> ! {
-    match code.__number() {
+pub fn __exit1<'a, T>(code: &'a T) -> !
+where
+    Number: From<&'a T>,
+{
+    match Number::from(code) {
         Number::Int64(code) => std::process::exit(code as i32),
         _ => unreachable!(),
     }
