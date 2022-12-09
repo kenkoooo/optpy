@@ -1,38 +1,30 @@
-use std::{collections::VecDeque, iter::FromIterator, rc::Rc};
+use std::{collections::VecDeque, rc::Rc};
 
-use crate::{cell::UnsafeRefCell, List, Value};
+use crate::cell::UnsafeRefCell;
 
-#[derive(Debug, Clone)]
-pub struct Deque(Rc<UnsafeRefCell<VecDeque<Value>>>);
-
-impl Default for Deque {
-    fn default() -> Self {
-        Self(UnsafeRefCell::rc(Default::default()))
-    }
+pub trait Deque<T> {
+    fn popleft(&self) -> T;
+    fn append(&self, value: &T);
+    fn appendleft(&self, value: &T);
+    fn test(&self) -> bool;
 }
 
-impl Deque {
-    pub fn popleft(&self) -> Value {
-        self.0
-            .borrow_mut()
+impl<T> Deque<T> for Rc<UnsafeRefCell<VecDeque<T>>>
+where
+    T: Clone,
+{
+    fn popleft(&self) -> T {
+        self.borrow_mut()
             .pop_front()
             .expect("pop from an empty deque")
     }
-    pub fn append(&self, value: &Value) {
-        self.0.borrow_mut().push_back(value.clone());
+    fn append(&self, value: &T) {
+        self.borrow_mut().push_back(value.clone());
     }
-    pub fn appendleft(&self, value: &Value) {
-        self.0.borrow_mut().push_front(value.clone());
+    fn appendleft(&self, value: &T) {
+        self.borrow_mut().push_front(value.clone());
     }
-    pub fn test(&self) -> bool {
-        !self.0.borrow().is_empty()
-    }
-}
-
-impl From<&List> for Deque {
-    fn from(list: &List) -> Self {
-        Deque(UnsafeRefCell::rc(VecDeque::from_iter(
-            list.0.borrow().iter().map(|v| v.borrow().clone()),
-        )))
+    fn test(&self) -> bool {
+        !self.borrow().is_empty()
     }
 }

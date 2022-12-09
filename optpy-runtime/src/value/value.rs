@@ -1,6 +1,10 @@
-use std::ops::Mul;
+use std::{collections::VecDeque, ops::Mul, rc::Rc};
 
-use crate::{cell::UnsafeRefMut, number::Number, Boolean, Deque, Dict, ImmutableString, List};
+use crate::{
+    cell::{UnsafeRefCell, UnsafeRefMut},
+    number::Number,
+    Boolean, Deque, Dict, ImmutableString, List,
+};
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -9,7 +13,7 @@ pub enum Value {
     Number(Number),
     Boolean(Boolean),
     Dict(Dict),
-    Deque(Deque),
+    Deque(Rc<UnsafeRefCell<VecDeque<Value>>>),
     None,
 }
 
