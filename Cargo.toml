@@ -18,6 +18,11 @@ optpy-dump = { path = "./optpy-dump" }
 
 [dev-dependencies]
 optpy-test-macro = { path = "./optpy-test-macro" }
+criterion = "0.4"
+
+[[bench]]
+name = "value-clone"
+harness = false
 
 [workspace]
 members = [
