@@ -8,6 +8,13 @@ pub fn input() -> Value {
     Value::from(buf.trim())
 }
 
+pub fn __has_next(iter: &Value) -> Value {
+    match iter {
+        Value::Iter(iter) => Value::Boolean(iter.__has_next()),
+        _ => todo!(),
+    }
+}
+
 pub fn map_int(value: &Value) -> Value {
     match value {
         Value::List(list) => {
@@ -138,14 +145,14 @@ pub fn len(value: &Value) -> Value {
 pub fn any(value: &Value) -> Value {
     match value {
         Value::List(list) => Value::Boolean(list.0.borrow().iter().any(|v| v.borrow().test())),
-        Value::Iter(iter) => Value::Boolean(iter.0.borrow_mut().any(|v| v.test())),
+        Value::Iter(iter) => Value::Boolean(iter.any()),
         _ => todo!(),
     }
 }
 pub fn all(value: &Value) -> Value {
     match value {
         Value::List(list) => Value::Boolean(list.0.borrow().iter().all(|v| v.borrow().test())),
-        Value::Iter(iter) => Value::Boolean(iter.0.borrow_mut().all(|v| v.test())),
+        Value::Iter(iter) => Value::Boolean(iter.all()),
         _ => todo!(),
     }
 }

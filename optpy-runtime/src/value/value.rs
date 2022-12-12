@@ -10,7 +10,7 @@ pub enum Value {
     Boolean(bool),
     Dict(Dict),
     Deque(Deque),
-    Iter(Iter),
+    Iter(Iter<Value>),
     None,
 }
 
