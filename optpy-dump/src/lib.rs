@@ -139,6 +139,8 @@ impl DumpPython for Expr {
                         optpy_parser::BinaryOperator::FloorDiv => "//",
                         optpy_parser::BinaryOperator::Pow => "**",
                         optpy_parser::BinaryOperator::BitAnd => "&",
+                        optpy_parser::BinaryOperator::LeftShift => "<<",
+                        optpy_parser::BinaryOperator::RightShift => ">>",
                     }
                 )
             }

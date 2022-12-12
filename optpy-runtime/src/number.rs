@@ -64,6 +64,18 @@ impl Number {
             Number::Float(f) => *f != 0.0,
         }
     }
+    pub fn __left_shift(&self, value: &Number) -> Number {
+        match (self, value) {
+            (Number::Int64(i), Number::Int64(x)) => Number::Int64(i << x),
+            _ => unreachable!(),
+        }
+    }
+    pub fn __right_shift(&self, value: &Number) -> Number {
+        match (self, value) {
+            (Number::Int64(i), Number::Int64(x)) => Number::Int64(i >> x),
+            _ => unreachable!(),
+        }
+    }
 }
 impl ToString for Number {
     fn to_string(&self) -> String {

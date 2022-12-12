@@ -233,6 +233,18 @@ impl Value {
             _ => unreachable!(),
         }
     }
+    pub fn __left_shift(&self, value: &Value) -> Value {
+        match (self, value) {
+            (Value::Number(i), Value::Number(x)) => Value::Number(i.__left_shift(x)),
+            _ => todo!(),
+        }
+    }
+    pub fn __right_shift(&self, value: &Value) -> Value {
+        match (self, value) {
+            (Value::Number(i), Value::Number(x)) => Value::Number(i.__right_shift(x)),
+            _ => todo!(),
+        }
+    }
     pub fn __len(&self) -> Value {
         match self {
             Value::List(list) => list.__len(),
@@ -271,6 +283,12 @@ impl Value {
         match self {
             Value::List(list) => list.count(value),
             Value::String(s) => s.count(value),
+            _ => todo!(),
+        }
+    }
+    pub fn index(&self, value: &Value) -> Value {
+        match self {
+            Value::List(list) => list.index(value),
             _ => todo!(),
         }
     }

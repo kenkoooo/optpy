@@ -1,4 +1,4 @@
-use crate::{cell::UnsafeRefMut, number::Number};
+use crate::number::Number;
 
 pub trait TypedValue: Sized {
     fn __shallow_copy(&self) -> Self;

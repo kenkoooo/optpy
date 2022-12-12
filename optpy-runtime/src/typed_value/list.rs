@@ -5,7 +5,7 @@ use crate::{
     number::Number,
 };
 
-use super::{IndexValue, TypedValue};
+use super::TypedValue;
 
 pub struct TypedList<T>(pub Rc<UnsafeRefCell<Vec<Rc<UnsafeRefCell<T>>>>>);
 impl<T> From<Vec<T>> for TypedList<T> {
