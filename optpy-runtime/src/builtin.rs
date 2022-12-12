@@ -184,10 +184,6 @@ pub fn enumerate(iter: &Value) -> Value {
 pub fn __next1(iter: &Value) -> Value {
     match iter {
         Value::Iter(iter) => iter.__next().expect("stop iteration"),
-        Value::List(list) => {
-            let head = list.0.borrow_mut().remove(0);
-            head.borrow().clone()
-        }
         _ => todo!("{:?}", iter),
     }
 }
