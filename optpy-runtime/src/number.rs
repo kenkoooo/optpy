@@ -122,3 +122,15 @@ impl Div for Number {
         }
     }
 }
+
+impl From<i64> for Number {
+    fn from(v: i64) -> Self {
+        Number::Int64(v)
+    }
+}
+
+impl From<f64> for Number {
+    fn from(v: f64) -> Self {
+        Number::Float(v)
+    }
+}
