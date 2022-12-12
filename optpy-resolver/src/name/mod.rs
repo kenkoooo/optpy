@@ -314,7 +314,7 @@ mod tests {
         let resolved = resolve_names(&ast);
 
         let expected = r"
-            |__v0 = map(int, input().split())
+            |__v0 = iter(map(int, input().split()))
             |__v1 = next(__v0)
             |__v2 = next(__v0)
             |print(__v1)"
@@ -336,7 +336,7 @@ mod tests {
         let resolved = resolve_names(&ast);
 
         let expected = r"
-            |__v0 = map(int, input().split())
+            |__v0 = iter(map(int, input().split()))
             |__v1 = next(__v0)
             |__v2 = next(__v0)
             |def __f0(__v3):
@@ -359,7 +359,7 @@ mod tests {
         .strip_margin();
 
         let expected = r"
-            |__v0 = map(int, input().split())
+            |__v0 = iter(map(int, input().split()))
             |__v1 = next(__v0)
             |__v2 = next(__v0)
             |__v3 = __v1 + __v2
@@ -390,7 +390,7 @@ mod tests {
         .strip_margin();
 
         let expected = r"
-            |__v0 = map(int, input().split())
+            |__v0 = iter(map(int, input().split()))
             |__v1 = next(__v0)
             |__v2 = next(__v0)
             |__v3 = __v1 + __v2

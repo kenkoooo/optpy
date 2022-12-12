@@ -47,7 +47,7 @@ print(a)
 ";
 
         let expected = r"
-__tmp_for_tuple = input().split()
+__tmp_for_tuple = iter(input().split())
 a = next(__tmp_for_tuple)
 b = next(__tmp_for_tuple)
 c = next(__tmp_for_tuple)

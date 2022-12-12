@@ -11,7 +11,10 @@ fn simplify_stmt(stmt: Statement) -> Vec<Statement> {
                 let tmp_target = Expr::VariableName("__tmp_for_tuple".into());
                 let mut result = vec![Statement::Assign(Assign {
                     target: tmp_target.clone(),
-                    value,
+                    value: Expr::CallFunction(CallFunction {
+                        name: "iter".into(),
+                        args: vec![value],
+                    }),
                 })];
                 for target in targets.into_iter() {
                     result.push(Statement::Assign(Assign {

@@ -691,3 +691,15 @@ def test(a, b):
         Value::from(true)
     )
 }
+
+#[test]
+fn test_iter() {
+    python_function! {r"
+def test():
+    a = [[]]
+    a[0].append([1, 2, 3, 4])
+    a[0].append([1, 2, 3, 4])
+    for i in range(len(a[0])):
+        x, y, z, w = a[0][i]"}
+    test();
+}
