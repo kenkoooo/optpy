@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use crate::{cell::UnsafeRefMut, number::Number, Deque, Dict, ImmutableString, List};
+use crate::{cell::UnsafeRefMut, number::Number, Deque, Dict, ImmutableString, Iter, List};
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -10,6 +10,7 @@ pub enum Value {
     Boolean(bool),
     Dict(Dict),
     Deque(Deque),
+    Iter(Iter),
     None,
 }
 
@@ -268,6 +269,7 @@ impl Value {
             Value::Number(n) => n.test(),
             Value::Dict(dict) => dict.test(),
             Value::Deque(deque) => deque.test(),
+            Value::Iter(iter) => iter.test(),
             Value::None => false,
         }
     }
