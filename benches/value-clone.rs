@@ -6,7 +6,7 @@ fn value_clone(c: &mut Criterion) {
         b.iter(|| {
             let x = Value::from(vec![]);
             for _ in 0..100000 {
-                let _ = x.clone();
+                criterion::black_box(x.clone());
             }
         })
     });
@@ -18,7 +18,7 @@ fn value_clone(c: &mut Criterion) {
                 _ => unreachable!(),
             };
             for _ in 0..100000 {
-                let _ = x.clone();
+                criterion::black_box(x.clone());
             }
         })
     });
