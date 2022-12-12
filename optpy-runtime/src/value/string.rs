@@ -33,7 +33,7 @@ impl ImmutableString {
     pub fn __len(&self) -> Value {
         Value::Number(Number::Int64(self.0.chars().count() as i64))
     }
-    pub fn count(&self, value: &Value) -> Value {
+    pub fn count(&self, value: Value) -> Value {
         match value {
             Value::String(value) => {
                 let lhs = self.0.as_str();

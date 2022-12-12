@@ -11,12 +11,12 @@ def test(x):
         return "NO"
 "#}
 
-    assert_eq!(test(&Value::from(1)), Value::from("OK"));
-    assert_eq!(test(&Value::from(0)), Value::from("NO"));
-    assert_eq!(test(&Value::from(-1)), Value::from("OK"));
-    assert_eq!(test(&Value::from(0.1)), Value::from("OK"));
-    assert_eq!(test(&Value::from(0.0)), Value::from("NO"));
-    assert_eq!(test(&Value::from(-0.1)), Value::from("OK"));
+    assert_eq!(test(Value::from(1)), Value::from("OK"));
+    assert_eq!(test(Value::from(0)), Value::from("NO"));
+    assert_eq!(test(Value::from(-1)), Value::from("OK"));
+    assert_eq!(test(Value::from(0.1)), Value::from("OK"));
+    assert_eq!(test(Value::from(0.0)), Value::from("NO"));
+    assert_eq!(test(Value::from(-0.1)), Value::from("OK"));
 }
 
 #[test]

@@ -10,7 +10,7 @@ def test(a):
     return x, y"}
 
     assert_eq!(
-        test(&Value::from(2)),
+        test(Value::from(2)),
         Value::from(vec![
             Value::from(vec![Value::from(vec![]), Value::from(vec![])]),
             Value::from(vec![Value::from(vec![]), Value::from(vec![])])

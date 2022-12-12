@@ -40,7 +40,7 @@ impl PartialEq for Number {
 }
 
 impl Number {
-    pub fn floor_div(&self, rhs: &Number) -> Number {
+    pub fn floor_div(&self, rhs: Number) -> Number {
         match (self, rhs) {
             (Number::Int64(l0), Number::Int64(r0)) => Number::Int64(l0 / r0),
             _ => todo!(),
@@ -64,13 +64,13 @@ impl Number {
             Number::Float(f) => *f != 0.0,
         }
     }
-    pub fn __left_shift(&self, value: &Number) -> Number {
+    pub fn __left_shift(&self, value: Number) -> Number {
         match (self, value) {
             (Number::Int64(i), Number::Int64(x)) => Number::Int64(i << x),
             _ => unreachable!(),
         }
     }
-    pub fn __right_shift(&self, value: &Number) -> Number {
+    pub fn __right_shift(&self, value: Number) -> Number {
         match (self, value) {
             (Number::Int64(i), Number::Int64(x)) => Number::Int64(i >> x),
             _ => unreachable!(),

@@ -21,11 +21,11 @@ impl PartialOrd for List {
 }
 
 impl List {
-    pub fn __mul(&self, rhs: &Value) -> Value {
+    pub fn __mul(&self, rhs: Value) -> Value {
         match rhs {
             Value::Number(Number::Int64(n)) => {
                 let mut result = vec![];
-                for _ in 0..(*n) {
+                for _ in 0..n {
                     for element in self.0.borrow().iter() {
                         result.push(UnsafeRefCell::rc(element.borrow().clone()));
                     }
@@ -35,43 +35,43 @@ impl List {
             _ => todo!(),
         }
     }
-    pub fn includes(&self, value: &Value) -> bool {
-        self.0.borrow().iter().any(|e| e.borrow().eq(value))
+    pub fn includes(&self, value: Value) -> bool {
+        self.0.borrow().iter().any(|e| e.borrow().eq(&value))
     }
-    pub fn __delete(&self, index: &Value) {
+    pub fn __delete(&self, index: Value) {
         match index {
             Value::Number(Number::Int64(i)) => {
-                if *i < 0 {
-                    let i = self.0.borrow().len() as i64 + *i;
+                if i < 0 {
+                    let i = self.0.borrow().len() as i64 + i;
                     self.0.borrow_mut().remove(i as usize);
                 } else {
-                    self.0.borrow_mut().remove(*i as usize);
+                    self.0.borrow_mut().remove(i as usize);
                 }
             }
             _ => todo!(),
         }
     }
-    pub fn __index_ref(&self, index: &Value) -> UnsafeRefMut<Value> {
+    pub fn __index_ref(&self, index: Value) -> UnsafeRefMut<Value> {
         match index {
             Value::Number(Number::Int64(i)) => {
-                if *i < 0 {
-                    let i = self.0.borrow().len() as i64 + *i;
+                if i < 0 {
+                    let i = self.0.borrow().len() as i64 + i;
                     self.0.borrow_mut()[i as usize].borrow_mut()
                 } else {
-                    self.0.borrow_mut()[*i as usize].borrow_mut()
+                    self.0.borrow_mut()[i as usize].borrow_mut()
                 }
             }
             _ => todo!(),
         }
     }
-    pub fn __index_value(&self, index: &Value) -> Value {
+    pub fn __index_value(&self, index: Value) -> Value {
         match index {
             Value::Number(Number::Int64(i)) => {
-                if *i < 0 {
-                    let i = self.0.borrow().len() as i64 + *i;
+                if i < 0 {
+                    let i = self.0.borrow().len() as i64 + i;
                     self.0.borrow()[i as usize].borrow().clone()
                 } else {
-                    self.0.borrow()[*i as usize].borrow().clone()
+                    self.0.borrow()[i as usize].borrow().clone()
                 }
             }
             _ => todo!(),
@@ -84,8 +84,8 @@ impl List {
         let last = self.0.borrow_mut().pop().expect("empty list");
         last.borrow().clone()
     }
-    pub fn append(&self, value: &Value) {
-        self.0.borrow_mut().push(UnsafeRefCell::rc(value.clone()));
+    pub fn append(&self, value: Value) {
+        self.0.borrow_mut().push(UnsafeRefCell::rc(value));
     }
     pub fn __len(&self) -> Value {
         Value::Number(Number::Int64(self.0.borrow().len() as i64))
@@ -97,23 +97,23 @@ impl List {
             a.partial_cmp(&b).unwrap()
         })
     }
-    pub fn index(&self, value: &Value) -> Value {
+    pub fn index(&self, value: Value) -> Value {
         let index = self
             .0
             .borrow()
             .iter()
             .enumerate()
-            .find(|(_, e)| e.borrow().eq(value))
+            .find(|(_, e)| e.borrow().eq(&value))
             .expect("not found")
             .0;
         Value::from(index as i64)
     }
-    pub fn count(&self, value: &Value) -> Value {
+    pub fn count(&self, value: Value) -> Value {
         let count = self
             .0
             .borrow()
             .iter()
-            .filter(|v| v.borrow().eq(value))
+            .filter(|v| v.borrow().eq(&value))
             .count();
         Value::Number(Number::Int64(count as i64))
     }

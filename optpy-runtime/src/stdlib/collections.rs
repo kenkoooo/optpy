@@ -6,7 +6,7 @@ pub fn __collections__deque0() -> Value {
 }
 
 #[allow(non_snake_case)]
-pub fn __collections__deque1(value: &Value) -> Value {
+pub fn __collections__deque1(value: Value) -> Value {
     match value {
         Value::List(list) => Value::Deque(Deque::from(list)),
         _ => todo!(),

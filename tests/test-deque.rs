@@ -46,6 +46,6 @@ def test(a):
         return 1
     else:
         return 2"}
-    assert_eq!(test(&Value::from(vec![Value::from(0)])), Value::from(1));
-    assert_eq!(test(&Value::from(vec![])), Value::from(2));
+    assert_eq!(test(Value::from(vec![Value::from(0)])), Value::from(1));
+    assert_eq!(test(Value::from(vec![])), Value::from(2));
 }

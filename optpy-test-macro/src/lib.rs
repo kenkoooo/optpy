@@ -36,7 +36,7 @@ pub fn python_function(tokens: TokenStream) -> TokenStream {
 
     let result = quote! {
         #[allow(unreachable_code)]
-        fn #function_name(#(#args: &optpy_runtime::Value),*) -> optpy_runtime::Value {
+        fn #function_name(#(mut #args: optpy_runtime::Value),*) -> optpy_runtime::Value {
             use optpy_runtime::*;
             #code
 

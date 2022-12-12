@@ -39,8 +39,7 @@ fn format_function(name: &str, args: &[String], body: TokenStream) -> TokenStrea
         .collect::<Vec<_>>();
     let name = format_ident!("{}", name);
     quote! {
-        fn #name( #(#args: &Value),*  ) -> Value {
-            #(let mut #args = #args.__shallow_copy();)*
+        fn #name(#(mut #args: Value),*) -> Value {
             #body
             return Default::default();
         }
@@ -67,13 +66,15 @@ fn format_declaration(variable: &str) -> TokenStream {
 }
 
 fn format_tuple(tuple: &[TokenStream]) -> TokenStream {
+    let tuple = tuple.iter().map(format_arg_expr).collect::<Vec<_>>();
     quote! {
-       Value::from(vec![ #(Value::from(&#tuple)),* ])
+       Value::from(vec![ #(Value::from(#tuple)),* ])
     }
 }
-fn format_list(tuple: &[TokenStream]) -> TokenStream {
+fn format_list(list: &[TokenStream]) -> TokenStream {
+    let list = list.iter().map(format_arg_expr).collect::<Vec<_>>();
     quote! {
-       Value::from(vec![ #(Value::from(&#tuple)),* ])
+       Value::from(vec![ #(Value::from(#list)),* ])
     }
 }
 fn format_string(s: &str) -> TokenStream {
@@ -81,13 +82,33 @@ fn format_string(s: &str) -> TokenStream {
         Value::from(#s)
     }
 }
+fn format_arg_expr(expr: &TokenStream) -> TokenStream {
+    fn is_ident(token: &TokenStream) -> bool {
+        token
+            .to_string()
+            .chars()
+            .all(|c| matches!(c, '0'..='9' | 'A'..='Z' | 'a'..='z' | '_'))
+    }
+
+    if is_ident(expr) {
+        quote! {
+            #expr.__shallow_copy()
+        }
+    } else {
+        quote! {
+            #expr
+        }
+    }
+}
 
 fn format_dict(pairs: &[(TokenStream, TokenStream)]) -> TokenStream {
     let pairs = pairs
         .iter()
         .map(|(key, value)| {
+            let key = format_arg_expr(key);
+            let value = format_arg_expr(value);
             quote! {
-                (Value::from(&#key), Value::from(&#value))
+                (Value::from(#key), Value::from(#value))
             }
         })
         .collect::<Vec<_>>();
@@ -126,8 +147,9 @@ impl CodeGenerator {
             Statement::Assign(Assign { target, value }) => {
                 let target = self.format_expr(target, true);
                 let value = self.format_expr(value, false);
+                let value = format_arg_expr(&value);
                 quote! {
-                    #target.assign(& #value);
+                    #target.assign(#value);
                 }
             }
             Statement::Expression(expr) => {
@@ -193,15 +215,16 @@ impl CodeGenerator {
         match expr {
             Expr::CallFunction(CallFunction { name, args }) => {
                 let args = self.format_exprs(args);
+                let args = args.iter().map(format_arg_expr).collect::<Vec<_>>();
                 if let Some(macro_name) = name.strip_suffix("__macro__") {
                     let name = format_ident!("{}", macro_name);
                     quote! {
-                        #name !( #(&#args),* )
+                        #name !( #(#args),* )
                     }
                 } else {
                     let name = format_ident!("{}", name);
                     quote! {
-                        #name ( #(&#args),* )
+                        #name ( #(#args),* )
                     }
                 }
             }
@@ -209,8 +232,9 @@ impl CodeGenerator {
                 let value = self.format_expr(value, false);
                 let name = format_ident!("{}", name);
                 let args = self.format_exprs(args);
+                let args = args.iter().map(format_arg_expr).collect::<Vec<_>>();
                 quote! {
-                    #value . #name ( #(&#args),* )
+                    #value . #name ( #(#args),* )
                 }
             }
             Expr::Tuple(values) => {
@@ -239,14 +263,16 @@ impl CodeGenerator {
             Expr::Compare(Compare { left, right, op }) => {
                 let left = self.format_expr(left, false);
                 let right = self.format_expr(right, false);
+                let right = format_arg_expr(&right);
                 let op = self.format_compare_ident(op);
-                quote! { #left . #op (&#right) }
+                quote! { #left . #op (#right) }
             }
             Expr::BinaryOperation(BinaryOperation { left, right, op }) => {
                 let left = self.format_expr(left, false);
                 let right = self.format_expr(right, false);
+                let right = format_arg_expr(&right);
                 let op = self.format_binary_ident(op);
-                quote! { #left . #op (&#right) }
+                quote! { #left . #op (#right) }
             }
             Expr::ConstantNumber(number) => self.format_number(number),
             Expr::None => {
@@ -257,13 +283,14 @@ impl CodeGenerator {
             Expr::Index(Index { value, index }) => {
                 let value = self.format_expr(value, assign_lhs);
                 let index = self.format_expr(index, false);
+                let index = format_arg_expr(&index);
                 if assign_lhs {
                     quote! {
-                        #value .__index_ref(& #index )
+                        #value .__index_ref(#index)
                     }
                 } else {
                     quote! {
-                        #value .__index_value(& #index )
+                        #value .__index_value(#index)
                     }
                 }
             }

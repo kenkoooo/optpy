@@ -18,19 +18,19 @@ impl Deque {
             .pop_front()
             .expect("pop from an empty deque")
     }
-    pub fn append(&self, value: &Value) {
-        self.0.borrow_mut().push_back(value.clone());
+    pub fn append(&self, value: Value) {
+        self.0.borrow_mut().push_back(value);
     }
-    pub fn appendleft(&self, value: &Value) {
-        self.0.borrow_mut().push_front(value.clone());
+    pub fn appendleft(&self, value: Value) {
+        self.0.borrow_mut().push_front(value);
     }
     pub fn test(&self) -> bool {
         !self.0.borrow().is_empty()
     }
 }
 
-impl From<&List> for Deque {
-    fn from(list: &List) -> Self {
+impl From<List> for Deque {
+    fn from(list: List) -> Self {
         Deque(UnsafeRefCell::rc(VecDeque::from_iter(
             list.0.borrow().iter().map(|v| v.borrow().clone()),
         )))

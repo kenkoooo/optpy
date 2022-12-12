@@ -1,7 +1,7 @@
 use crate::{number::Number, Value};
 
 #[allow(non_snake_case)]
-pub fn __math__gcd(a: &Value, b: &Value) -> Value {
+pub fn __math__gcd(a: Value, b: Value) -> Value {
     let a = a.__number();
     let b = b.__number();
 

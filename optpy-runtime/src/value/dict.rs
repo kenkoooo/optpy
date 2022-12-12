@@ -21,14 +21,14 @@ impl PartialEq for Dict {
 }
 
 impl Dict {
-    pub fn includes(&self, value: &Value) -> bool {
+    pub fn includes(&self, value: Value) -> bool {
         self.0.borrow().contains_key(&DictKey::from(value))
     }
-    pub fn __delete(&self, index: &Value) {
+    pub fn __delete(&self, index: Value) {
         self.0.borrow_mut().remove(&DictKey::from(index));
     }
 
-    pub fn __index_ref(&self, index: &Value) -> UnsafeRefMut<Value> {
+    pub fn __index_ref(&self, index: Value) -> UnsafeRefMut<Value> {
         let key = DictKey::from(index);
         self.0
             .borrow_mut()
@@ -36,7 +36,7 @@ impl Dict {
             .or_insert_with(|| UnsafeRefCell::rc(Default::default()))
             .borrow_mut()
     }
-    pub fn __index_value(&self, index: &Value) -> Value {
+    pub fn __index_value(&self, index: Value) -> Value {
         let key = DictKey::from(index);
         self.0
             .borrow_mut()
@@ -55,14 +55,14 @@ impl Dict {
             .collect::<Vec<Value>>();
         Value::from(list)
     }
-    pub fn setdefault(&self, key: &Value, value: &Value) {
+    pub fn setdefault(&self, key: Value, value: Value) {
         let key = DictKey::from(key);
         self.0
             .borrow_mut()
             .entry(key)
-            .or_insert_with(|| UnsafeRefCell::rc(value.clone()));
+            .or_insert_with(|| UnsafeRefCell::rc(value));
     }
-    pub fn add(&self, value: &Value) {
+    pub fn add(&self, value: Value) {
         let key = DictKey::from(value);
         self.0
             .borrow_mut()
@@ -81,7 +81,7 @@ impl From<Vec<(Value, Value)>> for Dict {
         let map = pairs
             .into_iter()
             .map(|(key, value)| {
-                let key = DictKey::from(&key);
+                let key = DictKey::from(key);
                 let value = UnsafeRefCell::rc(value);
                 (key, value)
             })
@@ -105,11 +105,11 @@ impl Into<Value> for DictKey {
     }
 }
 
-impl From<&Value> for DictKey {
-    fn from(value: &Value) -> Self {
+impl From<Value> for DictKey {
+    fn from(value: Value) -> Self {
         match value {
             Value::String(s) => Self::String(s.to_string()),
-            Value::Number(n) => Self::Number(*n),
+            Value::Number(n) => Self::Number(n),
             _ => unreachable!(),
         }
     }

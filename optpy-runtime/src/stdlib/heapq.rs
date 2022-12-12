@@ -1,21 +1,21 @@
 use crate::{cell::UnsafeRefCell, Value};
 
 #[allow(non_snake_case)]
-pub fn __heapq__heapify(x: &Value) {
+pub fn __heapq__heapify(x: Value) {
     match x {
         Value::List(list) => heapify(&mut *list.0.borrow_mut()),
         _ => todo!(),
     }
 }
 #[allow(non_snake_case)]
-pub fn __heapq__heappush(heap: &Value, item: &Value) {
+pub fn __heapq__heappush(heap: Value, item: Value) {
     match heap {
-        Value::List(list) => heap_push(&mut *list.0.borrow_mut(), UnsafeRefCell::rc(item.clone())),
+        Value::List(list) => heap_push(&mut *list.0.borrow_mut(), UnsafeRefCell::rc(item)),
         _ => todo!(),
     }
 }
 #[allow(non_snake_case)]
-pub fn __heapq__heappop(heap: &Value) -> Value {
+pub fn __heapq__heappop(heap: Value) -> Value {
     match heap {
         Value::List(list) => heap_pop(&mut *list.0.borrow_mut()).borrow().clone(),
         _ => todo!(),

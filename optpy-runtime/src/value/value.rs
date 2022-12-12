@@ -47,11 +47,11 @@ impl Default for Value {
 macro_rules! impl_binop {
     ($name:ident, $op:ident) => {
         impl Value {
-            pub fn $name(&self, rhs: &Value) -> Value {
+            pub fn $name(&self, rhs: Value) -> Value {
                 #[allow(unused_imports)]
                 use std::ops::*;
                 match (self, rhs) {
-                    (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs.$op(*rhs)),
+                    (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs.$op(rhs)),
                     _ => unreachable!(),
                 }
             }
@@ -65,10 +65,10 @@ impl_binop!(__div, div);
 impl_binop!(__pow, pow);
 
 impl Value {
-    pub fn __mul(&self, rhs: &Value) -> Value {
+    pub fn __mul(&self, rhs: Value) -> Value {
         match (self, rhs) {
             (Value::List(list), rhs) => list.__mul(rhs),
-            (Value::Number(a), Value::Number(b)) => Value::Number(*a * *b),
+            (Value::Number(a), Value::Number(b)) => Value::Number(*a * b),
             _ => todo!(),
         }
     }
@@ -77,8 +77,8 @@ impl Value {
 macro_rules! impl_compare {
     ($name:ident, $op:ident) => {
         impl Value {
-            pub fn $name(&self, rhs: &Value) -> Value {
-                Value::Boolean(self.$op(rhs))
+            pub fn $name(&self, rhs: Value) -> Value {
+                Value::Boolean(self.$op(&rhs))
             }
         }
     };
@@ -90,28 +90,28 @@ impl_compare!(__le, le);
 impl_compare!(__eq, eq);
 impl_compare!(__ne, ne);
 impl Value {
-    fn includes(&self, value: &Value) -> bool {
+    fn includes(&self, value: Value) -> bool {
         match self {
             Value::List(list) => list.includes(value),
             Value::Dict(map) => map.includes(value),
             _ => todo!(),
         }
     }
-    pub fn __in(&self, rhs: &Value) -> Value {
-        Value::Boolean(rhs.includes(self))
+    pub fn __in(&self, rhs: Value) -> Value {
+        Value::Boolean(rhs.includes(self.__shallow_copy()))
     }
-    pub fn __not_in(&self, rhs: &Value) -> Value {
-        Value::Boolean(!rhs.includes(self))
+    pub fn __not_in(&self, rhs: Value) -> Value {
+        Value::Boolean(!rhs.includes(self.__shallow_copy()))
     }
 
-    pub fn __bit_and(&self, rhs: &Value) -> Value {
+    pub fn __bit_and(&self, rhs: Value) -> Value {
         match (self, rhs) {
-            (Value::Boolean(a), Value::Boolean(b)) => Value::Boolean(*a && *b),
+            (Value::Boolean(a), Value::Boolean(b)) => Value::Boolean(*a && b),
             _ => todo!(),
         }
     }
 
-    pub fn __delete(&self, index: &Value) {
+    pub fn __delete(&self, index: Value) {
         match self {
             Value::List(list) => list.__delete(index),
             Value::Dict(dict) => dict.__delete(index),
@@ -134,14 +134,14 @@ impl Value {
         }
     }
 
-    pub fn __index_ref(&self, index: &Value) -> UnsafeRefMut<Value> {
+    pub fn __index_ref(&self, index: Value) -> UnsafeRefMut<Value> {
         match self {
             Value::List(list) => list.__index_ref(index),
             Value::Dict(dict) => dict.__index_ref(index),
             _ => todo!(),
         }
     }
-    pub fn __index_value(&self, index: &Value) -> Value {
+    pub fn __index_value(&self, index: Value) -> Value {
         match self {
             Value::List(list) => list.__index_value(index),
             Value::Dict(dict) => dict.__index_value(index),
@@ -156,8 +156,8 @@ impl Value {
         }
     }
 
-    pub fn assign(&mut self, value: &Value) {
-        *self = value.clone();
+    pub fn assign(&mut self, value: Value) {
+        *self = value;
     }
 
     pub fn reverse(&self) {
@@ -185,34 +185,34 @@ impl Value {
             _ => unreachable!(),
         }
     }
-    pub fn append(&self, value: &Value) {
+    pub fn append(&self, value: Value) {
         match self {
             Value::List(list) => list.append(value),
             Value::Deque(deque) => deque.append(value),
             _ => unreachable!(),
         }
     }
-    pub fn appendleft(&self, value: &Value) {
+    pub fn appendleft(&self, value: Value) {
         match self {
             Value::Deque(deque) => deque.appendleft(value),
             _ => unreachable!(),
         }
     }
 
-    pub fn setdefault(&self, key: &Value, value: &Value) {
+    pub fn setdefault(&self, key: Value, value: Value) {
         match self {
             Value::Dict(dict) => dict.setdefault(key, value),
             _ => todo!(),
         }
     }
-    pub fn add(&self, value: &Value) {
+    pub fn add(&self, value: Value) {
         match self {
             Value::Dict(dict) => dict.add(value),
             _ => unreachable!(),
         }
     }
 
-    pub fn __floor_div(&self, rhs: &Value) -> Value {
+    pub fn __floor_div(&self, rhs: Value) -> Value {
         match (self, rhs) {
             (Value::Number(lhs), Value::Number(rhs)) => Value::Number(lhs.floor_div(rhs)),
             _ => unreachable!(),
@@ -234,13 +234,13 @@ impl Value {
             _ => unreachable!(),
         }
     }
-    pub fn __left_shift(&self, value: &Value) -> Value {
+    pub fn __left_shift(&self, value: Value) -> Value {
         match (self, value) {
             (Value::Number(i), Value::Number(x)) => Value::Number(i.__left_shift(x)),
             _ => todo!(),
         }
     }
-    pub fn __right_shift(&self, value: &Value) -> Value {
+    pub fn __right_shift(&self, value: Value) -> Value {
         match (self, value) {
             (Value::Number(i), Value::Number(x)) => Value::Number(i.__right_shift(x)),
             _ => todo!(),
@@ -281,14 +281,14 @@ impl Value {
         }
     }
 
-    pub fn count(&self, value: &Value) -> Value {
+    pub fn count(&self, value: Value) -> Value {
         match self {
             Value::List(list) => list.count(value),
             Value::String(s) => s.count(value),
             _ => todo!(),
         }
     }
-    pub fn index(&self, value: &Value) -> Value {
+    pub fn index(&self, value: Value) -> Value {
         match self {
             Value::List(list) => list.index(value),
             _ => todo!(),
@@ -319,11 +319,6 @@ impl From<Vec<Value>> for Value {
 impl From<bool> for Value {
     fn from(b: bool) -> Self {
         Value::Boolean(b)
-    }
-}
-impl From<&Value> for Value {
-    fn from(v: &Value) -> Self {
-        v.__shallow_copy()
     }
 }
 impl ToString for Value {

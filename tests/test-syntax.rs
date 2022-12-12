@@ -12,10 +12,10 @@ def test(a, b):
         return "Odd"
     "#}
 
-    let result = test(&Value::from(3), &Value::from(4));
+    let result = test(Value::from(3), Value::from(4));
     assert_eq!(result, Value::from("Even"));
 
-    let result = test(&Value::from(3), &Value::from(5));
+    let result = test(Value::from(3), Value::from(5));
     assert_eq!(result, Value::from("Odd"));
 }
 
@@ -30,10 +30,10 @@ def test(a, b, c):
         return "OUT"
     "#}
 
-    let result = test(&Value::from(3), &Value::from(4), &Value::from(5));
+    let result = test(Value::from(3), Value::from(4), Value::from(5));
     assert_eq!(result, Value::from("IN"));
 
-    let result = test(&Value::from(3), &Value::from(5), &Value::from(4));
+    let result = test(Value::from(3), Value::from(5), Value::from(4));
     assert_eq!(result, Value::from("OUT"));
 }
 
@@ -45,7 +45,7 @@ def test(A):
     return A[0]
     "}
     assert_eq!(
-        test(&Value::from(vec![
+        test(Value::from(vec![
             Value::from(1),
             Value::from(2),
             Value::from(3)
@@ -74,14 +74,14 @@ def solve(N, A):
 "}
 
     let result = solve(
-        &Value::from(3),
-        &Value::from(vec![Value::from(8), Value::from(12), Value::from(40)]),
+        Value::from(3),
+        Value::from(vec![Value::from(8), Value::from(12), Value::from(40)]),
     );
     assert_eq!(result, Value::from(2));
 
     let result = solve(
-        &Value::from(4),
-        &Value::from(vec![
+        Value::from(4),
+        Value::from(vec![
             Value::from(5),
             Value::from(6),
             Value::from(8),
@@ -101,10 +101,10 @@ def test(N):
     return ans
     "#}
 
-    let result = test(&Value::from(5));
+    let result = test(Value::from(5));
     assert_eq!(result, Value::from(10));
 
-    let result = test(&Value::from(10));
+    let result = test(Value::from(10));
     assert_eq!(result, Value::from(45));
 }
 
@@ -120,11 +120,11 @@ def test(n):
     return n
     "#}
 
-    assert_eq!(test(&Value::from(0)), Value::from(1));
-    assert_eq!(test(&Value::from(1)), Value::from(1));
-    assert_eq!(test(&Value::from(2)), Value::from(2));
-    assert_eq!(test(&Value::from(3)), Value::from(3));
-    assert_eq!(test(&Value::from(4)), Value::from(5));
+    assert_eq!(test(Value::from(0)), Value::from(1));
+    assert_eq!(test(Value::from(1)), Value::from(1));
+    assert_eq!(test(Value::from(2)), Value::from(2));
+    assert_eq!(test(Value::from(3)), Value::from(3));
+    assert_eq!(test(Value::from(4)), Value::from(5));
 }
 
 #[test]
@@ -222,10 +222,10 @@ def test_short_circuit_evaluation(N):
     else:
         return eval
         "#};
-    let result = test_short_circuit_evaluation(&Value::from(0));
+    let result = test_short_circuit_evaluation(Value::from(0));
     assert_eq!(result, Value::from(vec![]));
 
-    let result = test_short_circuit_evaluation(&Value::from(1));
+    let result = test_short_circuit_evaluation(Value::from(1));
     assert_eq!(result, Value::from(vec![Value::from(1)]));
 }
 
@@ -287,7 +287,7 @@ def test(N, M):
     "#}
 
     assert_eq!(
-        test(&Value::from(3), &Value::from(2)),
+        test(Value::from(3), Value::from(2)),
         Value::from(vec![
             Value::from(vec![Value::from(0), Value::from(0)]),
             Value::from(vec![Value::from(0), Value::from(1)]),
@@ -371,8 +371,8 @@ fn test_set() {
 def test(b):
     a = {b}
     return 1 in a"}
-    assert_eq!(test(&Value::from("a")), Value::from(false));
-    assert_eq!(test(&Value::from(1)), Value::from(true));
+    assert_eq!(test(Value::from("a")), Value::from(false));
+    assert_eq!(test(Value::from(1)), Value::from(true));
 }
 
 #[test]

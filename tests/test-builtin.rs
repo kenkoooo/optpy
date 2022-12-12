@@ -44,7 +44,7 @@ def test(s):
 "}
 
     assert_eq!(
-        test(&Value::from("1 2")),
+        test(Value::from("1 2")),
         Value::from(vec![Value::from(1), Value::from(2)])
     );
 }
@@ -88,7 +88,7 @@ fn test_ops() {
 def test_ops(N, M):
     return [N + M, N * M, N - M, N / M, N // M]"
     };
-    let result = test_ops(&Value::from(4), &Value::from(2));
+    let result = test_ops(Value::from(4), Value::from(2));
     assert_eq!(
         result,
         Value::from(vec![
@@ -100,7 +100,7 @@ def test_ops(N, M):
         ])
     );
 
-    let result = test_ops(&Value::from(1), &Value::from(2));
+    let result = test_ops(Value::from(1), Value::from(2));
     assert_eq!(
         result,
         Value::from(vec![
@@ -121,7 +121,7 @@ def test(a):
     }
 
     assert_eq!(
-        test(&Value::from(4)),
+        test(Value::from(4)),
         Value::from(vec![Value::from(4), Value::from(-4)])
     )
 }
@@ -133,10 +133,10 @@ def test(a):
     return len(a)"
     }
 
-    assert_eq!(test(&Value::from("abcdef")), Value::from(6));
-    assert_eq!(test(&Value::from("あいうえお")), Value::from(5));
+    assert_eq!(test(Value::from("abcdef")), Value::from(6));
+    assert_eq!(test(Value::from("あいうえお")), Value::from(5));
     assert_eq!(
-        test(&Value::from(vec![Value::from(1), Value::from(2)])),
+        test(Value::from(vec![Value::from(1), Value::from(2)])),
         Value::from(2)
     );
 }
@@ -210,8 +210,8 @@ def test(key):
     a = {key: 10}
     return "a" in a"#};
 
-        assert_eq!(test(&Value::from("b")), Value::from(false));
-        assert_eq!(test(&Value::from("a")), Value::from(true));
+        assert_eq!(test(Value::from("b")), Value::from(false));
+        assert_eq!(test(Value::from("a")), Value::from(true));
     }
     {
         python_function! {r#"
@@ -219,8 +219,8 @@ def test(key):
     a = {key: 10}
     return "a" not in a"#};
 
-        assert_eq!(test(&Value::from("b")), Value::from(true));
-        assert_eq!(test(&Value::from("a")), Value::from(false));
+        assert_eq!(test(Value::from("b")), Value::from(true));
+        assert_eq!(test(Value::from("a")), Value::from(false));
     }
 }
 
@@ -232,11 +232,11 @@ def test(x, e, m):
     return pow(x, e, m)"#}
 
         assert_eq!(
-            test(&Value::from(2), &Value::from(3), &Value::from(10)),
+            test(Value::from(2), Value::from(3), Value::from(10)),
             Value::from(8)
         );
         assert_eq!(
-            test(&Value::from(2), &Value::from(4), &Value::from(10)),
+            test(Value::from(2), Value::from(4), Value::from(10)),
             Value::from(6)
         );
     }
@@ -246,8 +246,8 @@ def test(x, e, m):
 def test(x, e):
     return x ** e"#}
 
-        assert_eq!(test(&Value::from(2), &Value::from(3)), Value::from(8));
-        assert_eq!(test(&Value::from(2), &Value::from(4)), Value::from(16));
+        assert_eq!(test(Value::from(2), Value::from(3)), Value::from(8));
+        assert_eq!(test(Value::from(2), Value::from(4)), Value::from(16));
     }
 }
 
@@ -314,7 +314,7 @@ def test(a):
     a = set(a)
     return 1 in a"}
         assert_eq!(
-            test(&Value::from(vec![
+            test(Value::from(vec![
                 Value::from(1),
                 Value::from(2),
                 Value::from(3)
@@ -337,7 +337,7 @@ fn test_strip() {
     python_function! {r"
 def test(a):
     return a.strip()"}
-    assert_eq!(test(&Value::from("   aaa   ")), Value::from("aaa"));
+    assert_eq!(test(Value::from("   aaa   ")), Value::from("aaa"));
 }
 
 #[test]
@@ -354,9 +354,9 @@ fn test_str() {
     python_function! {r"
 def test(a):
     return str(a)"}
-    assert_eq!(test(&Value::from(1)), Value::from("1"));
-    assert_eq!(test(&Value::from(0.5)), Value::from("0.5"));
-    assert_eq!(test(&Value::from("string")), Value::from("string"));
+    assert_eq!(test(Value::from(1)), Value::from("1"));
+    assert_eq!(test(Value::from(0.5)), Value::from("0.5"));
+    assert_eq!(test(Value::from("string")), Value::from("string"));
 }
 
 #[test]
@@ -366,11 +366,11 @@ def test(a, b):
     a &= b
     return a"}
     assert_eq!(
-        test(&Value::from(true), &Value::from(false)),
+        test(Value::from(true), Value::from(false)),
         Value::from(false)
     );
     assert_eq!(
-        test(&Value::from(true), &Value::from(true)),
+        test(Value::from(true), Value::from(true)),
         Value::from(true)
     );
 }
@@ -380,8 +380,8 @@ fn test_unary_not() {
     python_function! {r"
 def test(a):
     return not a"}
-    assert_eq!(test(&Value::from(true)), Value::from(false));
-    assert_eq!(test(&Value::from(false)), Value::from(true));
+    assert_eq!(test(Value::from(true)), Value::from(false));
+    assert_eq!(test(Value::from(false)), Value::from(true));
 }
 
 #[test]
@@ -391,11 +391,11 @@ def test(s):
     return any(si in [1, 2, 3] for si in s)"}
 
     assert_eq!(
-        test(&Value::from(vec![Value::from(1), Value::from(4)])),
+        test(Value::from(vec![Value::from(1), Value::from(4)])),
         Value::from(true)
     );
     assert_eq!(
-        test(&Value::from(vec![Value::from(5), Value::from(4)])),
+        test(Value::from(vec![Value::from(5), Value::from(4)])),
         Value::from(false)
     );
 }
@@ -407,11 +407,11 @@ def test(s):
     return all(si in [1, 2, 3] for si in s)"}
 
     assert_eq!(
-        test(&Value::from(vec![Value::from(1), Value::from(3)])),
+        test(Value::from(vec![Value::from(1), Value::from(3)])),
         Value::from(true)
     );
     assert_eq!(
-        test(&Value::from(vec![Value::from(1), Value::from(4)])),
+        test(Value::from(vec![Value::from(1), Value::from(4)])),
         Value::from(false)
     );
 }
@@ -422,17 +422,17 @@ fn test_count() {
 def test(s, t):
     return s.count(t)"}
     assert_eq!(
-        test(&Value::from("abcdabc"), &Value::from("abc")),
+        test(Value::from("abcdabc"), Value::from("abc")),
         Value::from(2)
     );
     assert_eq!(
-        test(&Value::from("abcdabc"), &Value::from("abcd")),
+        test(Value::from("abcdabc"), Value::from("abcd")),
         Value::from(1)
     );
     assert_eq!(
         test(
-            &Value::from(vec![Value::from(1), Value::from(2), Value::from(2)]),
-            &Value::from(2)
+            Value::from(vec![Value::from(1), Value::from(2), Value::from(2)]),
+            Value::from(2)
         ),
         Value::from(2)
     );
@@ -445,7 +445,7 @@ fn test_min_max() {
 def test(a, b):
     return [min(a,b), max(a,b)]"}
         assert_eq!(
-            test(&Value::from(1), &Value::from(2)),
+            test(Value::from(1), Value::from(2)),
             Value::from(vec![Value::from(1), Value::from(2)])
         );
     }
@@ -454,7 +454,7 @@ def test(a, b):
 def test(a, b, c):
     return [min(a,b,c), max(a,b,c)]"}
         assert_eq!(
-            test(&Value::from(1), &Value::from(3), &Value::from(2)),
+            test(Value::from(1), Value::from(3), Value::from(2)),
             Value::from(vec![Value::from(1), Value::from(3)])
         );
     }
@@ -463,7 +463,7 @@ def test(a, b, c):
 def test(arr):
     return [min(arr), max(arr)]"}
         assert_eq!(
-            test(&Value::from(vec![
+            test(Value::from(vec![
                 Value::from(1),
                 Value::from(3),
                 Value::from(2)
@@ -590,9 +590,9 @@ fn test_abs() {
     python_function! {r"
 def test(a):
     return abs(a)"}
-    assert_eq!(test(&Value::from(1)), Value::from(1));
-    assert_eq!(test(&Value::from(-1)), Value::from(1));
-    assert_eq!(test(&Value::from(1.5)), Value::from(1.5));
+    assert_eq!(test(Value::from(1)), Value::from(1));
+    assert_eq!(test(Value::from(-1)), Value::from(1));
+    assert_eq!(test(Value::from(1.5)), Value::from(1.5));
 }
 
 #[test]
@@ -644,14 +644,11 @@ def test(x):
         return "NO"
 "#}
 
-    assert_eq!(test(&Value::from("")), Value::from("NO"));
-    assert_eq!(test(&Value::from("s")), Value::from("OK"));
+    assert_eq!(test(Value::from("")), Value::from("NO"));
+    assert_eq!(test(Value::from("s")), Value::from("OK"));
 
-    assert_eq!(test(&Value::from(vec![])), Value::from("NO"));
-    assert_eq!(
-        test(&Value::from(vec![Value::from("a")])),
-        Value::from("OK")
-    );
+    assert_eq!(test(Value::from(vec![])), Value::from("NO"));
+    assert_eq!(test(Value::from(vec![Value::from("a")])), Value::from("OK"));
 }
 
 #[test]
@@ -685,8 +682,8 @@ def test(a, b):
     return a < b"}
     assert_eq!(
         test(
-            &Value::from(vec![Value::from(1), Value::from(3)]),
-            &Value::from(vec![Value::from(2), Value::from(1)])
+            Value::from(vec![Value::from(1), Value::from(3)]),
+            Value::from(vec![Value::from(2), Value::from(1)])
         ),
         Value::from(true)
     )
