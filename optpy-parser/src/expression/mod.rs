@@ -171,7 +171,10 @@ impl RawExpr {
                     op,
                 })
             }
-            ExprKind::GeneratorExp { elt, generators } => list_comprehension(elt, generators),
+            ExprKind::GeneratorExp { elt, generators } => Self::CallFunction(CallFunction {
+                name: "iter".into(),
+                args: vec![list_comprehension(elt, generators)],
+            }),
             expr => todo!("unsupported expression: {:?}", expr),
         }
     }

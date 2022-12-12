@@ -11,13 +11,9 @@ pub fn input() -> Value {
 pub fn map_int(value: &Value) -> Value {
     match value {
         Value::List(list) => {
-            let list = list
-                .0
-                .borrow()
-                .iter()
-                .map(|v| int(&v.borrow()))
-                .collect::<Vec<_>>();
-            Value::from(list)
+            let list = list.0.borrow().clone();
+            let iter = list.into_iter().map(|v| int(&v.borrow()));
+            Value::Iter(Iter::new(Box::new(iter)))
         }
         _ => unreachable!(),
     }
@@ -142,12 +138,14 @@ pub fn len(value: &Value) -> Value {
 pub fn any(value: &Value) -> Value {
     match value {
         Value::List(list) => Value::Boolean(list.0.borrow().iter().any(|v| v.borrow().test())),
+        Value::Iter(iter) => Value::Boolean(iter.0.borrow_mut().any(|v| v.test())),
         _ => todo!(),
     }
 }
 pub fn all(value: &Value) -> Value {
     match value {
         Value::List(list) => Value::Boolean(list.0.borrow().iter().all(|v| v.borrow().test())),
+        Value::Iter(iter) => Value::Boolean(iter.0.borrow_mut().all(|v| v.test())),
         _ => todo!(),
     }
 }
@@ -183,17 +181,32 @@ pub fn enumerate(iter: &Value) -> Value {
         iter => enumerate(&list(iter)),
     }
 }
-pub fn next(iter: &Value) -> Value {
+pub fn __next1(iter: &Value) -> Value {
     match iter {
+        Value::Iter(iter) => iter.__next().expect("stop iteration"),
         Value::List(list) => {
             let head = list.0.borrow_mut().remove(0);
             head.borrow().clone()
         }
-        Value::Iter(iter) => iter.__next(),
+        _ => todo!("{:?}", iter),
+    }
+}
+pub fn __next2(iter: &Value, default: &Value) -> Value {
+    match iter {
+        Value::Iter(iter) => match iter.__next() {
+            Some(value) => value,
+            None => default.clone(),
+        },
         _ => todo!(),
     }
 }
-
+pub fn iter(iter: &Value) -> Value {
+    match iter {
+        Value::List(list) => list.__iter(),
+        Value::Iter(_) => iter.clone(),
+        _ => todo!(),
+    }
+}
 pub fn __pow3(number: &Value, power: &Value, modulus: &Value) -> Value {
     let int = |n: &Value| match n.__number() {
         Number::Int64(i) => i,
@@ -321,5 +334,15 @@ macro_rules! sum {
     };
     ($a:expr, $($arg:expr),+) => {
         __sum2($a, &sum!($($arg),+))
+    };
+}
+
+#[macro_export]
+macro_rules! next {
+    ($e:expr) => {
+        __next1($e)
+    };
+    ($a:expr, $b:expr) => {
+        __next2($a, $b)
     };
 }

@@ -251,7 +251,7 @@ impl Value {
             Value::List(list) => list.__len(),
             Value::Dict(dict) => dict.__len(),
             Value::String(s) => s.__len(),
-            _ => unreachable!(),
+            _ => unreachable!("{:?}", self),
         }
     }
     pub fn sort(&self) {

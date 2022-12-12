@@ -48,9 +48,9 @@ print(a)
 
         let expected = r"
 __tmp_for_tuple = input().split()
-a = __tmp_for_tuple[0]
-b = __tmp_for_tuple[1]
-c = __tmp_for_tuple[2]
+a = next(__tmp_for_tuple)
+b = next(__tmp_for_tuple)
+c = next(__tmp_for_tuple)
 print(a)";
         assert_eq!(parse(code).unwrap(), parse(expected).unwrap());
     }

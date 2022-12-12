@@ -39,7 +39,7 @@ def test2():
 fn test_map_int() {
     python_function! {r"
 def test(s):
-    a = map(int, s.split())
+    a = list(map(int, s.split()))
     return a
 "}
 

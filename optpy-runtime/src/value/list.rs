@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::{
     cell::{UnsafeRefCell, UnsafeRefMut},
     number::Number,
-    Value,
+    Iter, Value,
 };
 
 #[derive(Debug, Clone)]
@@ -119,6 +119,11 @@ impl List {
     }
     pub fn test(&self) -> bool {
         self.0.borrow().len() > 0
+    }
+    pub fn __iter(&self) -> Value {
+        let v = self.0.borrow().clone();
+        let iter = v.into_iter().map(|v| v.borrow().clone());
+        Value::Iter(Iter::new(Box::new(iter)))
     }
 }
 
