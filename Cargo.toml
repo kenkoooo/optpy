@@ -7,7 +7,7 @@ publish = false
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
 anyhow = { version = "1.0", features = ["backtrace"] }
-env_logger = "0.9"
+env_logger = "0.10"
 log = "0.4"
 
 optpy-parser = { path = "./optpy-parser" }
@@ -15,6 +15,7 @@ optpy-resolver = { path = "./optpy-resolver" }
 optpy-generator = { path = "./optpy-generator" }
 optpy-runtime = { path = "./optpy-runtime" }
 optpy-dump = { path = "./optpy-dump" }
+optpy-type-solver = { path = "./optpy-type-solver" }
 
 [dev-dependencies]
 optpy-test-macro = { path = "./optpy-test-macro" }
@@ -27,5 +28,6 @@ members = [
     "optpy-generator",
     "optpy-test-macro",
     "optpy-dump",
+    "optpy-type-solver",
     "tools/source-code-downloader",
 ]
