@@ -1,6 +1,6 @@
 use std::{io::stdin, rc::Rc};
 
-use crate::{number::Number, value::Value, ImmutableString};
+use crate::{number::Number, value::Value, ImmutableString, Iter};
 
 pub fn input() -> Value {
     let mut buf = String::new();
@@ -55,6 +55,7 @@ pub fn list(value: &Value) -> Value {
                 .collect::<Vec<_>>();
             Value::from(vec)
         }
+        Value::Iter(iter) => iter.__list(),
         _ => todo!(),
     }
 }
@@ -69,10 +70,8 @@ pub fn __range1(value: &Value) -> Value {
 pub fn __range2(start: &Value, stop: &Value) -> Value {
     match (start, stop) {
         (Value::Number(Number::Int64(start)), Value::Number(Number::Int64(stop))) => {
-            let list = (*start..*stop)
-                .map(|i| Value::Number(Number::Int64(i)))
-                .collect::<Vec<_>>();
-            Value::from(list)
+            let iter = (*start..*stop).map(|i| Value::Number(Number::Int64(i)));
+            Value::Iter(Iter::new(Box::new(iter)))
         }
         _ => unreachable!(),
     }
@@ -190,6 +189,7 @@ pub fn next(iter: &Value) -> Value {
             let head = list.0.borrow_mut().remove(0);
             head.borrow().clone()
         }
+        Value::Iter(iter) => iter.__next(),
         _ => todo!(),
     }
 }
