@@ -10,7 +10,7 @@ fn value_clone(c: &mut Criterion) {
             }
         })
     });
-    c.bench_function("clone raw number", |b| {
+    c.bench_function("clone raw list", |b| {
         b.iter(|| {
             let x = Value::from(vec![]);
             let x = match x {
