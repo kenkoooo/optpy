@@ -314,9 +314,9 @@ mod tests {
         let resolved = resolve_names(&ast);
 
         let expected = r"
-            |__v0 = map(int, input().split())
-            |__v1 = __v0[0]
-            |__v2 = __v0[1]
+            |__v0 = iter(map(int, input().split()))
+            |__v1 = next(__v0)
+            |__v2 = next(__v0)
             |print(__v1)"
             .strip_margin();
         assert_eq!(resolved, parse(expected).unwrap());
@@ -336,9 +336,9 @@ mod tests {
         let resolved = resolve_names(&ast);
 
         let expected = r"
-            |__v0 = map(int, input().split())
-            |__v1 = __v0[0]
-            |__v2 = __v0[1]
+            |__v0 = iter(map(int, input().split()))
+            |__v1 = next(__v0)
+            |__v2 = next(__v0)
             |def __f0(__v3):
             |    return __v3 + __v2
             |__v4 = __f0(__v1)
@@ -359,9 +359,9 @@ mod tests {
         .strip_margin();
 
         let expected = r"
-            |__v0 = map(int, input().split())
-            |__v1 = __v0[0]
-            |__v2 = __v0[1]
+            |__v0 = iter(map(int, input().split()))
+            |__v1 = next(__v0)
+            |__v2 = next(__v0)
             |__v3 = __v1 + __v2
             |def __f0(__v4):
             |    def __f1(__v5):
@@ -390,9 +390,9 @@ mod tests {
         .strip_margin();
 
         let expected = r"
-            |__v0 = map(int, input().split())
-            |__v1 = __v0[0]
-            |__v2 = __v0[1]
+            |__v0 = iter(map(int, input().split()))
+            |__v1 = next(__v0)
+            |__v2 = next(__v0)
             |__v3 = __v1 + __v2
             |def __f0(__v4):
             |    def __f1(__v5):

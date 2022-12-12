@@ -3,7 +3,7 @@ use std::{fmt::Debug, rc::Rc};
 use crate::{cell::UnsafeRefCell, List, Value};
 
 #[derive(Clone)]
-pub struct Iter(Rc<UnsafeRefCell<Box<dyn Iterator<Item = Value>>>>);
+pub struct Iter(pub Rc<UnsafeRefCell<Box<dyn Iterator<Item = Value>>>>);
 
 impl Debug for Iter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -18,8 +18,8 @@ impl Iter {
     pub fn test(&self) -> bool {
         true
     }
-    pub fn __next(&self) -> Value {
-        self.0.borrow_mut().next().expect("stop iteration")
+    pub fn __next(&self) -> Option<Value> {
+        self.0.borrow_mut().next()
     }
     pub fn __list(&self) -> Value {
         let mut list = vec![];

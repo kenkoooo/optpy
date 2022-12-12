@@ -1,4 +1,4 @@
-use crate::{statement::Assign, Expr, Func, If, Index, Number, Statement, While};
+use crate::{statement::Assign, CallFunction, Expr, Func, If, Statement, While};
 
 pub(crate) fn simplify_tuple_assignments(stmts: Vec<Statement>) -> Vec<Statement> {
     stmts.into_iter().flat_map(simplify_stmt).collect()
@@ -11,14 +11,17 @@ fn simplify_stmt(stmt: Statement) -> Vec<Statement> {
                 let tmp_target = Expr::VariableName("__tmp_for_tuple".into());
                 let mut result = vec![Statement::Assign(Assign {
                     target: tmp_target.clone(),
-                    value,
+                    value: Expr::CallFunction(CallFunction {
+                        name: "iter".into(),
+                        args: vec![value],
+                    }),
                 })];
-                for (i, target) in targets.into_iter().enumerate() {
+                for target in targets.into_iter() {
                     result.push(Statement::Assign(Assign {
                         target,
-                        value: Expr::Index(Index {
-                            value: Box::new(tmp_target.clone()),
-                            index: Box::new(Expr::ConstantNumber(Number::Int(i.to_string()))),
+                        value: Expr::CallFunction(CallFunction {
+                            name: "next".into(),
+                            args: vec![tmp_target.clone()],
                         }),
                     }))
                 }

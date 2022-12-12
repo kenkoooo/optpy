@@ -1,7 +1,7 @@
 use crate::{
     statement::{Assign, FromImport, RawStmt},
-    unixtime_nano, CallFunction, CallMethod, Compare, CompareOperator, Expr, For, Func, If, Import,
-    Number, Statement, While,
+    unixtime_nano, CallFunction, Compare, CompareOperator, Expr, For, Func, If, Import, Statement,
+    While,
 };
 
 pub(crate) fn simplify_for_loops(stmts: Vec<RawStmt<Expr>>) -> Vec<Statement> {
@@ -31,40 +31,44 @@ fn simplify_statement(stmt: RawStmt<Expr>) -> Vec<Statement> {
         RawStmt::Break => vec![Statement::Break],
         RawStmt::Continue => vec![Statement::Continue],
         RawStmt::For(For { target, iter, body }) => {
-            let tmp_target = Expr::VariableName(format!("__tmp_for_loop_iter_{}", unixtime_nano()));
+            let tmp_iter = Expr::VariableName(format!("__tmp_for_loop_iter_{}", unixtime_nano()));
+            let tmp_target =
+                Expr::VariableName(format!("__tmp_for_loop_target_{}", unixtime_nano()));
 
-            let mut while_body = vec![Statement::Assign(Assign {
-                target,
-                value: Expr::CallMethod(CallMethod {
-                    value: Box::new(tmp_target.clone()),
-                    name: "pop".into(),
-                    args: vec![],
+            let mut while_body = vec![
+                Statement::Assign(Assign {
+                    target: tmp_target.clone(),
+                    value: Expr::CallFunction(CallFunction {
+                        name: "next".into(),
+                        args: vec![tmp_iter.clone(), Expr::None],
+                    }),
                 }),
-            })];
+                Statement::If(If {
+                    test: Expr::Compare(Compare {
+                        left: Box::new(tmp_target.clone()),
+                        right: Box::new(Expr::None),
+                        op: CompareOperator::Equal,
+                    }),
+                    body: vec![Statement::Break],
+                    orelse: vec![],
+                }),
+                Statement::Assign(Assign {
+                    target,
+                    value: tmp_target,
+                }),
+            ];
             while_body.extend(simplify_for_loops(body));
 
             vec![
                 Statement::Assign(Assign {
-                    target: tmp_target.clone(),
+                    target: tmp_iter.clone(),
                     value: Expr::CallFunction(CallFunction {
-                        name: "list".into(),
+                        name: "iter".into(),
                         args: vec![iter],
                     }),
                 }),
-                Statement::Expression(Expr::CallMethod(CallMethod {
-                    value: Box::new(tmp_target.clone()),
-                    name: "reverse".into(),
-                    args: vec![],
-                })),
                 Statement::While(While {
-                    test: Expr::Compare(Compare {
-                        left: Box::new(Expr::CallFunction(CallFunction {
-                            name: "len".into(),
-                            args: vec![tmp_target.clone()],
-                        })),
-                        op: CompareOperator::Greater,
-                        right: Box::new(Expr::ConstantNumber(Number::Int("0".into()))),
-                    }),
+                    test: Expr::ConstantBoolean(true),
                     body: while_body,
                 }),
             ]

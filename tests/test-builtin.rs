@@ -39,7 +39,7 @@ def test2():
 fn test_map_int() {
     python_function! {r"
 def test(s):
-    a = map(int, s.split())
+    a = list(map(int, s.split()))
     return a
 "}
 
@@ -690,4 +690,16 @@ def test(a, b):
         ),
         Value::from(true)
     )
+}
+
+#[test]
+fn test_iter() {
+    python_function! {r"
+def test():
+    a = [[]]
+    a[0].append([1, 2, 3, 4])
+    a[0].append([1, 2, 3, 4])
+    for i in range(len(a[0])):
+        x, y, z, w = a[0][i]"}
+    test();
 }
