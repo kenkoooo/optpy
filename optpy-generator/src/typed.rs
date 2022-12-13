@@ -1,6 +1,3 @@
-mod typed;
-pub use typed::generate_typed_code;
-
 use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{
@@ -11,7 +8,7 @@ use optpy_parser::{
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
 
-pub fn generate_code(
+pub fn generate_typed_code(
     statements: &[Statement],
     definitions: &BTreeMap<String, BTreeSet<String>>,
 ) -> TokenStream {
@@ -33,7 +30,7 @@ pub fn generate_function_body(
         for variable in definitions {
             let variable = format_ident!("{}", variable);
             result.append_all(quote! {
-                let mut #variable = Value::None;
+                let mut #variable = Default::default();
             });
         }
     }
@@ -49,13 +46,22 @@ fn format_statement(
     definitions: &BTreeMap<String, BTreeSet<String>>,
 ) -> TokenStream {
     match statement {
-        Statement::Assign(Assign { target, value }) => {
-            let target = format_expr(target, true);
-            let value = format_expr(value, false);
-            quote! {
-                #target.assign(& #value);
+        Statement::Assign(Assign { target, value }) => match target {
+            Expr::VariableName(name) => {
+                let target = format_ident!("{}", name);
+                let value = format_expr(value, false);
+                quote! {
+                    #target = #value;
+                }
             }
-        }
+            target => {
+                let target = format_expr(target, true);
+                let value = format_expr(value, false);
+                quote! {
+                    #target.assign(#value . __shallow_copy());
+                }
+            }
+        },
         Statement::Expression(expr) => {
             let value = format_expr(expr, false);
             quote! {
@@ -88,23 +94,22 @@ fn format_statement(
             let body = generate_function_body(body, name, definitions);
             let name = format_ident!("{}", name);
             quote! {
-                fn #name( #(#args: &Value),*  ) -> Value {
-                    #(let mut #args = #args.__shallow_copy();)*
+                let #name = |#(mut #args),*| {
                     #body
-                    return Value::None;
-                }
+                    return Default::default();
+                };
             }
         }
         Statement::Return(value) => match value {
             Some(value) => {
                 let value = format_expr(value, false);
                 quote! {
-                    return Value::from(#value);
+                    return #value . __shallow_copy();
                 }
             }
             None => {
                 quote! {
-                    return Value::None;
+                    return Default::default();
                 }
             }
         },
@@ -131,14 +136,14 @@ fn format_expr(expr: &Expr, assign_lhs: bool) -> TokenStream {
         Expr::CallFunction(CallFunction { name, args }) => {
             let args = format_exprs(args);
             if let Some(macro_name) = name.strip_suffix("__macro__") {
-                let name = format_ident!("{}", macro_name);
+                let name = format_ident!("typed_{}", macro_name);
                 quote! {
-                    #name !( #(&#args),* )
+                    #name !( #(#args . __shallow_copy()),* )
                 }
             } else {
                 let name = format_ident!("{}", name);
                 quote! {
-                    #name ( #(&#args),* )
+                    #name ( #(#args . __shallow_copy()),* )
                 }
             }
         }
@@ -147,13 +152,13 @@ fn format_expr(expr: &Expr, assign_lhs: bool) -> TokenStream {
             let name = format_ident!("{}", name);
             let args = format_exprs(args);
             quote! {
-                #value . #name ( #(&#args),* )
+                #value . #name ( #(#args . __shallow_copy()),* )
             }
         }
         Expr::Tuple(values) => {
             let list = format_exprs(values);
             quote! {
-               Value::from(vec![ #(Value::from(&#list)),* ])
+               TypedList::from(vec![ #(#list . __shallow_copy()),* ])
             }
         }
         Expr::VariableName(name) => {
@@ -173,24 +178,24 @@ fn format_expr(expr: &Expr, assign_lhs: bool) -> TokenStream {
                 }
                 result.append_all(quote! { #condition .test() });
             }
-            quote! { Value::from(#result) }
+            quote! { Bool::from(#result) }
         }
         Expr::Compare(Compare { left, right, op }) => {
             let left = format_expr(left, false);
             let right = format_expr(right, false);
             let op = format_compare_ident(op);
-            quote! { #left . #op (&#right) }
+            quote! { #left . #op (#right . __shallow_copy()) }
         }
         Expr::BinaryOperation(BinaryOperation { left, right, op }) => {
             let left = format_expr(left, false);
             let right = format_expr(right, false);
             let op = format_binary_ident(op);
-            quote! { #left . #op (&#right) }
+            quote! { #left . #op (#right . __shallow_copy()) }
         }
         Expr::ConstantNumber(number) => format_number(number),
         Expr::None => {
             quote! {
-                Value::None
+                Value::none()
             }
         }
         Expr::Index(Index { value, index }) => {
@@ -198,18 +203,18 @@ fn format_expr(expr: &Expr, assign_lhs: bool) -> TokenStream {
             let index = format_expr(index, false);
             if assign_lhs {
                 quote! {
-                    #value .__index_ref(& #index )
+                    #value .__index_ref( #index . __shallow_copy())
                 }
             } else {
                 quote! {
-                    #value .__index_value(& #index )
+                    #value .__index_value( #index . __shallow_copy())
                 }
             }
         }
         Expr::List(list) => {
             let list = format_exprs(list);
             quote! {
-                Value::from(vec![#(Value::from(&#list)),*])
+                TypedList::from(vec![#(#list . __shallow_copy()),*])
             }
         }
         Expr::Dict(Dict { pairs }) => {
@@ -235,11 +240,11 @@ fn format_expr(expr: &Expr, assign_lhs: bool) -> TokenStream {
         Expr::ConstantBoolean(b) => {
             if *b {
                 quote! {
-                    Value::from(true)
+                    Bool::from(true)
                 }
             } else {
                 quote! {
-                    Value::from(false)
+                    Bool::from(false)
                 }
             }
         }
@@ -302,7 +307,7 @@ fn format_number(number: &Number) -> TokenStream {
         Number::Int(int) => match int.parse::<i64>() {
             Ok(int) => {
                 quote! {
-                    Value::from(#int)
+                    Number::from(#int)
                 }
             }
             Err(_) => {
@@ -312,7 +317,7 @@ fn format_number(number: &Number) -> TokenStream {
         Number::Float(float) => match float.parse::<f64>() {
             Ok(float) => {
                 quote! {
-                    Value::from(#float)
+                    Number::from(#float)
                 }
             }
             Err(e) => {
