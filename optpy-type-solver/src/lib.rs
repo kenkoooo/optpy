@@ -43,6 +43,10 @@ pub fn resolve_types(statements: &[Statement]) {
         }
         eprintln!();
     }
+
+    for (var, t) in fixed {
+        eprintln!("{} = {:?}", var.0, t);
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -106,6 +110,7 @@ impl Type {
                             map_params(arg, param, &mut param_map);
                         }
                         resolve_param(result, &param_map)
+                            .unwrap_or_else(|| Type::Apply(f.clone(), args))
                     }
                     _ => Type::Apply(f.clone(), args),
                 }
@@ -114,19 +119,19 @@ impl Type {
     }
 }
 
-fn resolve_param(result: &Type, map: &BTreeMap<usize, Type>) -> Type {
+fn resolve_param(result: &Type, map: &BTreeMap<usize, Type>) -> Option<Type> {
     match result {
-        Type::Param(p) => match map.get(p) {
-            Some(t) => t.clone(),
-            None => result.clone(),
-        },
+        Type::Param(p) => {
+            let t = map.get(p)?;
+            Some(t.clone())
+        }
         Type::Typing(_) => unreachable!("param is var"),
         Type::Apply(_, _) => unreachable!("param is apply"),
-        Type::Number | Type::String | Type::Bool | Type::None => result.clone(),
+        Type::Number | Type::String | Type::Bool | Type::None => Some(result.clone()),
         Type::Map(k, v) => {
-            let k = resolve_param(k, map);
-            let v = resolve_param(v, map);
-            Type::map(k, v)
+            let k = resolve_param(k, map)?;
+            let v = resolve_param(v, map)?;
+            Some(Type::map(k, v))
         }
         Type::Fun(_, _) => todo!(),
     }
@@ -134,7 +139,7 @@ fn resolve_param(result: &Type, map: &BTreeMap<usize, Type>) -> Type {
 
 fn map_params(arg: &Type, param: &Type, map: &mut BTreeMap<usize, Type>) {
     match (arg, param) {
-        (Type::Param(_), _) => unreachable!("arg is param"),
+        (Type::Param(_), _) => unreachable!("arg is param arg={:?}", arg),
         (_, Type::Typing(_)) => unreachable!("param is var"),
         (_, Type::Apply(_, _)) => unreachable!("param is apply"),
         (arg, Type::Param(p)) => {
@@ -177,6 +182,53 @@ impl Default for Resolver {
                 vec![Type::Number],
                 Type::map(Type::Number, Type::Number),
             ));
+        definitions
+            .entry(Var("range__macro___2".into()))
+            .or_insert_with(BTreeSet::new)
+            .insert(Type::fun(
+                vec![Type::Number, Type::Number],
+                Type::map(Type::Number, Type::Number),
+            ));
+        definitions
+            .entry(Var("next__macro___1".into()))
+            .or_insert_with(BTreeSet::new)
+            .insert(Type::fun(
+                vec![Type::map(Type::Number, Type::Param(0))],
+                Type::Param(0),
+            ));
+        definitions
+            .entry(Var("__has_next_1".into()))
+            .or_insert_with(BTreeSet::new)
+            .insert(Type::fun(
+                vec![Type::map(Type::Number, Type::Param(0))],
+                Type::Bool,
+            ));
+        definitions
+            .entry(Var("len_1".into()))
+            .or_insert_with(BTreeSet::new)
+            .insert(Type::fun(vec![Type::Param(0)], Type::Number));
+        definitions
+            .entry(Var("input_0".into()))
+            .or_insert_with(BTreeSet::new)
+            .insert(Type::fun(vec![], Type::String));
+        definitions
+            .entry(Var("__method__split_1".into()))
+            .or_insert_with(BTreeSet::new)
+            .insert(Type::fun(
+                vec![Type::String],
+                Type::map(Type::Number, Type::String),
+            ));
+        definitions
+            .entry(Var("map_int_1".into()))
+            .or_insert_with(BTreeSet::new)
+            .insert(Type::fun(
+                vec![Type::map(Type::Number, Type::Param(0))],
+                Type::map(Type::Number, Type::Number),
+            ));
+        definitions
+            .entry(Var("list_1".into()))
+            .or_insert_with(BTreeSet::new)
+            .insert(Type::fun(vec![Type::Param(0)], Type::Param(0)));
         Self {
             tmp_counter: 0,
             definitions,
