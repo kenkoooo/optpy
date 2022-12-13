@@ -1,7 +1,6 @@
 use crate::{
     statement::{Assign, FromImport, RawStmt},
-    unixtime_nano, CallFunction, Compare, CompareOperator, Expr, For, Func, If, Import, Statement,
-    While,
+    unixtime_nano, CallFunction, Expr, For, Func, If, Import, Statement, While,
 };
 
 pub(crate) fn simplify_for_loops(stmts: Vec<RawStmt<Expr>>) -> Vec<Statement> {
@@ -32,31 +31,14 @@ fn simplify_statement(stmt: RawStmt<Expr>) -> Vec<Statement> {
         RawStmt::Continue => vec![Statement::Continue],
         RawStmt::For(For { target, iter, body }) => {
             let tmp_iter = Expr::VariableName(format!("__tmp_for_loop_iter_{}", unixtime_nano()));
-            let tmp_target =
-                Expr::VariableName(format!("__tmp_for_loop_target_{}", unixtime_nano()));
 
-            let mut while_body = vec![
-                Statement::Assign(Assign {
-                    target: tmp_target.clone(),
-                    value: Expr::CallFunction(CallFunction {
-                        name: "next".into(),
-                        args: vec![tmp_iter.clone(), Expr::None],
-                    }),
+            let mut while_body = vec![Statement::Assign(Assign {
+                target,
+                value: Expr::CallFunction(CallFunction {
+                    name: "next".into(),
+                    args: vec![tmp_iter.clone()],
                 }),
-                Statement::If(If {
-                    test: Expr::Compare(Compare {
-                        left: Box::new(tmp_target.clone()),
-                        right: Box::new(Expr::None),
-                        op: CompareOperator::Equal,
-                    }),
-                    body: vec![Statement::Break],
-                    orelse: vec![],
-                }),
-                Statement::Assign(Assign {
-                    target,
-                    value: tmp_target,
-                }),
-            ];
+            })];
             while_body.extend(simplify_for_loops(body));
 
             vec![
@@ -68,7 +50,10 @@ fn simplify_statement(stmt: RawStmt<Expr>) -> Vec<Statement> {
                     }),
                 }),
                 Statement::While(While {
-                    test: Expr::ConstantBoolean(true),
+                    test: Expr::CallFunction(CallFunction {
+                        name: "__has_next".into(),
+                        args: vec![tmp_iter],
+                    }),
                     body: while_body,
                 }),
             ]
