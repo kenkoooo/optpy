@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use optpy::{compile, typed_compile};
+use optpy::compile;
 use optpy_dump::DumpPython;
 use optpy_parser::parse;
 use optpy_resolver::resolve;
@@ -31,13 +31,9 @@ enum Command {
         /// Input Python file
         input: PathBuf,
     },
-    /// Compile with type inference (experimental)
-    Typed {
+    Type {
         /// Input Python file
         input: PathBuf,
-
-        /// Path to output Rust file
-        output: Option<PathBuf>,
     },
 }
 
@@ -64,16 +60,11 @@ fn main() -> Result<()> {
             let python_code = ast.to_python_code();
             println!("{}", python_code);
         }
-        Command::Typed { input, output } => {
+        Command::Type { input } => {
             let code = read_to_string(&input)?;
-            let result = typed_compile(code)?;
-
-            let output = match output {
-                Some(output) => output,
-                None => input.with_extension("rs"),
-            };
-            write(&output, result)?;
-            log::info!("Generated {:?}", output);
+            let ast = parse(code)?;
+            let (ast, _) = resolve(&ast);
+            optpy_type_solver::resolve_types(&ast);
         }
     }
 
