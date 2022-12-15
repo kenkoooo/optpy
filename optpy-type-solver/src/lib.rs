@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use optpy_parser::{
     Assign, BinaryOperation, BinaryOperator, BoolOperation, CallFunction, CallMethod, Compare,
-    Dict, Expr, Func, If, Index, Number, Statement, UnaryOperation, While,
+    Dict, Expr, Func, If, Index, Statement, UnaryOperation, While,
 };
 
 pub fn resolve_types(statements: &[Statement]) {
@@ -11,8 +11,40 @@ pub fn resolve_types(statements: &[Statement]) {
         resolver.load_statement(statement);
     }
 
-    let mut definitions = resolver.definitions;
     let mut fixed = BTreeMap::new();
+    let mut definitions = resolver.definitions;
+    loop {
+        let mut new_definitions = fix_types(&definitions, &mut fixed);
+        merge_types(&mut new_definitions);
+        let new_definitions = new_definitions
+            .into_iter()
+            .filter(|(k, _)| !fixed.contains_key(k))
+            .collect();
+
+        if new_definitions == definitions {
+            break;
+        }
+        definitions = new_definitions;
+    }
+
+    for (name, values) in definitions {
+        eprintln!("{}", name.0);
+        for value in values {
+            eprintln!("= {:?}", value);
+        }
+        eprintln!();
+    }
+
+    for (var, t) in fixed {
+        eprintln!("{} = {:?}", var.0, t);
+    }
+}
+
+fn fix_types(
+    definitions: &BTreeMap<Var, BTreeSet<Type>>,
+    fixed: &mut BTreeMap<Var, Type>,
+) -> BTreeMap<Var, BTreeSet<Type>> {
+    let mut definitions = definitions.clone();
     loop {
         let mut new_definitions = BTreeMap::new();
         for (name, values) in definitions.iter() {
@@ -30,22 +62,10 @@ pub fn resolve_types(statements: &[Statement]) {
         }
 
         if definitions == new_definitions {
-            break;
+            return new_definitions;
         }
 
         definitions = new_definitions;
-    }
-
-    for (name, values) in definitions {
-        eprintln!("{}", name.0);
-        for value in values {
-            eprintln!("= {:?}", value);
-        }
-        eprintln!();
-    }
-
-    for (var, t) in fixed {
-        eprintln!("{} = {:?}", var.0, t);
     }
 }
 
@@ -60,6 +80,7 @@ enum Type {
     Fun(Vec<Type>, Box<Type>),
     Map(Box<Type>, Box<Type>),
     Apply(Var, Vec<Type>),
+    ArgOf(Var, usize),
 }
 
 impl Type {
@@ -78,7 +99,17 @@ impl Type {
             Type::Param(_) | Type::Number | Type::String | Type::Bool | Type::None => true,
             Type::Fun(args, result) => args.iter().all(|arg| arg.fixed()) && result.fixed(),
             Type::Map(k, v) => k.fixed() && v.fixed(),
-            Type::Apply(_, _) | Type::Typing(_) => false,
+            Type::Apply(_, _) | Type::Typing(_) | Type::ArgOf(_, _) => false,
+        }
+    }
+    fn fixed_no_param(&self) -> bool {
+        match self {
+            Type::Number | Type::String | Type::Bool | Type::None => true,
+            Type::Fun(args, result) => {
+                args.iter().all(|arg| arg.fixed_no_param()) && result.fixed_no_param()
+            }
+            Type::Map(k, v) => k.fixed_no_param() && v.fixed_no_param(),
+            Type::Param(_) | Type::Apply(_, _) | Type::Typing(_) | Type::ArgOf(_, _) => false,
         }
     }
     fn resolve(&self, fixed: &BTreeMap<Var, Type>) -> Type {
@@ -115,6 +146,17 @@ impl Type {
                     _ => Type::Apply(f.clone(), args),
                 }
             }
+            Type::ArgOf(f, pos) => {
+                if let Some(Type::Fun(params, _)) = fixed.get(f) {
+                    if params[*pos].fixed_no_param() {
+                        params[*pos].clone()
+                    } else {
+                        self.clone()
+                    }
+                } else {
+                    self.clone()
+                }
+            }
         }
     }
 }
@@ -127,6 +169,7 @@ fn resolve_param(result: &Type, map: &BTreeMap<usize, Type>) -> Option<Type> {
         }
         Type::Typing(_) => unreachable!("param is var"),
         Type::Apply(_, _) => unreachable!("param is apply"),
+        Type::ArgOf(_, _) => unreachable!("param is arg"),
         Type::Number | Type::String | Type::Bool | Type::None => Some(result.clone()),
         Type::Map(k, v) => {
             let k = resolve_param(k, map)?;
@@ -200,7 +243,10 @@ impl Default for Resolver {
             .entry(Var("__has_next_1".into()))
             .or_insert_with(BTreeSet::new)
             .insert(Type::fun(
-                vec![Type::map(Type::Number, Type::Param(0))],
+                vec![Type::map(
+                    Type::Number,
+                    Type::map(Type::Number, Type::Param(0)),
+                )],
                 Type::Bool,
             ));
         definitions
@@ -229,6 +275,15 @@ impl Default for Resolver {
             .entry(Var("list_1".into()))
             .or_insert_with(BTreeSet::new)
             .insert(Type::fun(vec![Type::Param(0)], Type::Param(0)));
+        definitions
+            .entry(Var("min__macro___2".into()))
+            .or_insert_with(BTreeSet::new)
+            .insert(Type::fun(vec![Type::Number, Type::Number], Type::Number));
+        definitions
+            .entry(Var("abs_1".into()))
+            .or_insert_with(BTreeSet::new)
+            .insert(Type::fun(vec![Type::Number], Type::Number));
+
         Self {
             tmp_counter: 0,
             definitions,
@@ -274,8 +329,13 @@ impl Resolver {
                 for statement in body {
                     results.extend(self.load_statement(statement));
                 }
-                for result in results {
-                    self.define(name.clone(), Type::Fun(args.clone(), Box::new(result)));
+
+                if results.is_empty() {
+                    self.define(name.clone(), Type::Fun(args.clone(), Box::new(Type::None)));
+                } else {
+                    for result in results {
+                        self.define(name.clone(), Type::Fun(args.clone(), Box::new(result)));
+                    }
                 }
 
                 vec![]
@@ -316,14 +376,29 @@ impl Resolver {
             }
         }
     }
+    fn define_type(&mut self, a: &Type, b: &Type) {
+        if let Type::Typing(var) = a {
+            self.define(var.clone(), b.clone());
+        }
+        if let Type::Typing(var) = b {
+            self.define(var.clone(), a.clone());
+        }
+        let tmp = self.new_tmp_var();
+        self.define(tmp.clone(), a.clone());
+        self.define(tmp.clone(), b.clone());
+    }
+
     fn parse_expr(&mut self, expr: &Expr) -> Type {
         match expr {
             Expr::CallFunction(CallFunction { name, args }) => {
+                let name = format!("{}_{}", name, args.len());
+                for (pos, arg) in args.iter().enumerate() {
+                    self.assign(arg, Type::ArgOf(Var(name.clone()), pos));
+                }
                 let args = args
                     .iter()
                     .map(|arg| self.parse_expr(arg))
                     .collect::<Vec<_>>();
-                let name = format!("{}_{}", name, args.len());
                 Type::Apply(Var(name), args)
             }
             Expr::CallMethod(CallMethod { value, name, args }) => {
@@ -332,10 +407,9 @@ impl Resolver {
                     let arg = self.parse_expr(arg);
                     method_args.push(arg);
                 }
-                Type::Apply(
-                    Var(format!("__method__{}_{}", name, method_args.len())),
-                    method_args,
-                )
+                let name = Var(format!("__method__{}_{}", name, method_args.len()));
+                self.define_from_function_call(&name, &method_args);
+                Type::Apply(name, method_args)
             }
             Expr::Tuple(list) | Expr::List(list) => {
                 let element_type = self.new_tmp_var();
@@ -420,5 +494,57 @@ impl Resolver {
         let name = format!("__t{}", self.tmp_counter);
         self.tmp_counter += 1;
         Var(name)
+    }
+
+    fn define_from_function_call(&mut self, f: &Var, args: &[Type]) {
+        match f.0.as_str() {
+            "__method__append_2" => {
+                self.define_type(&args[0], &Type::map(Type::Number, args[1].clone()));
+            }
+            _ => {}
+        }
+    }
+}
+
+fn merge_types(definitions: &mut BTreeMap<Var, BTreeSet<Type>>) {
+    let mut new_definitions = vec![];
+    for group in definitions.values() {
+        for a in group {
+            for b in group {
+                merge_two_types(a.clone(), b.clone(), &mut new_definitions);
+            }
+        }
+    }
+
+    for (k, v) in new_definitions {
+        definitions.entry(k).or_default().insert(v);
+    }
+}
+
+fn merge_two_types(a: Type, b: Type, definitions: &mut Vec<(Var, Type)>) {
+    if a == b {
+        return;
+    }
+    match (a, b) {
+        (Type::Param(_), _) | (_, Type::Param(_)) => {}
+        (Type::Typing(a), b) => {
+            definitions.push((a, b));
+        }
+        (a, Type::Typing(b)) => {
+            definitions.push((b, a));
+        }
+        (Type::Fun(args0, result0), Type::Fun(args1, result1)) => {
+            for (arg0, arg1) in args0.into_iter().zip(args1) {
+                merge_two_types(arg0, arg1, definitions);
+            }
+            merge_two_types(*result0, *result1, definitions);
+        }
+        (Type::Map(key0, value0), Type::Map(key1, value1)) => {
+            merge_two_types(*key0, *key1, definitions);
+            merge_two_types(*value0, *value1, definitions);
+        }
+        (a, b) => {
+            println!("{:?} {:?}", a, b);
+        }
     }
 }
